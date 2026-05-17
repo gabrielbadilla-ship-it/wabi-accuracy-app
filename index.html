@@ -6,125 +6,192 @@
 <title>CookUnity — Wabi Accuracy Audit</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
+/* ── CookUnity Brand Palette ── */
+:root {
+  --cu-gold:    #FFB81C;
+  --cu-black:   #2C2B2B;
+  --cu-magenta: #AA0061;
+  --cu-blue:    #475CC7;
+  --cu-orange:  #F96F15;
+  --cu-green:   #218848;
+  --cu-pink:    #DB1984;
+  --cu-sage:    #B8CDC2;
+  --cu-sand:    #C7B273;
+  --bg:         #F7F6F2;
+  --border:     #E5E3DC;
+  --text:       #2C2B2B;
+  --text-muted: #7A7870;
+  --white:      #FFFFFF;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;font-size:14px}
-#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:24px}
-#login-screen h1{font-size:22px;font-weight:500}
-#login-screen p{color:#666;font-size:13px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+
+/* LOGIN */
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:24px;background:var(--cu-black)}
+#login-screen .logo{color:var(--cu-gold);font-size:28px;font-weight:700;letter-spacing:-.5px}
+#login-screen .logo span{color:var(--white)}
+#login-screen h1{color:var(--white);font-size:20px;font-weight:500;text-align:center}
+#login-screen p{color:#aaa;font-size:13px;text-align:center}
+#login-box{background:#3a3938;border-radius:12px;padding:28px;width:340px;display:flex;flex-direction:column;gap:12px}
+#login-box input{padding:10px 14px;border:1px solid #555;border-radius:8px;font-size:13px;background:#2C2B2B;color:#fff;font-family:inherit;width:100%}
+#login-box input::placeholder{color:#888}
+#login-box input:focus{outline:none;border-color:var(--cu-gold)}
+#login-box button{padding:11px;background:var(--cu-gold);color:var(--cu-black);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+#login-box button:hover{background:#e8a618}
+#login-error{color:#f87171;font-size:12px;text-align:center;min-height:16px}
+
+/* APP SHELL */
 #app{display:none;height:100vh;overflow:hidden;flex-direction:row}
-#sidebar{width:220px;background:#fff;border-right:1px solid #e5e5e0;display:flex;flex-direction:column;flex-shrink:0}
-#sidebar .brand{padding:20px 16px 12px;font-weight:600;font-size:13px;border-bottom:1px solid #e5e5e0;color:#1a1a1a}
-#sidebar .brand span{display:block;font-weight:400;font-size:11px;color:#888;margin-top:2px}
-#sidebar nav{flex:1;padding:8px 0;overflow-y:auto}
-#sidebar nav a{display:flex;align-items:center;gap:10px;padding:8px 16px;color:#555;text-decoration:none;font-size:13px;border-radius:6px;margin:1px 6px;cursor:pointer}
-#sidebar nav a:hover{background:#f5f5f0;color:#1a1a1a}
-#sidebar nav a.active{background:#1a1a1a;color:#fff}
-#sidebar nav a .badge{margin-left:auto;background:#e74c3c;color:#fff;font-size:10px;padding:1px 6px;border-radius:10px}
-#sidebar .user-bar{padding:12px 16px;border-top:1px solid #e5e5e0;font-size:12px;color:#888}
-#sidebar .user-bar strong{display:block;color:#1a1a1a;font-size:13px}
-#sidebar .user-bar .sign-out{color:#e74c3c;cursor:pointer;font-size:11px;margin-top:4px}
-#main{flex:1;overflow-y:auto;padding:28px 32px}
+#sidebar{width:224px;background:var(--cu-black);display:flex;flex-direction:column;flex-shrink:0}
+#sidebar .brand{padding:20px 16px 14px;border-bottom:1px solid #3a3938}
+#sidebar .brand .logo{color:var(--cu-gold);font-size:15px;font-weight:700;letter-spacing:-.3px}
+#sidebar .brand .logo span{color:var(--white)}
+#sidebar .brand .sub{color:#888;font-size:11px;margin-top:3px}
+#sidebar nav{flex:1;padding:10px 8px;overflow-y:auto}
+#sidebar nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;color:#bbb;text-decoration:none;font-size:13px;border-radius:8px;margin-bottom:2px;cursor:pointer;transition:background .15s}
+#sidebar nav a:hover{background:#3a3938;color:#fff}
+#sidebar nav a.active{background:var(--cu-gold);color:var(--cu-black);font-weight:600}
+#sidebar nav a .badge{margin-left:auto;background:var(--cu-magenta);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px}
+#sidebar .user-bar{padding:14px 16px;border-top:1px solid #3a3938}
+#sidebar .user-bar strong{display:block;color:#fff;font-size:13px}
+#sidebar .user-bar .role-tag{display:inline-block;margin-top:4px;padding:2px 8px;background:var(--cu-gold);color:var(--cu-black);font-size:10px;font-weight:700;border-radius:10px;text-transform:uppercase}
+#sidebar .user-bar .sign-out{color:#888;cursor:pointer;font-size:11px;margin-top:8px;display:block}
+#sidebar .user-bar .sign-out:hover{color:#fff}
+
+/* MAIN */
+#main{flex:1;overflow-y:auto;padding:28px 32px;background:var(--bg)}
 .page{display:none}
 .page.active{display:block}
-.page-title{font-size:20px;font-weight:500;margin-bottom:6px}
-.page-sub{color:#888;font-size:13px;margin-bottom:24px}
-.card{background:#fff;border:1px solid #e5e5e0;border-radius:10px;padding:20px;margin-bottom:16px}
-.card h3{font-size:14px;font-weight:500;margin-bottom:16px;color:#1a1a1a}
+.page-title{font-size:22px;font-weight:700;margin-bottom:4px;color:var(--cu-black)}
+.page-sub{color:var(--text-muted);font-size:13px;margin-bottom:24px}
+
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card h3{font-size:13px;font-weight:600;margin-bottom:16px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+
+/* METRICS */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
-.metric{background:#fff;border:1px solid #e5e5e0;border-radius:8px;padding:16px}
-.metric .label{font-size:12px;color:#888;margin-bottom:6px}
-.metric .value{font-size:26px;font-weight:500}
-.metric .value.green{color:#1d9e75}
-.metric .value.red{color:#e74c3c}
-.metric .value.amber{color:#ba7517}
+.metric{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden}
+.metric::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--cu-gold)}
+.metric .label{font-size:11px;color:var(--text-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.metric .value{font-size:28px;font-weight:700;color:var(--cu-black)}
+.metric .value.green{color:var(--cu-green)}
+.metric .value.red{color:var(--cu-magenta)}
+.metric .value.amber{color:var(--cu-orange)}
+
+/* FORMS */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.form-grid.full{grid-template-columns:1fr}
 .field{display:flex;flex-direction:column;gap:6px}
-.field label{font-size:12px;font-weight:500;color:#555}
-.field input,.field select,.field textarea{padding:8px 10px;border:1px solid #d5d5d0;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;width:100%}
+.field label{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--white);width:100%;color:var(--text)}
 .field textarea{resize:vertical;min-height:70px}
-.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#1a1a1a}
-.section-title{font-size:13px;font-weight:500;color:#888;letter-spacing:.05em;text-transform:uppercase;margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid #e5e5e0}
-.rc-group{background:#f9f9f7;border:1px solid #e5e5e0;border-radius:8px;padding:16px;margin-bottom:12px}
-.rc-group h4{font-size:13px;font-weight:500;margin-bottom:4px}
-.rc-group p{font-size:12px;color:#888;margin-bottom:12px;line-height:1.5}
-.rc-options{display:flex;gap:10px}
-.rc-options label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1px solid #d5d5d0;border-radius:6px;background:#fff}
-.rc-options label:hover{border-color:#1a1a1a}
-.rc-options input[type=radio]:checked+span{font-weight:500}
-.rc-options label:has(input:checked){background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.score-preview{background:#f9f9f7;border:1px solid #e5e5e0;border-radius:8px;padding:16px;margin-top:16px}
-.score-preview .score-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px}
-.score-preview .cat{text-align:center;padding:10px;background:#fff;border-radius:6px;border:1px solid #e5e5e0}
-.score-preview .cat .pts{font-size:20px;font-weight:500}
-.score-preview .cat .name{font-size:10px;color:#888;margin-top:2px}
-.score-preview .total{text-align:center;font-size:24px;font-weight:600;padding:10px;border-radius:6px;background:#1a1a1a;color:#fff}
-.score-preview .total small{font-size:12px;font-weight:400;opacity:.7}
-.btn{padding:9px 18px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;font-family:inherit}
-.btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.btn-primary:hover{background:#333}
-.btn-secondary{background:#fff;color:#1a1a1a;border-color:#d5d5d0}
-.btn-secondary:hover{background:#f5f5f0}
-.btn-danger{background:#fff;color:#e74c3c;border-color:#f5c4c4}
-.btn-danger:hover{background:#fcebeb}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--cu-gold);box-shadow:0 0 0 3px rgba(255,184,28,.12)}
+
+.section-title{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin:20px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--cu-gold)}
+
+/* RC GROUPS */
+.rc-group{background:#FAFAF7;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+.rc-group h4{font-size:13px;font-weight:600;margin-bottom:4px;color:var(--cu-black)}
+.rc-group p{font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5}
+.rc-options{display:flex;gap:8px;flex-wrap:wrap}
+.rc-options label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:var(--white);transition:all .15s}
+.rc-options label:hover{border-color:var(--cu-gold)}
+.rc-options label:has(input[value="0"]:checked){background:#FFF0F5;border-color:var(--cu-magenta);color:var(--cu-magenta);font-weight:600}
+.rc-options label:has(input:not([value="0"]):not([value="na"]):checked){background:var(--cu-black);color:var(--white);border-color:var(--cu-black);font-weight:600}
+.rc-options label:has(input[value="na"]:checked){background:#F7F6F2;border-color:#aaa;color:#666;font-weight:600}
+
+/* SCORE PREVIEW */
+.score-preview{background:#FAFAF7;border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:16px}
+.score-preview .score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.score-preview .cat{text-align:center;padding:12px 8px;background:var(--white);border-radius:8px;border:1px solid var(--border)}
+.score-preview .cat .pts{font-size:20px;font-weight:700;color:var(--cu-black)}
+.score-preview .cat .name{font-size:10px;color:var(--text-muted);margin-top:3px;font-weight:600;text-transform:uppercase}
+.score-preview .total{text-align:center;font-size:26px;font-weight:700;padding:12px;border-radius:8px;background:var(--cu-black);color:var(--white);transition:background .3s}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:all .15s}
+.btn-primary{background:var(--cu-gold);color:var(--cu-black);border-color:var(--cu-gold)}
+.btn-primary:hover{background:#e8a618}
+.btn-secondary{background:var(--white);color:var(--cu-black);border-color:var(--border)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-danger{background:var(--white);color:var(--cu-magenta);border-color:#f5c4d8}
 .btn-sm{padding:5px 12px;font-size:12px}
 .actions-row{display:flex;gap:10px;margin-top:20px;align-items:center}
+
+/* TABLE */
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:8px 12px;border-bottom:2px solid #e5e5e0;color:#888;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
-td{padding:8px 12px;border-bottom:1px solid #f0f0ec}
-tr:hover td{background:#fafaf8}
-.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
-.badge-green{background:#e1f5ee;color:#0f6e56}
-.badge-amber{background:#faeeda;color:#854f0b}
-.badge-red{background:#fcebeb;color:#a32d2d}
-.badge-blue{background:#e6f1fb;color:#185fa5}
-.badge-gray{background:#f1efe8;color:#5f5e5a}
+th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--text-muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:9px 12px;border-bottom:1px solid #F2F1EC}
+tr:hover td{background:#FAFAF7}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700}
+.badge-green{background:#D6EFDF;color:#1a6b3a}
+.badge-amber{background:#FFF0D6;color:#8a4e00}
+.badge-red{background:#FFE5F0;color:var(--cu-magenta)}
+.badge-blue{background:#E5E9F9;color:var(--cu-blue)}
+.badge-gray{background:#F2F1EC;color:#666}
+.badge-gold{background:#FFF8E1;color:#8a6200}
+
+/* FILTERS */
 .filters-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:center}
-.filters-bar select,.filters-bar input{padding:7px 10px;border:1px solid #d5d5d0;border-radius:6px;font-size:13px;background:#fff;font-family:inherit}
+.filters-bar select,.filters-bar input{padding:7px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--white);font-family:inherit;color:var(--text)}
+.filters-bar select:focus,.filters-bar input:focus{outline:none;border-color:var(--cu-gold)}
+
+/* CHARTS */
 .chart-wrap{position:relative;height:220px;margin-top:8px}
-.tabs{display:flex;gap:2px;background:#f5f5f0;border-radius:8px;padding:3px;margin-bottom:20px;width:fit-content}
-.tab{padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;color:#666}
-.tab.active{background:#fff;color:#1a1a1a;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center}
+.charts-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+
+/* TABS */
+.tabs{display:flex;gap:2px;background:#F2F1EC;border-radius:10px;padding:3px;margin-bottom:20px;width:fit-content}
+.tab{padding:7px 18px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--text-muted);font-weight:500;transition:all .15s}
+.tab.active{background:var(--white);color:var(--cu-black);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(44,43,43,.5);z-index:1000;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:12px;padding:24px;max-width:560px;width:90%;max-height:85vh;overflow-y:auto}
-.modal h3{font-size:16px;font-weight:500;margin-bottom:16px}
+.modal{background:var(--white);border-radius:14px;padding:26px;max-width:580px;width:92%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:16px;color:var(--cu-black)}
 .modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
-.alert{padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px}
-.alert-success{background:#e1f5ee;color:#0f6e56;border:1px solid #9fe1cb}
-.alert-error{background:#fcebeb;color:#a32d2d;border:1px solid #f7c1c1}
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid #e5e5e0;border-top-color:#1a1a1a;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle}
+
+/* ALERTS */
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;font-weight:500}
+.alert-success{background:#D6EFDF;color:#1a6b3a;border:1px solid #a8d8b9}
+.alert-error{background:#FFE5F0;color:var(--cu-magenta);border:1px solid #f5c4d8}
+
+/* MISC */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--cu-gold);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
-.empty{text-align:center;padding:40px;color:#888;font-size:13px}
+.empty{text-align:center;padding:48px;color:var(--text-muted);font-size:13px}
+
+/* Lead performance table */
+.lead-perf-table th{background:#FAFAF7}
+.cat-bar{display:flex;align-items:center;gap:8px}
+.cat-bar-fill{height:6px;border-radius:3px;background:var(--cu-gold);min-width:2px;transition:width .3s}
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="login-screen">
-  <div style="text-align:center;max-width:360px">
-    <div style="font-size:32px;margin-bottom:12px">📋</div>
-    <h1>Wabi Accuracy Audit</h1>
-    <p style="margin-top:6px;color:#666">Sign in with your CookUnity email</p>
-    <p style="font-size:12px;color:#aaa;margin-top:4px">Only <strong>@cookunity.com</strong> accounts are allowed</p>
-    <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
-      <input type="email" id="login-email" placeholder="you@cookunity.com"
-        style="padding:10px 14px;border:1px solid #d5d5d0;border-radius:8px;font-size:14px;width:100%;font-family:inherit">
-      <input type="text" id="login-name" placeholder="Your full name"
-        style="padding:10px 14px;border:1px solid #d5d5d0;border-radius:8px;font-size:14px;width:100%;font-family:inherit">
-      <button onclick="manualLogin()"
-        style="padding:11px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">
-        Sign in
-      </button>
-    </div>
-    <div id="login-error" style="margin-top:12px;font-size:13px;color:#e74c3c"></div>
+  <div class="logo">COOK<span>UNITY</span></div>
+  <h1>Wabi Accuracy Audit</h1>
+  <p>Sign in with your CookUnity account</p>
+  <div id="login-box">
+    <input type="email" id="login-email" placeholder="you@cookunity.com">
+    <input type="text" id="login-name" placeholder="Full name">
+    <button onclick="manualLogin()">Sign in</button>
+    <div id="login-error"></div>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
   <div id="sidebar">
-    <div class="brand">Wabi Accuracy<span id="user-role-badge">— viewer</span></div>
+    <div class="brand">
+      <div class="logo">COOK<span>UNITY</span></div>
+      <div class="sub">Wabi Accuracy Audit</div>
+    </div>
     <nav>
       <a onclick="nav('dashboard')" class="active" data-page="dashboard">🏠 Dashboard</a>
       <a onclick="nav('form')" data-page="form">➕ New Audit</a>
@@ -135,8 +202,9 @@ tr:hover td{background:#fafaf8}
     </nav>
     <div class="user-bar">
       <strong id="user-name">—</strong>
-      <div id="user-email" style="font-size:11px;color:#aaa;margin-top:2px"></div>
-      <div class="sign-out" onclick="signOut()">Sign out</div>
+      <div id="user-email" style="font-size:11px;color:#888;margin-top:2px"></div>
+      <span class="role-tag" id="user-role-badge">viewer</span>
+      <span class="sign-out" onclick="signOut()">Sign out</span>
     </div>
   </div>
 
@@ -145,9 +213,14 @@ tr:hover td{background:#fafaf8}
     <!-- DASHBOARD -->
     <div id="page-dashboard" class="page active">
       <div class="page-title">Dashboard</div>
-      <div class="page-sub">Wabi Accuracy — Overview</div>
+      <div class="page-sub">Wabi Accuracy overview — H1 2026</div>
       <div class="filters-bar">
-        <select id="dash-month" onchange="loadDashboard()"><option value="">All months</option></select>
+        <select id="dash-month" onchange="loadDashboard()">
+          <option value="">All months</option>
+          <option value="1">January</option><option value="2">February</option>
+          <option value="3">March</option><option value="4">April</option>
+          <option value="5">May</option><option value="6">June</option>
+        </select>
         <select id="dash-sup" onchange="loadDashboard()"><option value="">All supervisors</option></select>
         <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">↺ Refresh</button>
       </div>
@@ -157,11 +230,11 @@ tr:hover td{background:#fafaf8}
         <div class="metric"><div class="label">Pending coaching</div><div class="value">—</div></div>
         <div class="metric"><div class="label">Below target (&lt;80)</div><div class="value">—</div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="charts-2col">
         <div class="card"><h3>Score distribution</h3><div class="chart-wrap"><canvas id="chart-bands"></canvas></div></div>
-        <div class="card"><h3>Root cause frequency</h3><div class="chart-wrap"><canvas id="chart-rc"></canvas></div></div>
+        <div class="card"><h3>Root cause frequency (fails)</h3><div class="chart-wrap"><canvas id="chart-rc"></canvas></div></div>
       </div>
-      <div class="card" style="margin-top:0"><h3>By supervisor</h3><div id="dash-sup-table"></div></div>
+      <div class="card"><h3>By supervisor</h3><div id="dash-sup-table"></div></div>
     </div>
 
     <!-- FORM -->
@@ -169,7 +242,6 @@ tr:hover td{background:#fafaf8}
       <div class="page-title">New Audit</div>
       <div class="page-sub">Complete all fields before submitting</div>
       <div id="form-alert"></div>
-
       <div class="card">
         <div class="section-title">Audit info</div>
         <div class="form-grid">
@@ -177,13 +249,19 @@ tr:hover td{background:#fafaf8}
             <select id="f-half"><option value="">Select</option><option>H1 - 2026</option><option>H2 - 2025</option></select></div>
           <div class="field"><label>Month *</label>
             <select id="f-month"><option value="">Select</option>
-            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-            <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
-            <option>11</option><option>12</option></select></div>
-          <div class="field"><label>Week *</label><input type="number" id="f-week" min="1" max="53" placeholder="e.g. 16"></div>
+            <option value="1">1 — January</option><option value="2">2 — February</option>
+            <option value="3">3 — March</option><option value="4">4 — April</option>
+            <option value="5">5 — May</option><option value="6">6 — June</option>
+            <option value="7">7 — July</option><option value="8">8 — August</option>
+            <option value="9">9 — September</option><option value="10">10 — October</option>
+            <option value="11">11 — November</option><option value="12">12 — December</option></select></div>
+          <div class="field"><label>Week *</label>
+            <select id="f-week"><option value="">Select</option>
+            ${Array.from({length:53},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('')}
+            </select></div>
           <div class="field"><label>Wabi date *</label><input type="date" id="f-wabi-date"></div>
           <div class="field"><label>Ticket number *</label><input type="text" id="f-ticket" placeholder="e.g. 1234567"></div>
-          <div class="field"><label>Lead email *</label>
+          <div class="field"><label>Lead *</label>
             <select id="f-lead"><option value="">Select lead</option></select></div>
           <div class="field"><label>Supervisor</label><input type="text" id="f-supervisor" readonly placeholder="Auto-filled"></div>
           <div class="field"><label>Specialist email</label><input type="text" id="f-specialist" placeholder="specialist@cookunity.com"></div>
@@ -192,7 +270,6 @@ tr:hover td{background:#fafaf8}
 
       <div class="card">
         <div class="section-title">1. Validation — 25 pts</div>
-
         <div class="rc-group">
           <h4>Context Oversight — 10 pts</h4>
           <p>All key background details verified: recurring issue, customer history, churn indicators, ARPU, prior compensation.</p>
@@ -202,10 +279,9 @@ tr:hover td{background:#fafaf8}
             <label><input type="radio" name="rc-co" value="na" onchange="calcScore()"> <span>N/A</span></label>
           </div>
         </div>
-
         <div class="rc-group">
           <h4>Evidence Validation — 15 pts</h4>
-          <p>Required validations documented: Admin, tracking, POD, screenshots, Braze/Mixpanel logs. Lead requested missing evidence before deciding.</p>
+          <p>Required validations documented: Admin, tracking, POD, screenshots, Braze/Mixpanel logs.</p>
           <div class="rc-options">
             <label><input type="radio" name="rc-ev" value="15" onchange="calcScore()"> <span>✓ Pass (15 pts)</span></label>
             <label><input type="radio" name="rc-ev" value="0" onchange="calcScore()"> <span>✗ Fail (−15 pts)</span></label>
@@ -216,20 +292,18 @@ tr:hover td{background:#fafaf8}
 
       <div class="card">
         <div class="section-title">2. Issue Resolution — 30 pts</div>
-
         <div class="rc-group">
           <h4>Wrong Adjustment Type or Amount — 10 pts</h4>
-          <p>Adjustment aligns with C&R Matrix: correct scenario, type, and amount. If overridden, proportional and justified.</p>
+          <p>Adjustment aligns with C&R Matrix: correct scenario, type, and amount.</p>
           <div class="rc-options">
             <label><input type="radio" name="rc-wa" value="10" onchange="calcScore()"> <span>✓ Pass (10 pts)</span></label>
             <label><input type="radio" name="rc-wa" value="0" onchange="calcScore()"> <span>✗ Fail (−10 pts)</span></label>
             <label><input type="radio" name="rc-wa" value="na" onchange="calcScore()"> <span>N/A</span></label>
           </div>
         </div>
-
         <div class="rc-group">
           <h4>Compensation Without Resolution — 20 pts</h4>
-          <p>Root issue addressed: required follow-up (Jira, Logistics, investigation) triggered. Not just compensated.</p>
+          <p>Root issue addressed: required follow-up (Jira, Logistics, investigation) triggered.</p>
           <div class="rc-options">
             <label><input type="radio" name="rc-cwr" value="20" onchange="calcScore()"> <span>✓ Pass (20 pts)</span></label>
             <label><input type="radio" name="rc-cwr" value="0" onchange="calcScore()"> <span>✗ Fail (−20 pts)</span></label>
@@ -240,20 +314,18 @@ tr:hover td{background:#fafaf8}
 
       <div class="card">
         <div class="section-title">3. Process & Escalation — 30 pts</div>
-
         <div class="rc-group">
           <h4>Lack of Process Alignment — 15 pts</h4>
-          <p>Decision aligns with SOPs and Matrix. Required escalations instructed clearly. No undocumented workarounds.</p>
+          <p>Decision aligns with SOPs and Matrix. No undocumented workarounds.</p>
           <div class="rc-options">
             <label><input type="radio" name="rc-lpa" value="15" onchange="calcScore()"> <span>✓ Pass (15 pts)</span></label>
             <label><input type="radio" name="rc-lpa" value="0" onchange="calcScore()"> <span>✗ Fail (−15 pts)</span></label>
             <label><input type="radio" name="rc-lpa" value="na" onchange="calcScore()"> <span>N/A</span></label>
           </div>
         </div>
-
         <div class="rc-group">
           <h4>Incorrect Escalation Reason — 15 pts</h4>
-          <p>Lead verified the Escalation Reason selected in Admin is correct. Instructed Specialist to update if wrong.</p>
+          <p>Lead verified the Escalation Reason in Admin is correct before approving.</p>
           <div class="rc-options">
             <label><input type="radio" name="rc-ier" value="15" onchange="calcScore()"> <span>✓ Pass (15 pts)</span></label>
             <label><input type="radio" name="rc-ier" value="0" onchange="calcScore()"> <span>✗ Fail (−15 pts)</span></label>
@@ -266,7 +338,7 @@ tr:hover td{background:#fafaf8}
         <div class="section-title">4. Coaching & Guidance — 15 pts</div>
         <div class="rc-group">
           <h4>Coaching & Guidance — 15 pts</h4>
-          <p>Decision explicit (approve/deny + amount + type). Corrections clearly stated. Rationale tied to policy/Matrix. Specialist can close in one pass.</p>
+          <p>Decision explicit (approve/deny + amount + type). Rationale tied to policy/Matrix.</p>
           <div class="rc-options">
             <label><input type="radio" name="rc-cg" value="15" onchange="calcScore()"> <span>✓ Pass (15 pts)</span></label>
             <label><input type="radio" name="rc-cg" value="0" onchange="calcScore()"> <span>✗ Fail (−15 pts)</span></label>
@@ -285,8 +357,7 @@ tr:hover td{background:#fafaf8}
           </div>
           <div class="total" id="score-total">Score: — / 100</div>
         </div>
-
-        <div class="section-title" style="margin-top:20px">Supervisor notes</div>
+        <div class="section-title" style="margin-top:20px">Notes</div>
         <div class="form-grid">
           <div class="field"><label>Was the Wabi correctly raised?</label>
             <select id="f-raised"><option value="">Select</option><option>Yes</option><option>No</option></select></div>
@@ -294,8 +365,7 @@ tr:hover td{background:#fafaf8}
             <select id="f-feedback"><option>Yes</option><option>No</option></select></div>
         </div>
         <div class="field" style="margin-top:12px"><label>Improvement notes (optional)</label>
-          <textarea id="f-notes" placeholder="Describe any improvement opportunity for the Lead or the Specialist..."></textarea></div>
-
+          <textarea id="f-notes" placeholder="Describe any improvement opportunity for the Lead or Specialist..."></textarea></div>
         <div class="actions-row">
           <button class="btn btn-primary" onclick="submitAudit()" id="submit-btn">✅ Submit audit</button>
           <button class="btn btn-secondary" onclick="clearForm()">Clear form</button>
@@ -306,10 +376,18 @@ tr:hover td{background:#fafaf8}
     <!-- RECORDS -->
     <div id="page-records" class="page">
       <div class="page-title">All Records</div>
-      <div class="page-sub">Full audit history</div>
+      <div class="page-sub">Full audit history — H1 2026</div>
       <div class="filters-bar">
-        <select id="rec-sup" onchange="loadRecords()"><option value="">All supervisors</option></select>
-        <select id="rec-week" onchange="loadRecords()"><option value="">All weeks</option></select>
+        <select id="rec-month" onchange="loadRecords()">
+          <option value="">All months</option>
+          <option value="1">January</option><option value="2">February</option>
+          <option value="3">March</option><option value="4">April</option>
+          <option value="5">May</option><option value="6">June</option>
+        </select>
+        <select id="rec-week" onchange="loadRecords()">
+          <option value="">All weeks</option>
+          ${Array.from({length:53},(_,i)=>`<option value="${i+1}">Week ${i+1}</option>`).join('')}
+        </select>
         <select id="rec-status" onchange="loadRecords()">
           <option value="">All statuses</option>
           <option>Pending</option><option>Coaching Delivered</option><option>Disputed</option>
@@ -317,9 +395,7 @@ tr:hover td{background:#fafaf8}
         <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
       </div>
       <div class="card" style="padding:0;overflow:hidden">
-        <div id="records-table" style="overflow-x:auto">
-          <div class="empty"><span class="spinner"></span> Loading...</div>
-        </div>
+        <div id="records-table" style="overflow-x:auto"><div class="empty"><span class="spinner"></span> Loading...</div></div>
       </div>
     </div>
 
@@ -335,9 +411,35 @@ tr:hover td{background:#fafaf8}
     <!-- ANALYTICS -->
     <div id="page-analytics" class="page">
       <div class="page-title">Analytics</div>
-      <div class="page-sub">Week-over-week score trends</div>
-      <div class="card"><h3>Avg score by week</h3><div class="chart-wrap" style="height:260px"><canvas id="chart-wow"></canvas></div></div>
-      <div class="card"><h3>Fail rate by week (score &lt; 80)</h3><div class="chart-wrap" style="height:200px"><canvas id="chart-fail"></canvas></div></div>
+      <div class="page-sub">Score trends and lead performance — H1 2026</div>
+      <div class="tabs">
+        <div class="tab active" onclick="analyticsTab('trends',this)">📈 Trends</div>
+        <div class="tab" onclick="analyticsTab('leads',this)">👤 Lead Performance</div>
+      </div>
+
+      <div id="analytics-trends">
+        <div class="charts-2col">
+          <div class="card"><h3>Avg score by week</h3><div class="chart-wrap" style="height:240px"><canvas id="chart-wow"></canvas></div></div>
+          <div class="card"><h3>Fail rate by week (score &lt; 80)</h3><div class="chart-wrap" style="height:240px"><canvas id="chart-fail"></canvas></div></div>
+        </div>
+        <div class="card"><h3>Avg score by month</h3><div class="chart-wrap" style="height:200px"><canvas id="chart-mom"></canvas></div></div>
+      </div>
+
+      <div id="analytics-leads" style="display:none">
+        <div class="filters-bar">
+          <select id="lead-filter" onchange="renderLeadPerformance()">
+            <option value="">All leads</option>
+          </select>
+          <select id="lead-month-filter" onchange="renderLeadPerformance()">
+            <option value="">All months</option>
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+          </select>
+        </div>
+        <div class="card"><h3>Category scores by lead (avg %)</h3><div id="lead-perf-table"></div></div>
+        <div class="card" style="margin-top:0"><h3>Lead trend — select a lead above</h3><div class="chart-wrap" style="height:260px"><canvas id="chart-lead-trend"></canvas></div></div>
+      </div>
     </div>
 
     <!-- ADMIN -->
@@ -348,7 +450,6 @@ tr:hover td{background:#fafaf8}
         <div class="tab active" onclick="adminTab('roles',this)">User Roles</div>
         <div class="tab" onclick="adminTab('hierarchy',this)">Lead Hierarchy</div>
       </div>
-
       <div id="admin-roles">
         <div class="card">
           <h3>Add / update role</h3>
@@ -361,7 +462,6 @@ tr:hover td{background:#fafaf8}
         </div>
         <div class="card"><h3>Current roles</h3><div id="roles-list"></div></div>
       </div>
-
       <div id="admin-hierarchy" style="display:none">
         <div class="card">
           <h3>Add lead</h3>
@@ -378,15 +478,15 @@ tr:hover td{background:#fafaf8}
       </div>
     </div>
 
-  </div><!-- /main -->
-</div><!-- /app -->
+  </div>
+</div>
 
-<!-- MODAL: record detail + supervisor action -->
+<!-- MODAL -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <h3 id="modal-title">Audit Detail</h3>
-      <span onclick="closeModal()" style="cursor:pointer;color:#888;font-size:18px">✕</span>
+      <span onclick="closeModal()" style="cursor:pointer;color:#aaa;font-size:20px;line-height:1">✕</span>
     </div>
     <div id="modal-body"></div>
     <div class="modal-actions" id="modal-actions"></div>
@@ -394,17 +494,19 @@ tr:hover td{background:#fafaf8}
 </div>
 
 <script>
-// ── CONFIG ─────────────────────────────────────────────────
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGd8cmQsp_Q4CvvjuHugnvfenADca2byszgP_-7stSAWKmc55uumw2tN4xg5T-XC5cxw/exec'; // replaced after deploy
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGd8cmQsp_Q4CvvjuHugnvfenADca2byszgP_-7stSAWKmc55uumw2tN4xg5T-XC5cxw/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
+const CURRENT_HALF = 'H1 - 2026';
 
 let currentUser = null;
 let currentRole = 'viewer';
 let allRecords  = [];
 let hierarchy   = [];
-let chartBands, chartRC, chartWow, chartFail;
+let chartBands, chartRC, chartWow, chartFail, chartMom, chartLeadTrend;
 
-// ── AUTH ────────────────────────────────────────────────────
+const MONTH_NAMES = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ── AUTH ───────────────────────────────────────────────────
 window.onload = () => {
   const saved = sessionStorage.getItem('wabiUser');
   if (saved) { currentUser = JSON.parse(saved); initApp(); }
@@ -415,8 +517,7 @@ function manualLogin() {
   const name  = document.getElementById('login-name').value.trim();
   const errEl = document.getElementById('login-error');
   if (!email.endsWith('@' + ALLOWED_DOMAIN)) {
-    errEl.textContent = 'Only @' + ALLOWED_DOMAIN + ' accounts are allowed.';
-    return;
+    errEl.textContent = 'Only @' + ALLOWED_DOMAIN + ' accounts are allowed.'; return;
   }
   if (!name) { errEl.textContent = 'Please enter your full name.'; return; }
   errEl.textContent = '';
@@ -433,34 +534,33 @@ async function initApp() {
 
   const roleData = await api('getRole', { email: currentUser.email });
   currentRole = roleData.role || 'viewer';
-  document.getElementById('user-role-badge').textContent = '— ' + currentRole;
+  document.getElementById('user-role-badge').textContent = currentRole;
   if (currentRole === 'admin' || currentRole === 'supervisor') {
     document.getElementById('admin-link').style.display = 'flex';
   }
+
+  // Set dashboard default to current month
+  const curMonth = new Date().getMonth() + 1;
+  document.getElementById('dash-month').value = String(curMonth);
 
   await loadHierarchy();
   loadDashboard();
   loadRecords();
   loadQueue();
   loadAnalytics();
-  if (currentRole === 'admin') { loadRoles(); }
+  if (currentRole === 'admin') loadRoles();
 }
 
-function signOut() {
-  sessionStorage.removeItem('wabiUser');
-  location.reload();
-}
+function signOut() { sessionStorage.removeItem('wabiUser'); location.reload(); }
 
 // ── API ────────────────────────────────────────────────────
 async function api(action, params = {}, body = null) {
   const url = new URL(SCRIPT_URL);
   url.searchParams.set('action', action);
-  Object.entries(params).forEach(([k,v]) => { if(v) url.searchParams.set(k, v); });
-
+  Object.entries(params).forEach(([k,v]) => { if(v !== undefined && v !== '') url.searchParams.set(k, v); });
   const opts = body
     ? { method: 'POST', body: JSON.stringify({ action, ...body }) }
     : { method: 'GET' };
-
   const res = await fetch(url.toString(), opts);
   const json = await res.json();
   if (!json.ok) throw new Error(json.error || 'API error');
@@ -475,33 +575,47 @@ function nav(page) {
   document.querySelector(`[data-page="${page}"]`).classList.add('active');
 }
 
+// ── SCORE HELPERS ──────────────────────────────────────────
+function normalizeScore(raw) {
+  // Sheet stores 0.85 or 85 — normalize to 0-100 integer
+  const n = Number(raw);
+  if (isNaN(n)) return 0;
+  return n > 0 && n <= 1 ? Math.round(n * 100) : Math.round(n);
+}
+
+function scoreClass(s) {
+  s = normalizeScore(s);
+  return s >= 90 ? 'badge-green' : s >= 80 ? 'badge-blue' : s >= 60 ? 'badge-amber' : 'badge-red';
+}
+function scoreBgColor(s) {
+  s = normalizeScore(s);
+  return s >= 90 ? '#218848' : s >= 80 ? '#475CC7' : s >= 60 ? '#F96F15' : '#AA0061';
+}
+function statusClass(s) {
+  return s === 'Coaching Delivered' ? 'badge-green' : s === 'Disputed' ? 'badge-amber' : 'badge-gray';
+}
+
 // ── DASHBOARD ──────────────────────────────────────────────
 async function loadDashboard() {
   const params = {
     month: document.getElementById('dash-month').value,
     supervisor: document.getElementById('dash-sup').value,
+    half: CURRENT_HALF,
   };
   try {
     const d = await api('getDashboard', params);
-    const m = document.getElementById('dash-metrics');
-    const belowTarget = (d.byBand['Below 60'] || 0) + (d.byBand['60-79'] || 0);
-    m.innerHTML = `
+    const belowTarget = (d.byBand['Below 60']||0) + (d.byBand['60-79']||0);
+    document.getElementById('dash-metrics').innerHTML = `
       <div class="metric"><div class="label">Total audits</div><div class="value">${d.total}</div></div>
-      <div class="metric"><div class="label">Avg score</div><div class="value ${d.avgScore>=80?'green':d.avgScore>=60?'amber':'red'}">${d.avgScore || '—'}%</div></div>
-      <div class="metric"><div class="label">Pending coaching</div><div class="value amber">${d.pending || 0}</div></div>
+      <div class="metric"><div class="label">Avg score</div><div class="value ${d.avgScore>=80?'green':d.avgScore>=60?'amber':'red'}">${d.avgScore||'—'}%</div></div>
+      <div class="metric"><div class="label">Pending coaching</div><div class="value amber">${d.pending||0}</div></div>
       <div class="metric"><div class="label">Below target</div><div class="value ${belowTarget>0?'red':''}">${belowTarget}</div></div>
     `;
-
     renderBandsChart(d.byBand);
     renderRCChart(d.rcFrequency);
-
-    // Supervisor table
-    const rows = Object.entries(d.bySupervisor || {}).map(([sup, data]) => `
-      <tr>
-        <td>${sup}</td>
-        <td>${data.count}</td>
-        <td><span class="badge ${data.avgScore>=80?'badge-green':data.avgScore>=60?'badge-amber':'badge-red'}">${data.avgScore}%</span></td>
-      </tr>`).join('');
+    const rows = Object.entries(d.bySupervisor||{}).map(([sup,data]) => `
+      <tr><td>${sup}</td><td>${data.count}</td>
+      <td><span class="badge ${data.avgScore>=80?'badge-green':data.avgScore>=60?'badge-amber':'badge-red'}">${data.avgScore}%</span></td></tr>`).join('');
     document.getElementById('dash-sup-table').innerHTML = rows
       ? `<table><thead><tr><th>Supervisor</th><th>Audits</th><th>Avg score</th></tr></thead><tbody>${rows}</tbody></table>`
       : '<div class="empty">No data yet</div>';
@@ -514,12 +628,13 @@ function renderBandsChart(data) {
   chartBands = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Below 60', '60–79', '80–89', '90–100'],
-      datasets: [{ data: [data['Below 60']||0, data['60-79']||0, data['80-89']||0, data['90-100']||0],
-        backgroundColor: ['#f09595','#ef9f27','#5dcaa5','#1d9e75'], borderRadius: 4, borderSkipped: false }]
+      labels: ['Below 60','60–79','80–89','90–100'],
+      datasets: [{ data: [data['Below 60']||0,data['60-79']||0,data['80-89']||0,data['90-100']||0],
+        backgroundColor: ['#AA0061','#F96F15','#475CC7','#218848'], borderRadius: 6, borderSkipped: false }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, grid: { color: '#f0f0ec' } }, x: { grid: { display: false } } } }
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ y:{beginAtZero:true,grid:{color:'#F2F1EC'}}, x:{grid:{display:false}} } }
   });
 }
 
@@ -527,157 +642,120 @@ function renderRCChart(data) {
   if (!data) return;
   const ctx = document.getElementById('chart-rc').getContext('2d');
   if (chartRC) chartRC.destroy();
-  const labels = ['Context Oversight','Evidence Validation','Wrong Adjustment','Comp w/o Res','Process Align','Esc Reason','Coaching'];
-  const values = [data.context_oversight||0, data.evidence_validation||0, data.wrong_adjustment||0,
-    data.comp_without_res||0, data.lack_process||0, data.incorrect_esc||0, data.coaching||0];
   chartRC = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels, datasets: [{ data: values, backgroundColor: '#e5c7f0', borderRadius: 4, borderSkipped: false }]
+      labels: ['Context Oversight','Evidence Validation','Wrong Adjustment','Comp w/o Res','Process Align','Esc Reason','Coaching'],
+      datasets: [{ data: [data.context_oversight||0,data.evidence_validation||0,data.wrong_adjustment||0,
+        data.comp_without_res||0,data.lack_process||0,data.incorrect_esc||0,data.coaching||0],
+        backgroundColor: '#FFB81C', borderRadius: 4, borderSkipped: false }]
     },
-    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.raw + ' fails' } } },
-      scales: { x: { beginAtZero: true, grid: { color: '#f0f0ec' } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{beginAtZero:true,grid:{color:'#F2F1EC'}}, y:{grid:{display:false},ticks:{font:{size:11}}} } }
   });
 }
 
-// ── SCORE CALCULATOR ───────────────────────────────────────
+// ── SCORE CALC (form) ──────────────────────────────────────
 function getRC(name) {
   const el = document.querySelector(`input[name="rc-${name}"]:checked`);
   return el ? el.value : null;
 }
 
 function calcScore() {
-  const co  = getRC('co');
-  const ev  = getRC('ev');
-  const wa  = getRC('wa');
-  const cwr = getRC('cwr');
-  const lpa = getRC('lpa');
-  const ier = getRC('ier');
-  const cg  = getRC('cg');
+  const co=getRC('co'), ev=getRC('ev'), wa=getRC('wa'), cwr=getRC('cwr'), lpa=getRC('lpa'), ier=getRC('ier'), cg=getRC('cg');
+  const pCo=co==='na'?null:Number(co||0), pEv=ev==='na'?null:Number(ev||0);
+  const pWa=wa==='na'?null:Number(wa||0), pCwr=cwr==='na'?null:Number(cwr||0);
+  const pLpa=lpa==='na'?null:Number(lpa||0), pIer=ier==='na'?null:Number(ier||0);
+  const pCg=cg==='na'?null:Number(cg||0);
 
-  const pCo  = co  === 'na' ? null : Number(co  || 0);
-  const pEv  = ev  === 'na' ? null : Number(ev  || 0);
-  const pWa  = wa  === 'na' ? null : Number(wa  || 0);
-  const pCwr = cwr === 'na' ? null : Number(cwr || 0);
-  const pLpa = lpa === 'na' ? null : Number(lpa || 0);
-  const pIer = ier === 'na' ? null : Number(ier || 0);
-  const pCg  = cg  === 'na' ? null : Number(cg  || 0);
+  let catVal=0,maxVal=25;
+  if(pCo===null&&pEv===null) maxVal=0;
+  else if(pCo===null){catVal=pEv;maxVal=15;}
+  else if(pEv===null){catVal=pCo;maxVal=10;}
+  else catVal=(pCo>0&&pEv>0)?25:pCo>0?10:pEv>0?15:0;
 
-  // Category scores with N/A handling
-  let catVal = 0, maxVal = 25;
-  if (pCo === null && pEv === null) maxVal = 0;
-  else if (pCo === null) { catVal = pEv; maxVal = 15; }
-  else if (pEv === null) { catVal = pCo; maxVal = 10; }
-  else catVal = (pCo > 0 && pEv > 0) ? 25 : pCo > 0 ? 10 : pEv > 0 ? 15 : 0;
+  let catIR=0,maxIR=30;
+  if(pWa===null&&pCwr===null) maxIR=0;
+  else if(pWa===null){catIR=pCwr;maxIR=20;}
+  else if(pCwr===null){catIR=pWa;maxIR=10;}
+  else catIR=(pWa>0&&pCwr>0)?30:pWa>0?10:pCwr>0?20:0;
 
-  let catIR = 0, maxIR = 30;
-  if (pWa === null && pCwr === null) maxIR = 0;
-  else if (pWa === null) { catIR = pCwr; maxIR = 20; }
-  else if (pCwr === null) { catIR = pWa; maxIR = 10; }
-  else catIR = (pWa > 0 && pCwr > 0) ? 30 : pWa > 0 ? 10 : pCwr > 0 ? 20 : 0;
+  let catProc=0,maxProc=30;
+  if(pLpa===null&&pIer===null) maxProc=0;
+  else if(pLpa===null){catProc=pIer;maxProc=15;}
+  else if(pIer===null){catProc=pLpa;maxProc=15;}
+  else catProc=(pLpa>0&&pIer>0)?30:pLpa>0?15:pIer>0?15:0;
 
-  let catProc = 0, maxProc = 30;
-  if (pLpa === null && pIer === null) maxProc = 0;
-  else if (pLpa === null) { catProc = pIer; maxProc = 15; }
-  else if (pIer === null) { catProc = pLpa; maxProc = 15; }
-  else catProc = (pLpa > 0 && pIer > 0) ? 30 : pLpa > 0 ? 15 : pIer > 0 ? 15 : 0;
+  let catCoach=pCg===null?0:pCg, maxCoach=pCg===null?0:15;
+  const maxTotal=maxVal+maxIR+maxProc+maxCoach;
+  const rawScore=catVal+catIR+catProc+catCoach;
+  const finalScore=maxTotal>0?Math.round((rawScore/maxTotal)*100):0;
 
-  let catCoach = pCg === null ? 0 : pCg;
-  let maxCoach = pCg === null ? 0 : 15;
+  document.getElementById('pts-val').textContent=pCo===null&&pEv===null?'N/A':catVal+'/'+maxVal;
+  document.getElementById('pts-ir').textContent=pWa===null&&pCwr===null?'N/A':catIR+'/'+maxIR;
+  document.getElementById('pts-proc').textContent=pLpa===null&&pIer===null?'N/A':catProc+'/'+maxProc;
+  document.getElementById('pts-coach').textContent=pCg===null?'N/A':catCoach+'/'+maxCoach;
 
-  const maxTotal = maxVal + maxIR + maxProc + maxCoach;
-  const rawScore = catVal + catIR + catProc + catCoach;
-  const finalScore = maxTotal > 0 ? Math.round((rawScore / maxTotal) * 100) : 0;
-
-  document.getElementById('pts-val').textContent   = pCo === null && pEv === null ? 'N/A' : catVal + '/' + maxVal;
-  document.getElementById('pts-ir').textContent    = pWa === null && pCwr === null ? 'N/A' : catIR + '/' + maxIR;
-  document.getElementById('pts-proc').textContent  = pLpa === null && pIer === null ? 'N/A' : catProc + '/' + maxProc;
-  document.getElementById('pts-coach').textContent = pCg === null ? 'N/A' : catCoach + '/' + maxCoach;
-
-  const el = document.getElementById('score-total');
-  el.textContent = `Score: ${finalScore} / 100`;
-  el.style.background = finalScore >= 90 ? '#1d9e75' : finalScore >= 80 ? '#3b6d11' : finalScore >= 60 ? '#ba7517' : '#e24b4a';
-
-  return { co: pCo||0, ev: pEv||0, wa: pWa||0, cwr: pCwr||0, lpa: pLpa||0, ier: pIer||0, cg: pCg||0, finalScore };
+  const el=document.getElementById('score-total');
+  el.textContent=`Score: ${finalScore} / 100`;
+  el.style.background=scoreBgColor(finalScore);
+  return { co:pCo||0,ev:pEv||0,wa:pWa||0,cwr:pCwr||0,lpa:pLpa||0,ier:pIer||0,cg:pCg||0,finalScore };
 }
 
-// ── SUBMIT AUDIT ───────────────────────────────────────────
+// ── SUBMIT ─────────────────────────────────────────────────
 async function submitAudit() {
   const alertEl = document.getElementById('form-alert');
   alertEl.innerHTML = '';
-
-  const required = [
-    ['f-half','Half'], ['f-month','Month'], ['f-week','Week'],
-    ['f-wabi-date','Wabi date'], ['f-ticket','Ticket'], ['f-lead','Lead']
-  ];
-  for (const [id, label] of required) {
+  const required = [['f-half','Half'],['f-month','Month'],['f-week','Week'],['f-wabi-date','Wabi date'],['f-ticket','Ticket'],['f-lead','Lead']];
+  for (const [id,label] of required) {
     if (!document.getElementById(id).value) {
-      alertEl.innerHTML = `<div class="alert alert-error">Please fill in: ${label}</div>`;
-      return;
+      alertEl.innerHTML=`<div class="alert alert-error">Please fill in: ${label}</div>`; return;
     }
   }
-
-  const rcs = ['co','ev','wa','cwr','lpa','ier','cg'];
-  for (const rc of rcs) {
+  for (const rc of ['co','ev','wa','cwr','lpa','ier','cg']) {
     if (!document.querySelector(`input[name="rc-${rc}"]:checked`)) {
-      alertEl.innerHTML = `<div class="alert alert-error">Please score all rubric categories (or mark N/A).</div>`;
-      return;
+      alertEl.innerHTML=`<div class="alert alert-error">Please score all rubric categories (or mark N/A).</div>`; return;
     }
   }
-
   const scores = calcScore();
   const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Submitting...';
-
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Submitting...';
   const body = {
-    reviewer_email:      currentUser.email,
-    half:                document.getElementById('f-half').value,
-    month:               document.getElementById('f-month').value,
-    week:                document.getElementById('f-week').value,
-    wabi_date:           document.getElementById('f-wabi-date').value,
-    ticket:              document.getElementById('f-ticket').value,
-    lead_email:          document.getElementById('f-lead').value,
-    supervisor:          document.getElementById('f-supervisor').value,
-    specialist:          document.getElementById('f-specialist').value,
-    context_oversight:   scores.co,
-    evidence_validation: scores.ev,
-    wrong_adjustment:    scores.wa,
-    comp_without_res:    scores.cwr,
-    lack_process:        scores.lpa,
-    incorrect_esc:       scores.ier,
-    coaching:            scores.cg,
-    correctly_raised:    document.getElementById('f-raised').value,
-    improvement_notes:   document.getElementById('f-notes').value,
-    feedback_yn:         document.getElementById('f-feedback').value,
+    reviewer_email: currentUser.email,
+    half: document.getElementById('f-half').value,
+    month: document.getElementById('f-month').value,
+    week: document.getElementById('f-week').value,
+    wabi_date: document.getElementById('f-wabi-date').value,
+    ticket: document.getElementById('f-ticket').value,
+    lead_email: document.getElementById('f-lead').value,
+    supervisor: document.getElementById('f-supervisor').value,
+    specialist: document.getElementById('f-specialist').value,
+    context_oversight: scores.co, evidence_validation: scores.ev,
+    wrong_adjustment: scores.wa, comp_without_res: scores.cwr,
+    lack_process: scores.lpa, incorrect_esc: scores.ier, coaching: scores.cg,
+    correctly_raised: document.getElementById('f-raised').value,
+    improvement_notes: document.getElementById('f-notes').value,
   };
-
   try {
-    const result = await api('submitAudit', {}, body);
-    alertEl.innerHTML = `<div class="alert alert-success">✓ Audit submitted — Score: ${scores.finalScore}/100</div>`;
-    clearForm();
-    loadRecords();
-    loadQueue();
-  } catch(e) {
-    alertEl.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
-  }
-  btn.disabled = false;
-  btn.innerHTML = '✅ Submit audit';
+    await api('submitAudit', {}, body);
+    alertEl.innerHTML=`<div class="alert alert-success">✓ Audit submitted — Score: ${scores.finalScore}/100</div>`;
+    clearForm(); loadRecords(); loadQueue();
+  } catch(e) { alertEl.innerHTML=`<div class="alert alert-error">Error: ${e.message}</div>`; }
+  btn.disabled=false; btn.innerHTML='✅ Submit audit';
 }
 
 function clearForm() {
   ['f-half','f-month','f-week','f-wabi-date','f-ticket','f-specialist','f-notes'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
+    const el=document.getElementById(id); if(el) el.value='';
   });
-  document.getElementById('f-lead').value = '';
-  document.getElementById('f-supervisor').value = '';
-  document.querySelectorAll('input[type=radio]').forEach(r => r.checked = false);
-  ['pts-val','pts-ir','pts-proc','pts-coach'].forEach(id => document.getElementById(id).textContent = '—');
-  document.getElementById('score-total').textContent = 'Score: — / 100';
-  document.getElementById('score-total').style.background = '#1a1a1a';
-  document.getElementById('form-alert').innerHTML = '';
+  document.getElementById('f-lead').value='';
+  document.getElementById('f-supervisor').value='';
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  ['pts-val','pts-ir','pts-proc','pts-coach'].forEach(id=>document.getElementById(id).textContent='—');
+  const st=document.getElementById('score-total');
+  st.textContent='Score: — / 100'; st.style.background='var(--cu-black)';
+  document.getElementById('form-alert').innerHTML='';
 }
 
 // ── HIERARCHY ──────────────────────────────────────────────
@@ -686,16 +764,20 @@ async function loadHierarchy() {
     hierarchy = await api('getHierarchy');
     const sel = document.getElementById('f-lead');
     sel.innerHTML = '<option value="">Select lead</option>';
+    const leadSel = document.getElementById('lead-filter');
+    if (leadSel) leadSel.innerHTML = '<option value="">All leads</option>';
     hierarchy.forEach(h => {
-      const opt = document.createElement('option');
-      opt.value = h.leadEmail;
-      opt.textContent = h.leadName + ' (' + h.leadEmail + ')';
-      opt.dataset.supervisor = h.supervisor;
-      sel.appendChild(opt);
+      const opt=document.createElement('option');
+      opt.value=h.leadEmail; opt.textContent=h.leadName+' ('+h.leadEmail+')';
+      opt.dataset.supervisor=h.supervisor; sel.appendChild(opt);
+      if (leadSel) {
+        const o2=document.createElement('option');
+        o2.value=h.leadEmail; o2.textContent=h.leadName; leadSel.appendChild(o2);
+      }
     });
     sel.onchange = () => {
-      const opt = sel.options[sel.selectedIndex];
-      document.getElementById('f-supervisor').value = opt.dataset.supervisor || '';
+      const opt=sel.options[sel.selectedIndex];
+      document.getElementById('f-supervisor').value=opt.dataset.supervisor||'';
     };
   } catch(e) {}
 }
@@ -703,7 +785,8 @@ async function loadHierarchy() {
 // ── RECORDS ────────────────────────────────────────────────
 async function loadRecords() {
   const params = {
-    supervisor: document.getElementById('rec-sup')?.value,
+    half: CURRENT_HALF,
+    month: document.getElementById('rec-month')?.value,
     week: document.getElementById('rec-week')?.value,
     status: document.getElementById('rec-status')?.value,
   };
@@ -715,109 +798,114 @@ async function loadRecords() {
 
 function renderRecordsTable(records) {
   if (!records.length) {
-    document.getElementById('records-table').innerHTML = '<div class="empty">No records found</div>';
-    return;
+    document.getElementById('records-table').innerHTML='<div class="empty">No records found</div>'; return;
   }
-  const rows = records.slice().reverse().map(r => `
-    <tr onclick="openRecord(${r.rowId})" style="cursor:pointer">
-      <td>${r.ticket || '—'}</td>
-      <td>${r.wabi_date || '—'}</td>
-      <td>W${r.week}</td>
-      <td>${r.lead_email}</td>
-      <td>${r.supervisor || '—'}</td>
-      <td><span class="badge ${scoreClass(r.total_score)}">${r.total_score}%</span></td>
-      <td>${r.reviewer_email}</td>
-      <td><span class="badge ${statusClass(r.review_status)}">${r.review_status || 'Pending'}</span></td>
-    </tr>`).join('');
-  document.getElementById('records-table').innerHTML = `
-    <table>
-      <thead><tr><th>Ticket</th><th>Wabi date</th><th>Week</th><th>Lead</th><th>Supervisor</th><th>Score</th><th>Reviewer</th><th>Status</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-}
-
-function scoreClass(s) {
-  s = Number(s);
-  return s >= 90 ? 'badge-green' : s >= 80 ? 'badge-blue' : s >= 60 ? 'badge-amber' : 'badge-red';
-}
-function statusClass(s) {
-  return s === 'Coaching Delivered' ? 'badge-green' : s === 'Disputed' ? 'badge-amber' : 'badge-gray';
+  const rows = records.slice().reverse().map(r => {
+    const score = normalizeScore(r.total_score);
+    return `<tr onclick="openRecord(${r.rowId})" style="cursor:pointer">
+      <td>${r.ticket||'—'}</td>
+      <td>${r.wabi_date||'—'}</td>
+      <td>W${r.week} / M${r.month}</td>
+      <td>${r.lead_email||'—'}</td>
+      <td>${r.supervisor||'—'}</td>
+      <td><span class="badge ${scoreClass(score)}">${score}%</span></td>
+      <td>${r.reviewer_email||'—'}</td>
+      <td><span class="badge ${statusClass(r.review_status)}">${r.review_status||'Pending'}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('records-table').innerHTML=`
+    <table><thead><tr><th>Ticket</th><th>Wabi date</th><th>Week / Month</th><th>Lead</th><th>Supervisor</th><th>Score</th><th>Reviewer</th><th>Status</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
 }
 
 function exportCSV() {
   if (!allRecords.length) return;
-  const keys = Object.keys(allRecords[0]);
-  const rows = [keys.join(','), ...allRecords.map(r => keys.map(k => `"${String(r[k]||'').replace(/"/g,'""')}"`).join(','))];
-  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'wabi_audit_records.csv';
-  a.click();
+  const keys=Object.keys(allRecords[0]);
+  const rows=[keys.join(','),...allRecords.map(r=>keys.map(k=>`"${String(r[k]||'').replace(/"/g,'""')}"`).join(','))];
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='wabi_audit_records.csv'; a.click();
 }
 
 // ── QUEUE ──────────────────────────────────────────────────
 async function loadQueue() {
   try {
-    const records = await api('getRecords', { status: 'Pending' });
+    const records = await api('getRecords', { status: 'Pending', half: CURRENT_HALF });
     document.getElementById('queue-badge').textContent = records.length;
-
     if (!records.length) {
-      document.getElementById('queue-table').innerHTML = '<div class="empty">No pending items 🎉</div>';
-      return;
+      document.getElementById('queue-table').innerHTML='<div class="empty">No pending items 🎉</div>'; return;
     }
-    const rows = records.map(r => `
-      <tr>
+    const rows=records.map(r=>{
+      const score=normalizeScore(r.total_score);
+      return `<tr>
         <td>${r.ticket}</td><td>${r.wabi_date}</td><td>${r.lead_email}</td>
-        <td><span class="badge ${scoreClass(r.total_score)}">${r.total_score}%</span></td>
-        <td>${r.improvement_notes ? r.improvement_notes.slice(0,60)+'…' : '—'}</td>
+        <td><span class="badge ${scoreClass(score)}">${score}%</span></td>
+        <td>${r.improvement_notes?r.improvement_notes.slice(0,60)+'…':'—'}</td>
         <td><button class="btn btn-primary btn-sm" onclick="openRecord(${r.rowId})">Action</button></td>
-      </tr>`).join('');
-    document.getElementById('queue-table').innerHTML = `
+      </tr>`;}).join('');
+    document.getElementById('queue-table').innerHTML=`
       <table><thead><tr><th>Ticket</th><th>Date</th><th>Lead</th><th>Score</th><th>Notes</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table>`;
   } catch(e) {}
 }
 
-// ── RECORD DETAIL MODAL ────────────────────────────────────
+// ── RECORD MODAL ───────────────────────────────────────────
 async function openRecord(rowId) {
   const r = await api('getRecord', { rowId });
+  const score = normalizeScore(r.total_score);
   document.getElementById('modal-title').textContent = 'Ticket ' + r.ticket;
 
-  const rcRow = (label, val, max) => {
-    const pct = max > 0 ? Math.round((Number(val)/max)*100) : 0;
-    const color = Number(val) === max ? '#1d9e75' : '#e74c3c';
-    return `<tr><td style="color:#555">${label}</td><td style="font-weight:500;color:${color}">${val}/${max}</td></tr>`;
+  const rcRow=(label,val,max)=>{
+    const pct=max>0?Math.round((Number(val)/max)*100):0;
+    const color=Number(val)===max?'var(--cu-green)':'var(--cu-magenta)';
+    return `<tr><td style="color:var(--text-muted);padding:5px 8px 5px 0">${label}</td>
+      <td style="font-weight:600;color:${color}">${val}/${max}</td>
+      <td style="width:40%"><div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%;background:${color}"></div><span style="font-size:11px;color:#aaa">${pct}%</span></div></td></tr>`;
   };
 
+  const catVal   = normalizeScore(r.cat_validation);
+  const catIR    = normalizeScore(r.cat_issue_res);
+  const catProc  = normalizeScore(r.cat_process);
+  const catCoach = normalizeScore(r.cat_coaching);
+
   document.getElementById('modal-body').innerHTML = `
-    <table style="margin-bottom:16px;font-size:13px">
-      <tr><td style="color:#888;padding:4px 8px 4px 0">Lead</td><td>${r.lead_email}</td></tr>
-      <tr><td style="color:#888;padding:4px 8px 4px 0">Supervisor</td><td>${r.supervisor}</td></tr>
-      <tr><td style="color:#888;padding:4px 8px 4px 0">Week</td><td>W${r.week} / ${r.half}</td></tr>
-      <tr><td style="color:#888;padding:4px 8px 4px 0">Wabi date</td><td>${r.wabi_date}</td></tr>
-      <tr><td style="color:#888;padding:4px 8px 4px 0">Reviewed by</td><td>${r.reviewer_email}</td></tr>
-    </table>
-    <div style="background:#f9f9f7;border-radius:8px;padding:12px;margin-bottom:16px">
-      <div style="font-size:11px;color:#888;margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.05em">RC Scores</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;font-size:13px">
+      <div><span style="color:var(--text-muted)">Lead</span><br><strong>${r.lead_email}</strong></div>
+      <div><span style="color:var(--text-muted)">Supervisor</span><br><strong>${r.supervisor||'—'}</strong></div>
+      <div><span style="color:var(--text-muted)">Week / Month</span><br><strong>W${r.week} / M${r.month}</strong></div>
+      <div><span style="color:var(--text-muted)">Wabi date</span><br><strong>${r.wabi_date}</strong></div>
+      <div><span style="color:var(--text-muted)">Ticket</span><br><strong>${r.ticket}</strong></div>
+      <div><span style="color:var(--text-muted)">Reviewed by</span><br><strong>${r.reviewer_email}</strong></div>
+    </div>
+    <div style="background:#FAFAF7;border-radius:10px;padding:14px;margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">RC Scores</div>
       <table style="width:100%;font-size:13px">
-        ${rcRow('Context Oversight', r.context_oversight, 10)}
-        ${rcRow('Evidence Validation', r.evidence_validation, 15)}
-        ${rcRow('Wrong Adjustment', r.wrong_adjustment, 10)}
-        ${rcRow('Comp. w/o Resolution', r.comp_without_res, 20)}
-        ${rcRow('Lack of Process Align.', r.lack_process, 15)}
-        ${rcRow('Incorrect Esc. Reason', r.incorrect_esc, 15)}
-        ${rcRow('Coaching & Guidance', r.coaching, 15)}
+        ${rcRow('Context Oversight',r.context_oversight,10)}
+        ${rcRow('Evidence Validation',r.evidence_validation,15)}
+        ${rcRow('Wrong Adjustment',r.wrong_adjustment,10)}
+        ${rcRow('Comp. w/o Resolution',r.comp_without_res,20)}
+        ${rcRow('Lack of Process Align.',r.lack_process,15)}
+        ${rcRow('Incorrect Esc. Reason',r.incorrect_esc,15)}
+        ${rcRow('Coaching & Guidance',r.coaching,15)}
       </table>
-      <div style="text-align:center;font-size:22px;font-weight:600;margin-top:12px;padding:10px;background:${Number(r.total_score)>=80?'#1d9e75':'#e74c3c'};color:#fff;border-radius:6px">
-        ${r.total_score} / 100
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;text-align:center">
+        ${[['Validation',catVal],['Issue Res.',catIR],['Process',catProc],['Coaching',catCoach]].map(([n,v])=>`
+          <div style="background:white;border-radius:6px;padding:8px;border:1px solid var(--border)">
+            <div style="font-size:16px;font-weight:700">${v}%</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${n}</div>
+          </div>`).join('')}
+      </div>
+      <div style="text-align:center;font-size:24px;font-weight:700;margin-top:10px;padding:12px;background:${scoreBgColor(score)};color:#fff;border-radius:8px">
+        ${score} / 100
       </div>
     </div>
-    ${r.improvement_notes ? `<div style="margin-bottom:12px"><div style="font-size:12px;color:#888;margin-bottom:4px">Improvement notes</div><div style="font-size:13px;line-height:1.6;background:#f9f9f7;padding:10px;border-radius:6px">${r.improvement_notes}</div></div>` : ''}
-    <div style="font-size:12px;color:#888;margin-bottom:4px">Status</div>
-    <div><span class="badge ${statusClass(r.review_status)}">${r.review_status || 'Pending'}</span></div>
-    ${(currentRole === 'supervisor' || currentRole === 'admin') ? `
-    <div style="margin-top:20px;border-top:1px solid #e5e5e0;padding-top:16px">
-      <div style="font-size:12px;font-weight:500;color:#555;margin-bottom:10px">Supervisor action</div>
+    ${r.improvement_notes?`<div style="margin-bottom:12px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:700;text-transform:uppercase">Improvement notes</div>
+      <div style="font-size:13px;line-height:1.6;background:#FAFAF7;padding:10px;border-radius:8px">${r.improvement_notes}</div></div>`:''}
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:700;text-transform:uppercase">Status</div>
+    <span class="badge ${statusClass(r.review_status)}">${r.review_status||'Pending'}</span>
+    ${(currentRole==='supervisor'||currentRole==='admin')?`
+    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px">Supervisor action</div>
       <div class="form-grid">
         <div class="field"><label>Status</label>
           <select id="modal-status">
@@ -830,7 +918,6 @@ async function openRecord(rowId) {
       </div>
       <div class="field" style="margin-top:10px"><label>Supervisor notes</label>
         <textarea id="modal-sup-notes" rows="3">${r.sup_notes||''}</textarea></div>
-      ${r.review_status === 'Disputed' ? `
       <div class="field" style="margin-top:10px"><label>Dispute reason</label>
         <textarea id="modal-dispute-reason" rows="2">${r.dispute_reason||''}</textarea></div>
       <div class="form-grid" style="margin-top:10px">
@@ -838,14 +925,14 @@ async function openRecord(rowId) {
           <select id="modal-dispute-accepted"><option>—</option><option>Y</option><option>N</option></select></div>
         <div class="field"><label>Rejection reason</label>
           <input type="text" id="modal-rejection-reason" value="${r.rejection_reason||''}"></div>
-      </div>` : ''}
-    </div>` : ''}
+      </div>
+    </div>`:''}
   `;
 
-  document.getElementById('modal-actions').innerHTML = (currentRole === 'supervisor' || currentRole === 'admin')
-    ? `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-       <button class="btn btn-primary" onclick="saveSupAction(${r.rowId})">Save changes</button>`
-    : `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
+  document.getElementById('modal-actions').innerHTML=(currentRole==='supervisor'||currentRole==='admin')
+    ?`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSupAction(${r.rowId})">Save changes</button>`
+    :`<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
 
   document.getElementById('modal').classList.add('open');
 }
@@ -856,107 +943,203 @@ async function saveSupAction(rowId) {
     review_status:    document.getElementById('modal-status')?.value,
     coaching_date:    document.getElementById('modal-coaching-date')?.value,
     sup_notes:        document.getElementById('modal-sup-notes')?.value,
-    dispute_reason:   document.getElementById('modal-dispute-reason')?.value || '',
-    dispute_accepted: document.getElementById('modal-dispute-accepted')?.value || '',
-    rejection_reason: document.getElementById('modal-rejection-reason')?.value || '',
+    dispute_reason:   document.getElementById('modal-dispute-reason')?.value||'',
+    dispute_accepted: document.getElementById('modal-dispute-accepted')?.value||'',
+    rejection_reason: document.getElementById('modal-rejection-reason')?.value||'',
   };
   try {
-    await api('supervisorAction', {}, body);
-    closeModal();
-    loadRecords();
-    loadQueue();
-  } catch(e) { alert('Error: ' + e.message); }
+    await api('supervisorAction',{},body);
+    closeModal(); loadRecords(); loadQueue();
+  } catch(e) { alert('Error: '+e.message); }
 }
 
-function closeModal() {
-  document.getElementById('modal').classList.remove('open');
-}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
 
 // ── ANALYTICS ──────────────────────────────────────────────
 async function loadAnalytics() {
   try {
-    const data = await api('getAnalytics');
+    const data = await api('getAnalytics', { half: CURRENT_HALF });
     if (!data.length) return;
 
-    const labels = data.map(d => d.week);
-    const scores = data.map(d => d.avgScore);
-    const fails  = data.map(d => d.failRate);
+    // Week trend
+    const wLabels=data.map(d=>d.week);
+    const wScores=data.map(d=>normalizeScore(d.avgScore));
+    const wFails=data.map(d=>d.failRate);
 
-    const ctx1 = document.getElementById('chart-wow').getContext('2d');
-    if (chartWow) chartWow.destroy();
-    chartWow = new Chart(ctx1, {
-      type: 'line',
-      data: { labels, datasets: [{
-        label: 'Avg score', data: scores, borderColor: '#1d9e75', backgroundColor: 'rgba(29,158,117,.1)',
-        fill: true, tension: 0.3, pointRadius: 4
-      }]},
-      options: { responsive: true, maintainAspectRatio: false,
-        scales: { y: { min: 0, max: 100, grid: { color: '#f0f0ec' } }, x: { grid: { display: false } } } }
+    const ctx1=document.getElementById('chart-wow').getContext('2d');
+    if(chartWow) chartWow.destroy();
+    chartWow=new Chart(ctx1,{type:'line',data:{labels:wLabels,datasets:[{
+      label:'Avg score',data:wScores,borderColor:'#FFB81C',backgroundColor:'rgba(255,184,28,.1)',
+      fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:'#FFB81C'}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}},
+        plugins:{legend:{display:false}}}});
+
+    const ctx2=document.getElementById('chart-fail').getContext('2d');
+    if(chartFail) chartFail.destroy();
+    chartFail=new Chart(ctx2,{type:'bar',data:{labels:wLabels,datasets:[{
+      label:'Fail rate',data:wFails,backgroundColor:'#AA0061',borderRadius:6,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}},
+        plugins:{legend:{display:false}}}});
+
+    // Month trend
+    const byMonth={};
+    data.forEach(d=>{
+      const m='M'+d.month;
+      if(!byMonth[m]){byMonth[m]={total:0,count:0};}
+      byMonth[m].total+=normalizeScore(d.avgScore)*d.count;
+      byMonth[m].count+=d.count;
+    });
+    const mLabels=Object.keys(byMonth).sort((a,b)=>Number(a.slice(1))-Number(b.slice(1)));
+    const mScores=mLabels.map(m=>Math.round(byMonth[m].total/byMonth[m].count));
+
+    const ctx3=document.getElementById('chart-mom').getContext('2d');
+    if(chartMom) chartMom.destroy();
+    chartMom=new Chart(ctx3,{type:'bar',data:{labels:mLabels.map(m=>MONTH_NAMES[Number(m.slice(1))]||m),
+      datasets:[{label:'Avg score',data:mScores,backgroundColor:'#475CC7',borderRadius:6,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}},
+        plugins:{legend:{display:false}}}});
+
+    // Populate lead performance after data loads
+    renderLeadPerformance();
+  } catch(e) { console.error(e); }
+}
+
+function analyticsTab(tab, el) {
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('analytics-trends').style.display = tab==='trends'?'block':'none';
+  document.getElementById('analytics-leads').style.display  = tab==='leads'?'block':'none';
+}
+
+async function renderLeadPerformance() {
+  const filterLead  = document.getElementById('lead-filter')?.value || '';
+  const filterMonth = document.getElementById('lead-month-filter')?.value || '';
+
+  try {
+    const params = { half: CURRENT_HALF };
+    if (filterMonth) params.month = filterMonth;
+    if (filterLead)  params.lead  = filterLead;
+    const records = await api('getRecords', params);
+    if (!records.length) {
+      document.getElementById('lead-perf-table').innerHTML='<div class="empty">No data</div>'; return;
+    }
+
+    // Group by lead → month
+    const leads={};
+    records.forEach(r=>{
+      const lead=r.lead_email;
+      const month=Number(r.month);
+      if(!leads[lead]) leads[lead]={};
+      if(!leads[lead][month]) leads[lead][month]={val:[],ir:[],proc:[],coach:[],total:[]};
+      leads[lead][month].val.push(normalizeScore(r.cat_validation));
+      leads[lead][month].ir.push(normalizeScore(r.cat_issue_res));
+      leads[lead][month].proc.push(normalizeScore(r.cat_process));
+      leads[lead][month].coach.push(normalizeScore(r.cat_coaching));
+      leads[lead][month].total.push(normalizeScore(r.total_score));
     });
 
-    const ctx2 = document.getElementById('chart-fail').getContext('2d');
-    if (chartFail) chartFail.destroy();
-    chartFail = new Chart(ctx2, {
-      type: 'bar',
-      data: { labels, datasets: [{
-        label: 'Fail rate %', data: fails, backgroundColor: '#f09595', borderRadius: 4, borderSkipped: false
-      }]},
-      options: { responsive: true, maintainAspectRatio: false,
-        scales: { y: { min: 0, max: 100, grid: { color: '#f0f0ec' } }, x: { grid: { display: false } } },
-        plugins: { legend: { display: false } } }
-    });
-  } catch(e) {}
+    const avg=arr=>arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null;
+
+    // Table: lead × category (overall avg)
+    const leadList=Object.keys(leads).sort();
+    const catCell=(val)=>{
+      if(val===null) return '<td style="color:#ccc">—</td>';
+      const color=val>=80?'var(--cu-green)':val>=60?'var(--cu-orange)':'var(--cu-magenta)';
+      return `<td><div class="cat-bar"><div class="cat-bar-fill" style="width:${val}%;background:${color}"></div><span style="font-size:12px;font-weight:600;color:${color}">${val}%</span></div></td>`;
+    };
+
+    const rows=leadList.map(lead=>{
+      const allMonths=Object.values(leads[lead]);
+      const vAll=allMonths.flatMap(m=>m.val);
+      const iAll=allMonths.flatMap(m=>m.ir);
+      const pAll=allMonths.flatMap(m=>m.proc);
+      const cAll=allMonths.flatMap(m=>m.coach);
+      const tAll=allMonths.flatMap(m=>m.total);
+      const t=avg(tAll);
+      return `<tr>
+        <td style="font-weight:600;font-size:12px">${lead}</td>
+        ${catCell(avg(vAll))}${catCell(avg(iAll))}${catCell(avg(pAll))}${catCell(avg(cAll))}
+        <td><span class="badge ${scoreClass(t)}">${t}%</span></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('lead-perf-table').innerHTML=`
+      <table class="lead-perf-table">
+        <thead><tr><th>Lead</th><th>Validation</th><th>Issue Resolution</th><th>Process & Esc.</th><th>Coaching</th><th>Total</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    // Chart: selected lead trend by month
+    if (filterLead && leads[filterLead]) {
+      const months=Object.keys(leads[filterLead]).map(Number).sort((a,b)=>a-b);
+      const mNames=months.map(m=>MONTH_NAMES[m]||'M'+m);
+      const ds=[
+        {label:'Validation',    data:months.map(m=>avg(leads[filterLead][m].val)),  borderColor:'#FFB81C',backgroundColor:'rgba(255,184,28,.1)'},
+        {label:'Issue Res.',    data:months.map(m=>avg(leads[filterLead][m].ir)),   borderColor:'#475CC7',backgroundColor:'rgba(71,92,199,.1)'},
+        {label:'Process',       data:months.map(m=>avg(leads[filterLead][m].proc)), borderColor:'#218848',backgroundColor:'rgba(33,136,72,.1)'},
+        {label:'Coaching',      data:months.map(m=>avg(leads[filterLead][m].coach)),borderColor:'#AA0061',backgroundColor:'rgba(170,0,97,.1)'},
+      ];
+      const ctx=document.getElementById('chart-lead-trend').getContext('2d');
+      if(chartLeadTrend) chartLeadTrend.destroy();
+      chartLeadTrend=new Chart(ctx,{type:'line',data:{labels:mNames,datasets:ds.map(d=>({...d,fill:false,tension:0.3,pointRadius:4}))},
+        options:{responsive:true,maintainAspectRatio:false,
+          scales:{y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}});
+      document.querySelector('#analytics-leads .card:last-child h3').textContent=`Lead trend — ${filterLead}`;
+    }
+  } catch(e) { console.error(e); }
 }
 
 // ── ADMIN ──────────────────────────────────────────────────
-function adminTab(tab, el) {
-  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+function adminTab(tab,el) {
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('admin-roles').style.display     = tab === 'roles' ? 'block' : 'none';
-  document.getElementById('admin-hierarchy').style.display = tab === 'hierarchy' ? 'block' : 'none';
-  if (tab === 'hierarchy') loadHierarchyAdmin();
+  document.getElementById('admin-roles').style.display     = tab==='roles'?'block':'none';
+  document.getElementById('admin-hierarchy').style.display = tab==='hierarchy'?'block':'none';
+  if(tab==='hierarchy') loadHierarchyAdmin();
 }
 
 async function loadRoles() {
   try {
-    const roles = await api('getRoles');
-    const rows = roles.map(r => `<tr><td>${r.email}</td><td><span class="badge badge-blue">${r.role}</span></td><td>${r.assignedBy||'—'}</td></tr>`).join('');
-    document.getElementById('roles-list').innerHTML = roles.length
-      ? `<table><thead><tr><th>Email</th><th>Role</th><th>Assigned by</th></tr></thead><tbody>${rows}</tbody></table>`
-      : '<div class="empty">No roles set</div>';
+    const roles=await api('getRoles');
+    const rows=roles.map(r=>`<tr><td>${r.email}</td><td><span class="badge badge-blue">${r.role}</span></td><td>${r.assignedBy||'—'}</td></tr>`).join('');
+    document.getElementById('roles-list').innerHTML=rows
+      ?`<table><thead><tr><th>Email</th><th>Role</th><th>Assigned by</th></tr></thead><tbody>${rows}</tbody></table>`
+      :'<div class="empty">No roles set</div>';
   } catch(e) {}
 }
 
 async function saveRole() {
-  const email = document.getElementById('admin-email').value;
-  const role  = document.getElementById('admin-role').value;
-  if (!email) return;
-  await api('setRole', {}, { email, role, assignedBy: currentUser.email });
+  const email=document.getElementById('admin-email').value;
+  const role=document.getElementById('admin-role').value;
+  if(!email) return;
+  await api('setRole',{},{email,role,assignedBy:currentUser.email});
   loadRoles();
 }
 
 async function loadHierarchyAdmin() {
   try {
-    const h = await api('getHierarchy');
-    const rows = h.map(r => `<tr><td>${r.leadName}</td><td>${r.leadEmail}</td><td>${r.supervisor}</td><td>${r.manager||'—'}</td></tr>`).join('');
-    document.getElementById('hierarchy-list').innerHTML = h.length
-      ? `<table><thead><tr><th>Lead</th><th>Email</th><th>Supervisor</th><th>Manager</th></tr></thead><tbody>${rows}</tbody></table>`
-      : '<div class="empty">No leads added yet</div>';
+    const h=await api('getHierarchy');
+    const rows=h.map(r=>`<tr><td>${r.leadName}</td><td>${r.leadEmail}</td><td>${r.supervisor}</td><td>${r.manager||'—'}</td></tr>`).join('');
+    document.getElementById('hierarchy-list').innerHTML=rows
+      ?`<table><thead><tr><th>Lead</th><th>Email</th><th>Supervisor</th><th>Manager</th></tr></thead><tbody>${rows}</tbody></table>`
+      :'<div class="empty">No leads added yet</div>';
   } catch(e) {}
 }
 
 async function saveLead() {
-  const body = {
-    leadName: document.getElementById('h-name').value,
-    leadEmail: document.getElementById('h-email').value,
-    supervisor: document.getElementById('h-sup').value,
-    supervisorEmail: document.getElementById('h-sup-email').value,
-    manager: document.getElementById('h-manager').value,
+  const body={
+    leadName:document.getElementById('h-name').value,
+    leadEmail:document.getElementById('h-email').value,
+    supervisor:document.getElementById('h-sup').value,
+    supervisorEmail:document.getElementById('h-sup-email').value,
+    manager:document.getElementById('h-manager').value,
   };
-  if (!body.leadEmail) return;
-  await api('addLead', {}, body);
-  loadHierarchy();
-  loadHierarchyAdmin();
+  if(!body.leadEmail) return;
+  await api('addLead',{},body);
+  loadHierarchy(); loadHierarchyAdmin();
 }
 </script>
 </body>
