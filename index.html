@@ -495,7 +495,10 @@ tr:hover td{background:#FAFAF7}
         </select>
         <select id="rec-status" onchange="loadRecords()">
           <option value="">All statuses</option>
-          <option>Pending</option><option>Coaching Delivered</option><option>Disputed</option>
+          <option>Pending</option>
+          <option>Coaching Delivered</option>
+          <option>No feedback needed</option>
+          <option>Disputed</option>
         </select>
         <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
       </div>
@@ -599,7 +602,7 @@ tr:hover td{background:#FAFAF7}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyImX3mvGVd6yj3XFDKeLjxu5Npl7cShEBpbnQhqTF-EE-pfi67xWWimaUo1qt9LFcsew/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTw-b9uRJ92idiF3GbmlGpKKXgnrsBqrLfvCXl9vbchXtOkvgOh9X19lgCHoHCZtW9lQ/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -706,7 +709,10 @@ function scoreBgColor(s) {
   return s >= 90 ? '#218848' : s >= 80 ? '#475CC7' : s >= 60 ? '#F96F15' : '#AA0061';
 }
 function statusClass(s) {
-  return s === 'Coaching Delivered' ? 'badge-green' : s === 'Disputed' ? 'badge-amber' : 'badge-gray';
+  if (s === 'Coaching Delivered') return 'badge-green';
+  if (s === 'No feedback needed')  return 'badge-gray';
+  if (s === 'Disputed')            return 'badge-amber';
+  return 'badge-red'; // Pending = needs action
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────
@@ -945,7 +951,7 @@ function exportCSV() {
 // ── QUEUE ──────────────────────────────────────────────────
 async function loadQueue() {
   try {
-    const records = await api('getRecords', { status: 'Pending', half: CURRENT_HALF });
+    const records = await api('getRecords', { status: 'Pending', half: CURRENT_HALF, feedback_yn: 'Yes' });
     document.getElementById('queue-badge').textContent = records.length;
     if (!records.length) {
       document.getElementById('queue-table').innerHTML='<div class="empty">No pending items 🎉</div>'; return;
@@ -1023,11 +1029,8 @@ async function openRecord(rowId) {
       <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px">Supervisor action</div>
       <div class="form-grid">
         <div class="field"><label>Status</label>
-          <select id="modal-status">
-            <option ${r.review_status==='Pending'?'selected':''}>Pending</option>
-            <option ${r.review_status==='Coaching Delivered'?'selected':''}>Coaching Delivered</option>
-            <option ${r.review_status==='Disputed'?'selected':''}>Disputed</option>
-          </select></div>
+          <select id="modal-status" style="display:none"></select>
+          <span class="badge ${statusClass(r.review_status)}">${r.review_status}</span></div>
         <div class="field"><label>Coaching date</label>
           <input type="date" id="modal-coaching-date" value="${r.coaching_date||''}"></div>
       </div>
