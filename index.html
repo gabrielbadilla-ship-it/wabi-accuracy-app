@@ -257,7 +257,59 @@ tr:hover td{background:#FAFAF7}
             <option value="11">11 — November</option><option value="12">12 — December</option></select></div>
           <div class="field"><label>Week *</label>
             <select id="f-week"><option value="">Select</option>
-            ${Array.from({length:53},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('')}
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <option value="31">31</option>
+            <option value="32">32</option>
+            <option value="33">33</option>
+            <option value="34">34</option>
+            <option value="35">35</option>
+            <option value="36">36</option>
+            <option value="37">37</option>
+            <option value="38">38</option>
+            <option value="39">39</option>
+            <option value="40">40</option>
+            <option value="41">41</option>
+            <option value="42">42</option>
+            <option value="43">43</option>
+            <option value="44">44</option>
+            <option value="45">45</option>
+            <option value="46">46</option>
+            <option value="47">47</option>
+            <option value="48">48</option>
+            <option value="49">49</option>
+            <option value="50">50</option>
+            <option value="51">51</option>
+            <option value="52">52</option>
+            <option value="53">53</option>
             </select></div>
           <div class="field"><label>Wabi date *</label><input type="date" id="f-wabi-date"></div>
           <div class="field"><label>Ticket number *</label><input type="text" id="f-ticket" placeholder="e.g. 1234567"></div>
@@ -378,6 +430,7 @@ tr:hover td{background:#FAFAF7}
       <div class="page-title">All Records</div>
       <div class="page-sub">Full audit history — H1 2026</div>
       <div class="filters-bar">
+        <select id="rec-sup" onchange="loadRecords()"><option value="">All supervisors</option></select>
         <select id="rec-month" onchange="loadRecords()">
           <option value="">All months</option>
           <option value="1">January</option><option value="2">February</option>
@@ -386,7 +439,59 @@ tr:hover td{background:#FAFAF7}
         </select>
         <select id="rec-week" onchange="loadRecords()">
           <option value="">All weeks</option>
-          ${Array.from({length:53},(_,i)=>`<option value="${i+1}">Week ${i+1}</option>`).join('')}
+          <option value="1">Week 1</option>
+          <option value="2">Week 2</option>
+          <option value="3">Week 3</option>
+          <option value="4">Week 4</option>
+          <option value="5">Week 5</option>
+          <option value="6">Week 6</option>
+          <option value="7">Week 7</option>
+          <option value="8">Week 8</option>
+          <option value="9">Week 9</option>
+          <option value="10">Week 10</option>
+          <option value="11">Week 11</option>
+          <option value="12">Week 12</option>
+          <option value="13">Week 13</option>
+          <option value="14">Week 14</option>
+          <option value="15">Week 15</option>
+          <option value="16">Week 16</option>
+          <option value="17">Week 17</option>
+          <option value="18">Week 18</option>
+          <option value="19">Week 19</option>
+          <option value="20">Week 20</option>
+          <option value="21">Week 21</option>
+          <option value="22">Week 22</option>
+          <option value="23">Week 23</option>
+          <option value="24">Week 24</option>
+          <option value="25">Week 25</option>
+          <option value="26">Week 26</option>
+          <option value="27">Week 27</option>
+          <option value="28">Week 28</option>
+          <option value="29">Week 29</option>
+          <option value="30">Week 30</option>
+          <option value="31">Week 31</option>
+          <option value="32">Week 32</option>
+          <option value="33">Week 33</option>
+          <option value="34">Week 34</option>
+          <option value="35">Week 35</option>
+          <option value="36">Week 36</option>
+          <option value="37">Week 37</option>
+          <option value="38">Week 38</option>
+          <option value="39">Week 39</option>
+          <option value="40">Week 40</option>
+          <option value="41">Week 41</option>
+          <option value="42">Week 42</option>
+          <option value="43">Week 43</option>
+          <option value="44">Week 44</option>
+          <option value="45">Week 45</option>
+          <option value="46">Week 46</option>
+          <option value="47">Week 47</option>
+          <option value="48">Week 48</option>
+          <option value="49">Week 49</option>
+          <option value="50">Week 50</option>
+          <option value="51">Week 51</option>
+          <option value="52">Week 52</option>
+          <option value="53">Week 53</option>
         </select>
         <select id="rec-status" onchange="loadRecords()">
           <option value="">All statuses</option>
@@ -814,7 +919,8 @@ function renderRecordsTable(records) {
     return `<tr onclick="openRecord(${r.rowId})" style="cursor:pointer">
       <td>${r.ticket||'—'}</td>
       <td>${r.wabi_date||'—'}</td>
-      <td>W${r.week} / M${r.month}</td>
+      <td>W${r.week}</td>
+      <td>${r.month ? MONTH_NAMES[Number(r.month)] || r.month : '—'}</td>
       <td>${r.lead_email||'—'}</td>
       <td>${r.supervisor||'—'}</td>
       <td><span class="badge ${scoreClass(score)}">${score}%</span></td>
@@ -823,7 +929,7 @@ function renderRecordsTable(records) {
     </tr>`;
   }).join('');
   document.getElementById('records-table').innerHTML=`
-    <table><thead><tr><th>Ticket</th><th>Wabi date</th><th>Week / Month</th><th>Lead</th><th>Supervisor</th><th>Score</th><th>Reviewer</th><th>Status</th></tr></thead>
+    <table><thead><tr><th>Ticket</th><th>Wabi date</th><th>Week</th><th>Month</th><th>Lead</th><th>Supervisor</th><th>Score</th><th>Reviewer</th><th>Status</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
 
