@@ -494,7 +494,7 @@ tr:hover td{background:#FAFAF7}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2BI-z4WtwZaS6IgKwxJD4jhoGzaoYTiUJeGkW6vFBmk7vg7Rrt1b500_4lRrZQVz2Bg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyImX3mvGVd6yj3XFDKeLjxu5Npl7cShEBpbnQhqTF-EE-pfi67xWWimaUo1qt9LFcsew/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -558,11 +558,17 @@ async function api(action, params = {}, body = null) {
   const url = new URL(SCRIPT_URL);
   url.searchParams.set('action', action);
   Object.entries(params).forEach(([k,v]) => { if(v !== undefined && v !== '') url.searchParams.set(k, v); });
-  const opts = body
-    ? { method: 'POST', body: JSON.stringify({ action, ...body }) }
-    : { method: 'GET' };
-  const res = await fetch(url.toString(), opts);
-  const json = await res.json();
+
+  let res;
+  if (body) {
+    // POST: send action + body as JSON in query param to avoid CORS preflight
+    url.searchParams.set('payload', JSON.stringify({ action, ...body }));
+    res = await fetch(url.toString(), { method: 'GET' });
+  } else {
+    res = await fetch(url.toString(), { method: 'GET' });
+  }
+  const text = await res.text();
+  const json = JSON.parse(text);
   if (!json.ok) throw new Error(json.error || 'API error');
   return json.data;
 }
@@ -577,10 +583,13 @@ function nav(page) {
 
 // ── SCORE HELPERS ──────────────────────────────────────────
 function normalizeScore(raw) {
-  // Sheet stores 0.85 or 85 — normalize to 0-100 integer
   const n = Number(raw);
   if (isNaN(n)) return 0;
-  return n > 0 && n <= 1 ? Math.round(n * 100) : Math.round(n);
+  // Sheet stores decimals: 0.65 = 65%, 1 = 100%
+  // But also category scores like 10, 15, 20 should stay as-is for RC display
+  // For total_score and cat_* fields: always decimal 0-1
+  if (n >= 0 && n <= 1) return Math.round(n * 100);
+  return Math.round(n);
 }
 
 function scoreClass(s) {
