@@ -912,6 +912,12 @@ async function loadRecords() {
   };
   try {
     allRecords = await api('getRecords', params);
+    // Populate supervisor filter from loaded records
+    const supSel = document.getElementById('rec-sup');
+    const currentSup = supSel.value;
+    const sups = [...new Set(allRecords.map(r => r.supervisor).filter(Boolean))].sort();
+    supSel.innerHTML = '<option value="">All supervisors</option>' +
+      sups.map(s => `<option value="${s}" ${s===currentSup?'selected':''}>${s}</option>`).join('');
     renderRecordsTable(allRecords);
   } catch(e) {}
 }
