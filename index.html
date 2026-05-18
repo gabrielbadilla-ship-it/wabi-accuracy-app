@@ -341,18 +341,24 @@ tr:hover td{background:#FAFAF7}
           <h4>Context Oversight — 10 pts</h4>
           <p>All key background details verified: recurring issue, customer history, churn indicators, ARPU, prior compensation.</p>
           <div class="rc-options">
-            <label><input type="radio" name="rc-co" value="10" onchange="calcScore()"> <span>✓ Pass (10 pts)</span></label>
-            <label><input type="radio" name="rc-co" value="0" onchange="calcScore()"> <span>✗ Fail (−10 pts)</span></label>
-            <label><input type="radio" name="rc-co" value="na" onchange="calcScore()"> <span>N/A</span></label>
+            <label><input type="radio" name="rc-co" value="10" onchange="calcScore();toggleComment('co',false)"> <span>✓ Pass (10 pts)</span></label>
+            <label><input type="radio" name="rc-co" value="0" onchange="calcScore();toggleComment('co',true)"> <span>✗ Fail (−10 pts)</span></label>
+          </div>
+          <div id="comment-co" style="display:none;margin-top:10px">
+            <div class="field"><label>Feedback — Context Oversight *</label>
+              <textarea id="f-comment-co" placeholder="Explain what was missing or incorrect and what good looks like..." rows="3"></textarea></div>
           </div>
         </div>
         <div class="rc-group">
           <h4>Evidence Validation — 15 pts</h4>
           <p>Required validations documented: Admin, tracking, POD, screenshots, Braze/Mixpanel logs.</p>
           <div class="rc-options">
-            <label><input type="radio" name="rc-ev" value="15" onchange="calcScore()"> <span>✓ Pass (15 pts)</span></label>
-            <label><input type="radio" name="rc-ev" value="0" onchange="calcScore()"> <span>✗ Fail (−15 pts)</span></label>
-            <label><input type="radio" name="rc-ev" value="na" onchange="calcScore()"> <span>N/A</span></label>
+            <label><input type="radio" name="rc-ev" value="15" onchange="calcScore();toggleComment('ev',false)"> <span>✓ Pass (15 pts)</span></label>
+            <label><input type="radio" name="rc-ev" value="0" onchange="calcScore();toggleComment('ev',true)"> <span>✗ Fail (−15 pts)</span></label>
+          </div>
+          <div id="comment-ev" style="display:none;margin-top:10px">
+            <div class="field"><label>Feedback — Evidence Validation *</label>
+              <textarea id="f-comment-ev" placeholder="Explain what evidence was missing or insufficient..." rows="3"></textarea></div>
           </div>
         </div>
       </div>
@@ -363,18 +369,24 @@ tr:hover td{background:#FAFAF7}
           <h4>Wrong Adjustment Type or Amount — 10 pts</h4>
           <p>Adjustment aligns with C&R Matrix: correct scenario, type, and amount.</p>
           <div class="rc-options">
-            <label><input type="radio" name="rc-wa" value="10" onchange="calcScore()"> <span>✓ Pass (10 pts)</span></label>
-            <label><input type="radio" name="rc-wa" value="0" onchange="calcScore()"> <span>✗ Fail (−10 pts)</span></label>
-            <label><input type="radio" name="rc-wa" value="na" onchange="calcScore()"> <span>N/A</span></label>
+            <label><input type="radio" name="rc-wa" value="10" onchange="calcScore();toggleComment('wa',false)"> <span>✓ Pass (10 pts)</span></label>
+            <label><input type="radio" name="rc-wa" value="0" onchange="calcScore();toggleComment('wa',true)"> <span>✗ Fail (−10 pts)</span></label>
+          </div>
+          <div id="comment-wa" style="display:none;margin-top:10px">
+            <div class="field"><label>Feedback — Wrong Adjustment *</label>
+              <textarea id="f-comment-wa" placeholder="Explain what the correct adjustment type/amount should have been..." rows="3"></textarea></div>
           </div>
         </div>
         <div class="rc-group">
           <h4>Compensation Without Resolution — 20 pts</h4>
           <p>Root issue addressed: required follow-up (Jira, Logistics, investigation) triggered.</p>
           <div class="rc-options">
-            <label><input type="radio" name="rc-cwr" value="20" onchange="calcScore()"> <span>✓ Pass (20 pts)</span></label>
-            <label><input type="radio" name="rc-cwr" value="0" onchange="calcScore()"> <span>✗ Fail (−20 pts)</span></label>
-            <label><input type="radio" name="rc-cwr" value="na" onchange="calcScore()"> <span>N/A</span></label>
+            <label><input type="radio" name="rc-cwr" value="20" onchange="calcScore();toggleComment('cwr',false)"> <span>✓ Pass (20 pts)</span></label>
+            <label><input type="radio" name="rc-cwr" value="0" onchange="calcScore();toggleComment('cwr',true)"> <span>✗ Fail (−20 pts)</span></label>
+          </div>
+          <div id="comment-cwr" style="display:none;margin-top:10px">
+            <div class="field"><label>Feedback — Compensation Without Resolution *</label>
+              <textarea id="f-comment-cwr" placeholder="Explain what root issue was not addressed and what follow-up was required..." rows="3"></textarea></div>
           </div>
         </div>
       </div>
@@ -385,18 +397,24 @@ tr:hover td{background:#FAFAF7}
           <h4>Lack of Process Alignment — 15 pts</h4>
           <p>Decision aligns with SOPs and Matrix. No undocumented workarounds.</p>
           <div class="rc-options">
-            <label><input type="radio" name="rc-lpa" value="15" onchange="calcScore()"> <span>✓ Pass (15 pts)</span></label>
-            <label><input type="radio" name="rc-lpa" value="0" onchange="calcScore()"> <span>✗ Fail (−15 pts)</span></label>
-            <label><input type="radio" name="rc-lpa" value="na" onchange="calcScore()"> <span>N/A</span></label>
+            <label><input type="radio" name="rc-lpa" value="15" onchange="calcScore();toggleComment('lpa',false)"> <span>✓ Pass (15 pts)</span></label>
+            <label><input type="radio" name="rc-lpa" value="0" onchange="calcScore();toggleComment('lpa',true)"> <span>✗ Fail (−15 pts)</span></label>
+          </div>
+          <div id="comment-lpa" style="display:none;margin-top:10px">
+            <div class="field"><label>Feedback — Lack of Process Alignment *</label>
+              <textarea id="f-comment-lpa" placeholder="Explain which SOP or process was not followed and what should have been done..." rows="3"></textarea></div>
           </div>
         </div>
         <div class="rc-group">
           <h4>Incorrect Escalation Reason — 15 pts</h4>
           <p>Lead verified the Escalation Reason in Admin is correct before approving.</p>
           <div class="rc-options">
-            <label><input type="radio" name="rc-ier" value="15" onchange="calcScore()"> <span>✓ Pass (15 pts)</span></label>
-            <label><input type="radio" name="rc-ier" value="0" onchange="calcScore()"> <span>✗ Fail (−15 pts)</span></label>
-            <label><input type="radio" name="rc-ier" value="na" onchange="calcScore()"> <span>N/A</span></label>
+            <label><input type="radio" name="rc-ier" value="15" onchange="calcScore();toggleComment('ier',false)"> <span>✓ Pass (15 pts)</span></label>
+            <label><input type="radio" name="rc-ier" value="0" onchange="calcScore();toggleComment('ier',true)"> <span>✗ Fail (−15 pts)</span></label>
+          </div>
+          <div id="comment-ier" style="display:none;margin-top:10px">
+            <div class="field"><label>Feedback — Incorrect Escalation Reason *</label>
+              <textarea id="f-comment-ier" placeholder="Explain what the correct escalation reason should have been..." rows="3"></textarea></div>
           </div>
         </div>
       </div>
@@ -407,9 +425,12 @@ tr:hover td{background:#FAFAF7}
           <h4>Coaching & Guidance — 15 pts</h4>
           <p>Decision explicit (approve/deny + amount + type). Rationale tied to policy/Matrix.</p>
           <div class="rc-options">
-            <label><input type="radio" name="rc-cg" value="15" onchange="calcScore()"> <span>✓ Pass (15 pts)</span></label>
-            <label><input type="radio" name="rc-cg" value="0" onchange="calcScore()"> <span>✗ Fail (−15 pts)</span></label>
-            <label><input type="radio" name="rc-cg" value="na" onchange="calcScore()"> <span>N/A</span></label>
+            <label><input type="radio" name="rc-cg" value="15" onchange="calcScore();toggleComment('cg',false)"> <span>✓ Pass (15 pts)</span></label>
+            <label><input type="radio" name="rc-cg" value="0" onchange="calcScore();toggleComment('cg',true)"> <span>✗ Fail (−15 pts)</span></label>
+          </div>
+          <div id="comment-cg" style="display:none;margin-top:10px">
+            <div class="field"><label>Feedback — Coaching & Guidance *</label>
+              <textarea id="f-comment-cg" placeholder="Explain what was unclear or missing in the guidance provided..." rows="3"></textarea></div>
           </div>
         </div>
       </div>
@@ -921,48 +942,39 @@ function renderDashMomChart(avgByMonth) {
 // ── SCORE CALC (form) ──────────────────────────────────────
 function getRC(name) {
   const el = document.querySelector(`input[name="rc-${name}"]:checked`);
-  return el ? el.value : null;
+  return el ? Number(el.value) : null;
+}
+
+function toggleComment(rc, show) {
+  const el = document.getElementById(`comment-${rc}`);
+  if (el) el.style.display = show ? 'block' : 'none';
+  if (!show) {
+    const ta = document.getElementById(`f-comment-${rc}`);
+    if (ta) ta.value = '';
+  }
 }
 
 function calcScore() {
-  const co=getRC('co'), ev=getRC('ev'), wa=getRC('wa'), cwr=getRC('cwr'), lpa=getRC('lpa'), ier=getRC('ier'), cg=getRC('cg');
-  const pCo=co==='na'?null:Number(co||0), pEv=ev==='na'?null:Number(ev||0);
-  const pWa=wa==='na'?null:Number(wa||0), pCwr=cwr==='na'?null:Number(cwr||0);
-  const pLpa=lpa==='na'?null:Number(lpa||0), pIer=ier==='na'?null:Number(ier||0);
-  const pCg=cg==='na'?null:Number(cg||0);
+  const co=getRC('co'), ev=getRC('ev'), wa=getRC('wa'), cwr=getRC('cwr');
+  const lpa=getRC('lpa'), ier=getRC('ier'), cg=getRC('cg');
 
-  let catVal=0,maxVal=25;
-  if(pCo===null&&pEv===null) maxVal=0;
-  else if(pCo===null){catVal=pEv;maxVal=15;}
-  else if(pEv===null){catVal=pCo;maxVal=10;}
-  else catVal=(pCo>0&&pEv>0)?25:pCo>0?10:pEv>0?15:0;
+  const catVal   = (co===null||ev===null)   ? 0 : (co+ev);
+  const catIR    = (wa===null||cwr===null)  ? 0 : (wa+cwr);
+  const catProc  = (lpa===null||ier===null) ? 0 : (lpa+ier);
+  const catCoach = cg===null ? 0 : cg;
+  const rawScore = catVal + catIR + catProc + catCoach;
+  const allScored = co!==null && ev!==null && wa!==null && cwr!==null && lpa!==null && ier!==null && cg!==null;
+  const finalScore = allScored ? rawScore : 0;
 
-  let catIR=0,maxIR=30;
-  if(pWa===null&&pCwr===null) maxIR=0;
-  else if(pWa===null){catIR=pCwr;maxIR=20;}
-  else if(pCwr===null){catIR=pWa;maxIR=10;}
-  else catIR=(pWa>0&&pCwr>0)?30:pWa>0?10:pCwr>0?20:0;
+  document.getElementById('pts-val').textContent   = co===null||ev===null ? '—' : catVal+'/25';
+  document.getElementById('pts-ir').textContent    = wa===null||cwr===null ? '—' : catIR+'/30';
+  document.getElementById('pts-proc').textContent  = lpa===null||ier===null ? '—' : catProc+'/30';
+  document.getElementById('pts-coach').textContent = cg===null ? '—' : catCoach+'/15';
 
-  let catProc=0,maxProc=30;
-  if(pLpa===null&&pIer===null) maxProc=0;
-  else if(pLpa===null){catProc=pIer;maxProc=15;}
-  else if(pIer===null){catProc=pLpa;maxProc=15;}
-  else catProc=(pLpa>0&&pIer>0)?30:pLpa>0?15:pIer>0?15:0;
-
-  let catCoach=pCg===null?0:pCg, maxCoach=pCg===null?0:15;
-  const maxTotal=maxVal+maxIR+maxProc+maxCoach;
-  const rawScore=catVal+catIR+catProc+catCoach;
-  const finalScore=maxTotal>0?Math.round((rawScore/maxTotal)*100):0;
-
-  document.getElementById('pts-val').textContent=pCo===null&&pEv===null?'N/A':catVal+'/'+maxVal;
-  document.getElementById('pts-ir').textContent=pWa===null&&pCwr===null?'N/A':catIR+'/'+maxIR;
-  document.getElementById('pts-proc').textContent=pLpa===null&&pIer===null?'N/A':catProc+'/'+maxProc;
-  document.getElementById('pts-coach').textContent=pCg===null?'N/A':catCoach+'/'+maxCoach;
-
-  const el=document.getElementById('score-total');
-  el.textContent=`Score: ${finalScore} / 100`;
-  el.style.background=scoreBgColor(finalScore);
-  return { co:pCo||0,ev:pEv||0,wa:pWa||0,cwr:pCwr||0,lpa:pLpa||0,ier:pIer||0,cg:pCg||0,finalScore };
+  const el = document.getElementById('score-total');
+  el.textContent = allScored ? `Score: ${finalScore} / 100` : 'Score: — / 100';
+  el.style.background = allScored ? scoreBgColor(finalScore) : 'var(--cu-black)';
+  return { co:co||0, ev:ev||0, wa:wa||0, cwr:cwr||0, lpa:lpa||0, ier:ier||0, cg:cg||0, finalScore };
 }
 
 // ── SUBMIT ─────────────────────────────────────────────────
@@ -977,7 +989,22 @@ async function submitAudit() {
   }
   for (const rc of ['co','ev','wa','cwr','lpa','ier','cg']) {
     if (!document.querySelector(`input[name="rc-${rc}"]:checked`)) {
-      alertEl.innerHTML=`<div class="alert alert-error">Please score all rubric categories (or mark N/A).</div>`; return;
+      alertEl.innerHTML=`<div class="alert alert-error">Please score all rubric categories.</div>`; return;
+    }
+  }
+  // Validate comments for failed categories
+  const failedRCs = [
+    ['co','Context Oversight'],['ev','Evidence Validation'],['wa','Wrong Adjustment'],
+    ['cwr','Compensation Without Resolution'],['lpa','Lack of Process Alignment'],
+    ['ier','Incorrect Escalation Reason'],['cg','Coaching & Guidance']
+  ];
+  for (const [rc, label] of failedRCs) {
+    const checked = document.querySelector(`input[name="rc-${rc}"]:checked`);
+    if (checked && checked.value === '0') {
+      const comment = document.getElementById(`f-comment-${rc}`)?.value?.trim();
+      if (!comment) {
+        alertEl.innerHTML=`<div class="alert alert-error">Please add feedback for: ${label}</div>`; return;
+      }
     }
   }
   const scores = calcScore();
@@ -1014,6 +1041,9 @@ function clearForm() {
   document.getElementById('f-lead').value='';
   document.getElementById('f-supervisor').value='';
   document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  ['co','ev','wa','cwr','lpa','ier','cg'].forEach(rc => {
+    toggleComment(rc, false);
+  });
   ['pts-val','pts-ir','pts-proc','pts-coach'].forEach(id=>document.getElementById(id).textContent='—');
   const st=document.getElementById('score-total');
   st.textContent='Score: — / 100'; st.style.background='var(--cu-black)';
