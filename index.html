@@ -573,27 +573,35 @@ tr:hover td{background:#FAFAF7}
       </div>
 
       <div id="analytics-trends">
-        <div class="charts-2col">
-          <div class="card"><h3>Avg score by week</h3><div class="chart-wrap" style="height:240px"><canvas id="chart-wow"></canvas></div></div>
-          <div class="card"><h3>Fail rate by week (score &lt; 80)</h3><div class="chart-wrap" style="height:240px"><canvas id="chart-fail"></canvas></div></div>
-        </div>
+        <div class="card"><h3>Avg score by week</h3><div class="chart-wrap" style="height:240px"><canvas id="chart-wow"></canvas></div></div>
         <div class="card"><h3>Avg score by month</h3><div class="chart-wrap" style="height:200px"><canvas id="chart-mom"></canvas></div></div>
       </div>
 
       <div id="analytics-leads" style="display:none">
         <div class="filters-bar">
-          <select id="lead-filter" onchange="renderLeadPerformance()">
+          <select id="lead-filter" onchange="loadLeadAnalytics()">
             <option value="">All leads</option>
           </select>
-          <select id="lead-month-filter" onchange="renderLeadPerformance()">
+          <select id="lead-month-filter" onchange="loadLeadAnalytics()">
             <option value="">All months</option>
             <option value="1">January</option><option value="2">February</option>
             <option value="3">March</option><option value="4">April</option>
             <option value="5">May</option><option value="6">June</option>
           </select>
         </div>
-        <div class="card"><h3>Category scores by lead (avg %)</h3><div id="lead-perf-table"></div></div>
-        <div class="card" style="margin-top:0"><h3>Lead trend — select a lead above</h3><div class="chart-wrap" style="height:260px"><canvas id="chart-lead-trend"></canvas></div></div>
+        <!-- Summary metrics -->
+        <div class="metrics" id="analytics-metrics" style="margin-bottom:16px"></div>
+        <!-- Main table -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div class="sticky-table-wrap">
+            <div id="lead-analytics-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+          </div>
+        </div>
+        <!-- Lead trend chart -->
+        <div class="card" id="lead-trend-card" style="display:none">
+          <h3 id="lead-trend-title">Lead trend</h3>
+          <div class="chart-wrap" style="height:260px"><canvas id="chart-lead-trend"></canvas></div>
+        </div>
       </div>
     </div>
 
@@ -678,7 +686,7 @@ tr:hover td{background:#FAFAF7}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1xUrlxDtr6aOBzKRZuxKdY_HwN-LICeqLntfhWkpBU13jIlI8cKmf74WtDkFtlbf7eQ/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwb5A24DSMShzGC6QWAEbfgEyMWQLYyUeP42pWTLdWwpb-vk6ADHI0WUTU3p3gr5cyZVw/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -729,6 +737,7 @@ async function initApp() {
 
   await loadHierarchy();
   await populateSupFilter();
+  populateLeadFilter();
   loadDashboard();
   loadRecords();
   loadQueue();
@@ -1025,6 +1034,18 @@ async function loadRecords() {
   } catch(e) {}
 }
 
+function populateLeadFilter() {
+  const sel = document.getElementById('lead-filter');
+  if (!sel) return;
+  // Combine hierarchy leads + historical leads
+  const emails = new Set([
+    ...hierarchy.map(h => h.leadEmail),
+    ...Object.keys(HISTORICAL_LEAD_SCORES)
+  ]);
+  sel.innerHTML = '<option value="">All leads</option>' +
+    [...emails].sort().map(e => `<option value="${e}">${e}</option>`).join('');
+}
+
 async function populateSupFilter() {
   try {
     const all = await api('getRecords', { half: CURRENT_HALF });
@@ -1231,135 +1252,186 @@ async function loadAnalytics() {
     const data = await api('getAnalytics', { half: CURRENT_HALF });
     if (!data.length) return;
 
-    // Week trend
-    const wLabels=data.map(d=>d.week);
-    const wScores=data.map(d=>normalizeScore(d.avgScore));
-    const wFails=data.map(d=>d.failRate);
+    // Week trend (week 18+ only from live data)
+    const wLabels = data.map(d => d.week);
+    const wScores = data.map(d => normalizeScore(d.avgScore));
 
-    const ctx1=document.getElementById('chart-wow').getContext('2d');
-    if(chartWow) chartWow.destroy();
-    chartWow=new Chart(ctx1,{type:'line',data:{labels:wLabels,datasets:[{
-      label:'Avg score',data:wScores,borderColor:'#FFB81C',backgroundColor:'rgba(255,184,28,.1)',
-      fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:'#FFB81C'}]},
-      options:{responsive:true,maintainAspectRatio:false,
-        scales:{y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}},
-        plugins:{legend:{display:false}}}});
+    const ctx1 = document.getElementById('chart-wow').getContext('2d');
+    if (chartWow) chartWow.destroy();
+    chartWow = new Chart(ctx1, { type:'line', data:{ labels:wLabels, datasets:[{
+      label:'Avg score', data:wScores, borderColor:'#FFB81C', backgroundColor:'rgba(255,184,28,.1)',
+      fill:true, tension:0.3, pointRadius:4, pointBackgroundColor:'#FFB81C'
+    }]}, options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}} },
+      plugins:{ legend:{display:false} } }});
 
-    const ctx2=document.getElementById('chart-fail').getContext('2d');
-    if(chartFail) chartFail.destroy();
-    chartFail=new Chart(ctx2,{type:'bar',data:{labels:wLabels,datasets:[{
-      label:'Fail rate',data:wFails,backgroundColor:'#AA0061',borderRadius:6,borderSkipped:false}]},
-      options:{responsive:true,maintainAspectRatio:false,
-        scales:{y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}},
-        plugins:{legend:{display:false}}}});
-
-    // Month trend
-    const byMonth={};
-    data.forEach(d=>{
-      const m='M'+d.month;
-      if(!byMonth[m]){byMonth[m]={total:0,count:0};}
-      byMonth[m].total+=normalizeScore(d.avgScore)*d.count;
-      byMonth[m].count+=d.count;
+    // Month trend — historical grand total + live
+    const histMonths = {};
+    Object.entries(HISTORICAL_GRAND_TOTAL).forEach(([w, score]) => {
+      const m = weekToMonth(Number(w));
+      if (!histMonths[m]) histMonths[m] = [];
+      histMonths[m].push(score);
     });
-    const mLabels=Object.keys(byMonth).sort((a,b)=>Number(a.slice(1))-Number(b.slice(1)));
-    const mScores=mLabels.map(m=>Math.round(byMonth[m].total/byMonth[m].count));
+    data.forEach(d => {
+      const m = Number(d.month);
+      if (!histMonths[m]) histMonths[m] = [];
+      histMonths[m].push(normalizeScore(d.avgScore));
+    });
+    const mKeys = Object.keys(histMonths).map(Number).sort((a,b)=>a-b);
+    const mScores = mKeys.map(m => Math.round(histMonths[m].reduce((a,b)=>a+b,0)/histMonths[m].length));
 
-    const ctx3=document.getElementById('chart-mom').getContext('2d');
-    if(chartMom) chartMom.destroy();
-    chartMom=new Chart(ctx3,{type:'bar',data:{labels:mLabels.map(m=>MONTH_NAMES[Number(m.slice(1))]||m),
-      datasets:[{label:'Avg score',data:mScores,backgroundColor:'#475CC7',borderRadius:6,borderSkipped:false}]},
-      options:{responsive:true,maintainAspectRatio:false,
-        scales:{y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}},
-        plugins:{legend:{display:false}}}});
+    const ctx3 = document.getElementById('chart-mom').getContext('2d');
+    if (chartMom) chartMom.destroy();
+    chartMom = new Chart(ctx3, { type:'bar', data:{ labels:mKeys.map(m=>MONTH_NAMES[m]||'M'+m),
+      datasets:[{ label:'Avg score', data:mScores, backgroundColor:'#475CC7', borderRadius:6, borderSkipped:false }]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        scales:{ y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}} },
+        plugins:{ legend:{display:false},
+          tooltip:{ callbacks:{ label: c => ` ${c.raw}% avg score` } } } }});
 
-    // Populate lead performance after data loads
-    renderLeadPerformance();
   } catch(e) { console.error(e); }
+}
+
+function weekToMonth(w) {
+  if (w <= 4)  return 1;
+  if (w <= 8)  return 2;
+  if (w <= 13) return 3;
+  if (w <= 17) return 4;
+  if (w <= 21) return 5;
+  return 6;
 }
 
 function analyticsTab(tab, el) {
-  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('analytics-trends').style.display = tab==='trends'?'block':'none';
-  document.getElementById('analytics-leads').style.display  = tab==='leads'?'block':'none';
+  document.getElementById('analytics-trends').style.display = tab==='trends' ? 'block' : 'none';
+  document.getElementById('analytics-leads').style.display  = tab==='leads'  ? 'block' : 'none';
+  if (tab === 'leads') loadLeadAnalytics();
 }
 
-async function renderLeadPerformance() {
-  const filterLead  = document.getElementById('lead-filter')?.value || '';
+async function loadLeadAnalytics() {
+  const filterLead  = document.getElementById('lead-filter')?.value  || '';
   const filterMonth = document.getElementById('lead-month-filter')?.value || '';
 
   try {
-    const params = { half: CURRENT_HALF };
+    const params = {};
     if (filterMonth) params.month = filterMonth;
     if (filterLead)  params.lead  = filterLead;
-    const records = await api('getRecords', params);
-    if (!records.length) {
-      document.getElementById('lead-perf-table').innerHTML='<div class="empty">No data</div>'; return;
-    }
+    const d = await api('getLeadAnalytics', params);
 
-    // Group by lead → month
-    const leads={};
-    records.forEach(r=>{
-      const lead=r.lead_email;
-      const month=Number(r.month);
-      if(!leads[lead]) leads[lead]={};
-      if(!leads[lead][month]) leads[lead][month]={val:[],ir:[],proc:[],coach:[],total:[]};
-      leads[lead][month].val.push(normalizeScore(r.cat_validation));
-      leads[lead][month].ir.push(normalizeScore(r.cat_issue_res));
-      leads[lead][month].proc.push(normalizeScore(r.cat_process));
-      leads[lead][month].coach.push(normalizeScore(r.cat_coaching));
-      leads[lead][month].total.push(normalizeScore(r.total_score));
+    // Summary metrics
+    const leads = d.leads;
+    const totalLeads = [...new Set(leads.map(r => r.lead))].length;
+    const avgScore   = leads.length ? Math.round(leads.reduce((s,r)=>s+(r.avgScore||0),0)/leads.length) : 0;
+    const belowTarget = leads.filter(r => (r.avgScore||0) < 80).length;
+    const totalReviewed = leads.reduce((s,r)=>s+(r.reviewed||0),0);
+    document.getElementById('analytics-metrics').innerHTML = `
+      <div class="metric"><div class="label">Leads tracked</div><div class="value">${totalLeads}</div></div>
+      <div class="metric"><div class="label">Avg score</div><div class="value ${avgScore>=80?'green':'red'}">${avgScore}%</div></div>
+      <div class="metric"><div class="label">Below target</div><div class="value ${belowTarget>0?'red':''}">${belowTarget}</div></div>
+      <div class="metric"><div class="label">Total reviewed</div><div class="value">${totalReviewed}</div></div>`;
+
+    // Group by lead for table
+    const byLead = {};
+    leads.forEach(r => {
+      if (!byLead[r.lead]) byLead[r.lead] = [];
+      byLead[r.lead].push(r);
     });
 
-    const avg=arr=>arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null;
+    const leadList = Object.keys(byLead).sort();
+    const months   = filterMonth ? [Number(filterMonth)] : [1,2,3,4,5,6];
 
-    // Table: lead × category (overall avg)
-    const leadList=Object.keys(leads).sort();
-    const catCell=(val)=>{
-      if(val===null) return '<td style="color:#ccc">—</td>';
-      const color=val>=80?'var(--cu-green)':val>=60?'var(--cu-orange)':'var(--cu-magenta)';
-      return `<td><div class="cat-bar"><div class="cat-bar-fill" style="width:${val}%;background:${color}"></div><span style="font-size:12px;font-weight:600;color:${color}">${val}%</span></div></td>`;
-    };
+    // Build table: rows = leads, cols = months
+    const monthHeaders = months.map(m => `<th colspan="3" style="text-align:center;border-left:2px solid var(--border)">${MONTH_NAMES[m]||'M'+m}</th>`).join('');
+    const subHeaders   = months.map(() => `<th style="border-left:2px solid var(--border)">Score</th><th>WoW</th><th>vs Target</th>`).join('');
 
-    const rows=leadList.map(lead=>{
-      const allMonths=Object.values(leads[lead]);
-      const vAll=allMonths.flatMap(m=>m.val);
-      const iAll=allMonths.flatMap(m=>m.ir);
-      const pAll=allMonths.flatMap(m=>m.proc);
-      const cAll=allMonths.flatMap(m=>m.coach);
-      const tAll=allMonths.flatMap(m=>m.total);
-      const t=avg(tAll);
-      return `<tr>
-        <td style="font-weight:600;font-size:12px">${lead}</td>
-        ${catCell(avg(vAll))}${catCell(avg(iAll))}${catCell(avg(pAll))}${catCell(avg(cAll))}
-        <td><span class="badge ${scoreClass(t)}">${t}%</span></td>
+    const rows = leadList.map(lead => {
+      const monthData = {};
+      byLead[lead].forEach(r => { monthData[r.month] = r; });
+
+      const cells = months.map(m => {
+        const d = monthData[m];
+        if (!d || d.avgScore === null) return `<td style="border-left:2px solid var(--border);color:#ccc">—</td><td>—</td><td>—</td>`;
+        const scoreColor = d.avgScore >= 80 ? 'var(--cu-green)' : 'var(--cu-magenta)';
+        const wowVal  = d.wow  !== null ? d.wow  : null;
+        const varVal  = d.variance !== null ? d.variance : null;
+        const wowStr  = wowVal  !== null ? `<span style="color:${wowVal>=0?'var(--cu-green)':'var(--cu-magenta)'}">${wowVal>=0?'↑':'↓'} ${Math.abs(wowVal)}%</span>` : '—';
+        const varStr  = varVal  !== null ? `<span style="color:${varVal>=0?'var(--cu-green)':'var(--cu-magenta)'}">${varVal>=0?'+':''}${varVal}%</span>` : '—';
+        return `<td style="border-left:2px solid var(--border);font-weight:600;color:${scoreColor}">${d.avgScore}%</td><td style="font-size:12px">${wowStr}</td><td style="font-size:12px">${varStr}</td>`;
+      }).join('');
+
+      const reviewed = byLead[lead].reduce((s,r)=>s+(r.reviewed||0),0);
+      return `<tr onclick="selectLead('${lead}')" style="cursor:pointer">
+        <td style="font-weight:600;font-size:12px;white-space:nowrap">${lead}</td>
+        <td style="text-align:center">${reviewed}</td>
+        ${cells}
       </tr>`;
     }).join('');
 
-    document.getElementById('lead-perf-table').innerHTML=`
-      <table class="lead-perf-table">
-        <thead><tr><th>Lead</th><th>Validation</th><th>Issue Resolution</th><th>Process & Esc.</th><th>Coaching</th><th>Total</th></tr></thead>
-        <tbody>${rows}</tbody>
+    // Grand total row
+    const totalCells = months.map(m => {
+      const gt = d.grandTotals.find(g => g.month === m);
+      if (!gt) return `<td style="border-left:2px solid var(--border)">—</td><td>—</td><td>—</td>`;
+      const histWowWeeks = Object.entries(HISTORICAL_WOW_TOTAL).filter(([w])=>weekToMonth(Number(w))===m);
+      const wowAvg = histWowWeeks.length ? Math.round(histWowWeeks.reduce((s,[,v])=>s+v,0)/histWowWeeks.length*10)/10 : null;
+      const wowStr = wowAvg !== null ? `<span style="color:${wowAvg>=0?'var(--cu-green)':'var(--cu-magenta)'}">${wowAvg>=0?'↑':'↓'} ${Math.abs(wowAvg)}%</span>` : '—';
+      const varStr = `<span style="color:${gt.variance>=0?'var(--cu-green)':'var(--cu-magenta)'}">${gt.variance>=0?'+':''}${gt.variance}%</span>`;
+      return `<td style="border-left:2px solid var(--border);font-weight:700;color:${gt.avgScore>=80?'var(--cu-green)':'var(--cu-magenta)'}">${gt.avgScore}%</td><td style="font-size:12px">${wowStr}</td><td style="font-size:12px">${varStr}</td>`;
+    }).join('');
+    const totalReviewedGrand = d.grandTotals.reduce((s,g) => {
+      const liveR = leads.reduce((t,r)=>t+(r.reviewed||0),0);
+      return liveR;
+    }, 0);
+
+    document.getElementById('lead-analytics-table').innerHTML = `
+      <table>
+        <thead>
+          <tr style="background:#FAFAF7">
+            <th rowspan="2">Lead</th>
+            <th rowspan="2" style="text-align:center">Reviewed</th>
+            ${monthHeaders}
+          </tr>
+          <tr style="background:#FAFAF7">${subHeaders}</tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr style="background:#F2F1EC;font-weight:700">
+            <td>Grand Total</td>
+            <td style="text-align:center">${totalReviewed}</td>
+            ${totalCells}
+          </tr>
+        </tbody>
       </table>`;
 
-    // Chart: selected lead trend by month
-    if (filterLead && leads[filterLead]) {
-      const months=Object.keys(leads[filterLead]).map(Number).sort((a,b)=>a-b);
-      const mNames=months.map(m=>MONTH_NAMES[m]||'M'+m);
-      const ds=[
-        {label:'Validation',    data:months.map(m=>avg(leads[filterLead][m].val)),  borderColor:'#FFB81C',backgroundColor:'rgba(255,184,28,.1)'},
-        {label:'Issue Res.',    data:months.map(m=>avg(leads[filterLead][m].ir)),   borderColor:'#475CC7',backgroundColor:'rgba(71,92,199,.1)'},
-        {label:'Process',       data:months.map(m=>avg(leads[filterLead][m].proc)), borderColor:'#218848',backgroundColor:'rgba(33,136,72,.1)'},
-        {label:'Coaching',      data:months.map(m=>avg(leads[filterLead][m].coach)),borderColor:'#AA0061',backgroundColor:'rgba(170,0,97,.1)'},
-      ];
-      const ctx=document.getElementById('chart-lead-trend').getContext('2d');
-      if(chartLeadTrend) chartLeadTrend.destroy();
-      chartLeadTrend=new Chart(ctx,{type:'line',data:{labels:mNames,datasets:ds.map(d=>({...d,fill:false,tension:0.3,pointRadius:4}))},
-        options:{responsive:true,maintainAspectRatio:false,
-          scales:{y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}});
-      document.querySelector('#analytics-leads .card:last-child h3').textContent=`Lead trend — ${filterLead}`;
+    // Show trend chart if lead selected
+    if (filterLead && byLead[filterLead]) {
+      const leadMonths = byLead[filterLead].sort((a,b)=>a.month-b.month);
+      const mNames = leadMonths.map(d => MONTH_NAMES[d.month]||'M'+d.month);
+      const scores = leadMonths.map(d => d.avgScore);
+      const variances = leadMonths.map(d => d.variance);
+
+      const ctx = document.getElementById('chart-lead-trend').getContext('2d');
+      if (chartLeadTrend) chartLeadTrend.destroy();
+      chartLeadTrend = new Chart(ctx, { type:'line', data:{ labels:mNames, datasets:[
+        { label:'Avg Score', data:scores, borderColor:'#FFB81C', backgroundColor:'rgba(255,184,28,.1)', fill:true, tension:0.3, pointRadius:4 },
+        { label:'Variance to Target', data:variances, borderColor:'#475CC7', backgroundColor:'rgba(71,92,199,.05)', fill:true, tension:0.3, pointRadius:4 },
+        { label:'Target (80%)', data:mNames.map(()=>80), borderColor:'#AA0061', borderDash:[5,5], pointRadius:0, fill:false },
+      ]}, options:{ responsive:true, maintainAspectRatio:false,
+        scales:{ y:{grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}} } }});
+
+      document.getElementById('lead-trend-title').textContent = `Lead trend — ${filterLead}`;
+      document.getElementById('lead-trend-card').style.display = 'block';
+    } else {
+      document.getElementById('lead-trend-card').style.display = 'none';
     }
-  } catch(e) { console.error(e); }
+
+  } catch(e) { console.error('loadLeadAnalytics:', e); }
+}
+
+function selectLead(email) {
+  const sel = document.getElementById('lead-filter');
+  sel.value = email;
+  loadLeadAnalytics();
 }
 
 // ── ADMIN ──────────────────────────────────────────────────
