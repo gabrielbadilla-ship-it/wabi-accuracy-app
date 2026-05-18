@@ -168,6 +168,12 @@ tr:hover td{background:#FAFAF7}
 .lead-perf-table th{background:#FAFAF7}
 .cat-bar{display:flex;align-items:center;gap:8px}
 .cat-bar-fill{height:6px;border-radius:3px;background:var(--cu-gold);min-width:2px;transition:width .3s}
+
+/* Sticky table headers */
+.sticky-table-wrap{overflow-y:auto;max-height:calc(100vh - 340px)}
+.sticky-table-wrap table thead th{position:sticky;top:0;background:var(--white);z-index:5;box-shadow:0 1px 0 var(--border)}
+#page-records .filters-bar{position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0;margin-bottom:0}
+#page-records .page-title{position:sticky;top:0;background:var(--bg);z-index:11;padding-top:4px}
 </style>
 </head>
 <body>
@@ -196,7 +202,7 @@ tr:hover td{background:#FAFAF7}
       <a onclick="nav('dashboard')" class="active" data-page="dashboard">🏠 Dashboard</a>
       <a onclick="nav('form')" data-page="form">➕ New Audit</a>
       <a onclick="nav('records')" data-page="records">📋 Records</a>
-      <a onclick="nav('queue')" data-page="queue">🔔 Queue <span class="badge" id="queue-badge">0</span></a>
+      <a onclick="nav('queue')" data-page="queue">💬 Feedback Loop <span class="badge" id="queue-badge">0</span></a>
       <a onclick="nav('analytics')" data-page="analytics">📈 Analytics</a>
       <a onclick="nav('compliance')" data-page="compliance">✅ Compliance</a>
       <a onclick="nav('admin')" data-page="admin" id="admin-link" style="display:none">⚙️ Admin</a>
@@ -231,9 +237,10 @@ tr:hover td{background:#FAFAF7}
         <div class="metric"><div class="label">Pending coaching</div><div class="value">—</div></div>
         <div class="metric"><div class="label">Below target (&lt;80)</div><div class="value">—</div></div>
       </div>
+      <div class="card"><h3>Avg score by month</h3><div class="chart-wrap"><canvas id="chart-dash-mom"></canvas></div></div>
       <div class="charts-2col">
         <div class="card"><h3>Score distribution</h3><div class="chart-wrap"><canvas id="chart-bands"></canvas></div></div>
-        <div class="card"><h3>Root cause frequency (fails)</h3><div class="chart-wrap"><canvas id="chart-rc"></canvas></div></div>
+        <div class="card"><h3>Root cause frequency (fails %)</h3><div class="chart-wrap"><canvas id="chart-rc"></canvas></div></div>
       </div>
       <div class="card"><h3>By supervisor</h3><div id="dash-sup-table"></div></div>
     </div>
@@ -511,15 +518,47 @@ tr:hover td{background:#FAFAF7}
         <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
       </div>
       <div class="card" style="padding:0;overflow:hidden">
-        <div id="records-table" style="overflow-x:auto"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+        <div class="sticky-table-wrap">
+          <div id="records-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+        </div>
       </div>
     </div>
 
-    <!-- QUEUE -->
+    <!-- FEEDBACK LOOP -->
     <div id="page-queue" class="page">
-      <div class="page-title">Coaching Queue</div>
-      <div class="page-sub">Audits pending supervisor action</div>
-      <div class="card" style="padding:0;overflow:hidden">
+      <div class="page-title">Feedback Loop</div>
+      <div class="page-sub">Coaching compliance by month</div>
+      <div class="filters-bar" style="position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0">
+        <select id="fl-month" onchange="loadFeedbackLoop()">
+          <option value="">All months</option>
+          <option value="1">January</option><option value="2">February</option>
+          <option value="3">March</option><option value="4">April</option>
+          <option value="5">May</option><option value="6">June</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="loadFeedbackLoop()">↺ Refresh</button>
+      </div>
+      <!-- Team metrics -->
+      <div class="metrics" id="fl-metrics">
+        <div class="metric"><div class="label">Feedback needed</div><div class="value">—</div></div>
+        <div class="metric"><div class="label">Coaching delivered</div><div class="value green">—</div></div>
+        <div class="metric"><div class="label">Pending</div><div class="value red">—</div></div>
+        <div class="metric"><div class="label">Feedback compliance</div><div class="value">—</div></div>
+      </div>
+      <!-- Month breakdown -->
+      <div class="card"><h3>By month</h3><div id="fl-month-table"></div></div>
+      <!-- Personal queue — sticky header -->
+      <div class="page-title" style="font-size:16px;margin-bottom:8px">Your pending coaching</div>
+      <div style="position:sticky;top:56px;z-index:9;background:var(--bg);padding-bottom:4px">
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px 10px 0 0;overflow:hidden">
+          <table style="width:100%">
+            <thead><tr>
+              <th>Ticket</th><th>Lead</th><th>Week / Month</th>
+              <th>Score</th><th>Notes</th><th>Action</th>
+            </tr></thead>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="padding:0;border-radius:0 0 10px 10px;margin-top:0;border-top:none;overflow:hidden">
         <div id="queue-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
       </div>
     </div>
@@ -639,7 +678,7 @@ tr:hover td{background:#FAFAF7}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6SKA7HxVU6yylwnLM56tn1Q7aFqSV-RcARUUCO7dOh-9ca2G-um8yyCUo1o3N2P1PYg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNf5FbmOkN27eXjVVi9p0bGuZEv0uFtFZuMtC3fVXzwZW_TvwhZ_Ugl4B909U5duKFNg/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -696,6 +735,7 @@ async function initApp() {
   loadAnalytics();
   loadAuditQueue();
   loadCompliance();
+  loadFeedbackLoop();
   if (currentRole === 'admin') loadRoles();
 }
 
@@ -772,7 +812,8 @@ async function loadDashboard() {
       <div class="metric"><div class="label">Below target</div><div class="value ${belowTarget>0?'red':''}">${belowTarget}</div></div>
     `;
     renderBandsChart(d.byBand);
-    renderRCChart(d.rcFrequency);
+    renderRCChart(d.rcFrequency, d.rcPct, d.rcTotal);
+    renderDashMomChart(d.avgByMonth);
     const rows = Object.entries(d.bySupervisor||{}).map(([sup,data]) => `
       <tr><td>${sup}</td><td>${data.count}</td>
       <td><span class="badge ${data.avgScore>=80?'badge-green':data.avgScore>=60?'badge-amber':'badge-red'}">${data.avgScore}%</span></td></tr>`).join('');
@@ -798,21 +839,48 @@ function renderBandsChart(data) {
   });
 }
 
-function renderRCChart(data) {
+let chartDashMom;
+function renderRCChart(data, pct, total) {
   if (!data) return;
   const ctx = document.getElementById('chart-rc').getContext('2d');
   if (chartRC) chartRC.destroy();
+  const labels = ['Context Oversight','Evidence Validation','Wrong Adjustment','Comp w/o Res','Process Align','Esc Reason','Coaching'];
+  const absVals = [data.context_oversight||0,data.evidence_validation||0,data.wrong_adjustment||0,
+    data.comp_without_res||0,data.lack_process||0,data.incorrect_esc||0,data.coaching||0];
+  const pctVals = pct ? [pct.context_oversight||0,pct.evidence_validation||0,pct.wrong_adjustment||0,
+    pct.comp_without_res||0,pct.lack_process||0,pct.incorrect_esc||0,pct.coaching||0] : absVals;
   chartRC = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Context Oversight','Evidence Validation','Wrong Adjustment','Comp w/o Res','Process Align','Esc Reason','Coaching'],
-      datasets: [{ data: [data.context_oversight||0,data.evidence_validation||0,data.wrong_adjustment||0,
-        data.comp_without_res||0,data.lack_process||0,data.incorrect_esc||0,data.coaching||0],
-        backgroundColor: '#FFB81C', borderRadius: 4, borderSkipped: false }]
+      labels,
+      datasets: [{ data: pctVals, backgroundColor: '#FFB81C', borderRadius: 4, borderSkipped: false }]
     },
     options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      scales:{ x:{beginAtZero:true,grid:{color:'#F2F1EC'}}, y:{grid:{display:false},ticks:{font:{size:11}}} } }
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label: (c) => ` ${c.raw}% (${absVals[c.dataIndex]} audits)` } } },
+      scales:{ x:{beginAtZero:true,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}},
+        y:{grid:{display:false},ticks:{font:{size:11}}} } }
+  });
+}
+
+function renderDashMomChart(avgByMonth) {
+  if (!avgByMonth || !avgByMonth.length) return;
+  const ctx = document.getElementById('chart-dash-mom').getContext('2d');
+  if (chartDashMom) chartDashMom.destroy();
+  chartDashMom = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: avgByMonth.map(d => MONTH_NAMES[d.month] || 'M'+d.month),
+      datasets: [{
+        label: 'Avg score', data: avgByMonth.map(d => d.avg),
+        borderColor: '#FFB81C', backgroundColor: 'rgba(255,184,28,.1)',
+        fill: true, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#FFB81C'
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      scales:{ y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}} },
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label: c => ` ${c.raw}%` } } } }
   });
 }
 
@@ -1002,26 +1070,56 @@ function exportCSV() {
   a.download='wabi_audit_records.csv'; a.click();
 }
 
-// ── QUEUE ──────────────────────────────────────────────────
-async function loadQueue() {
+// ── FEEDBACK LOOP ──────────────────────────────────────────
+async function loadFeedbackLoop() {
+  const month = document.getElementById('fl-month').value;
   try {
-    const records = await api('getRecords', { status: 'Pending', half: CURRENT_HALF, feedback_yn: 'Yes' });
-    document.getElementById('queue-badge').textContent = records.length;
-    if (!records.length) {
-      document.getElementById('queue-table').innerHTML='<div class="empty">No pending items 🎉</div>'; return;
+    const d = await api('getFeedbackLoop', { month, supervisor: currentUser.email });
+
+    // Team metrics
+    document.getElementById('fl-metrics').innerHTML = `
+      <div class="metric"><div class="label">Feedback needed</div><div class="value">${d.total}</div></div>
+      <div class="metric"><div class="label">Coaching delivered</div><div class="value green">${d.withCoaching}</div></div>
+      <div class="metric"><div class="label">Pending</div><div class="value ${d.pending>0?'red':''}">${d.pending}</div></div>
+      <div class="metric"><div class="label">Feedback compliance</div><div class="value ${d.compliancePct>=80?'green':d.compliancePct>=50?'amber':'red'}">${d.compliancePct}%</div></div>`;
+
+    // Month breakdown table
+    const MONTH_NAMES_LOCAL = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+    const mRows = d.monthBreakdown.map(m => `
+      <tr>
+        <td>${MONTH_NAMES_LOCAL[m.month]||'M'+m.month}</td>
+        <td>${m.total}</td>
+        <td style="color:var(--cu-green);font-weight:600">${m.done}</td>
+        <td>${m.pending}</td>
+        <td><span class="badge ${m.pct>=80?'badge-green':m.pct>=50?'badge-amber':'badge-red'}">${m.pct}%</span></td>
+      </tr>`).join('');
+    document.getElementById('fl-month-table').innerHTML = mRows
+      ? `<table><thead><tr><th>Month</th><th>Total</th><th>Delivered</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${mRows}</tbody></table>`
+      : '<div class="empty">No data</div>';
+
+    // Update badge
+    document.getElementById('queue-badge').textContent = d.pending;
+
+    // Personal pending list
+    if (!d.personalPending.length) {
+      document.getElementById('queue-table').innerHTML = '<div class="empty">🎉 No pending coaching for you this period</div>';
+      return;
     }
-    const rows=records.map(r=>{
-      const score=normalizeScore(r.total_score);
-      return `<tr>
-        <td>${r.ticket}</td><td>${r.wabi_date}</td><td>${r.lead_email}</td>
-        <td><span class="badge ${scoreClass(score)}">${score}%</span></td>
-        <td>${r.improvement_notes?r.improvement_notes.slice(0,60)+'…':'—'}</td>
-        <td><button class="btn btn-primary btn-sm" onclick="openRecord(${r.rowId})">Action</button></td>
-      </tr>`;}).join('');
-    document.getElementById('queue-table').innerHTML=`
-      <table><thead><tr><th>Ticket</th><th>Date</th><th>Lead</th><th>Score</th><th>Notes</th><th></th></tr></thead>
-      <tbody>${rows}</tbody></table>`;
-  } catch(e) {}
+    const rows = d.personalPending.map(r => `
+      <tr>
+        <td>${r.ticket}</td>
+        <td>${r.lead_email}</td>
+        <td>W${r.week} / M${r.month}</td>
+        <td><span class="badge ${scoreClass(r.total_score)}">${r.total_score}%</span></td>
+        <td style="max-width:200px;font-size:12px;color:var(--text-muted)">${r.improvement_notes?r.improvement_notes.slice(0,80)+'…':'—'}</td>
+        <td><button class="btn btn-primary btn-sm" onclick="openRecord(${r.rowId})">Log coaching</button></td>
+      </tr>`).join('');
+    document.getElementById('queue-table').innerHTML = `<table><tbody>${rows}</tbody></table>`;
+  } catch(e) { console.error('loadFeedbackLoop:', e); }
+}
+
+async function loadQueue() {
+  loadFeedbackLoop();
 }
 
 // ── RECORD MODAL ───────────────────────────────────────────
