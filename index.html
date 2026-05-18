@@ -198,6 +198,7 @@ tr:hover td{background:#FAFAF7}
       <a onclick="nav('records')" data-page="records">📋 Records</a>
       <a onclick="nav('queue')" data-page="queue">🔔 Queue <span class="badge" id="queue-badge">0</span></a>
       <a onclick="nav('analytics')" data-page="analytics">📈 Analytics</a>
+      <a onclick="nav('compliance')" data-page="compliance">✅ Compliance</a>
       <a onclick="nav('admin')" data-page="admin" id="admin-link" style="display:none">⚙️ Admin</a>
     </nav>
     <div class="user-bar">
@@ -240,8 +241,15 @@ tr:hover td{background:#FAFAF7}
     <!-- FORM -->
     <div id="page-form" class="page">
       <div class="page-title">New Audit</div>
-      <div class="page-sub">Complete all fields before submitting</div>
+      <div class="page-sub">Select a pending ticket from your queue or fill in manually</div>
       <div id="form-alert"></div>
+
+      <!-- PENDING QUEUE -->
+      <div class="card" id="audit-queue-card">
+        <h3>Your pending reviews</h3>
+        <div id="audit-queue-list"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+      </div>
+
       <div class="card">
         <div class="section-title">Audit info</div>
         <div class="form-grid">
@@ -586,6 +594,35 @@ tr:hover td{background:#FAFAF7}
       </div>
     </div>
 
+    <!-- COMPLIANCE -->
+    <div id="page-compliance" class="page">
+      <div class="page-title">Compliance</div>
+      <div class="page-sub">Samples assigned vs audited — H1 2026</div>
+      <div class="filters-bar">
+        <select id="comp-sup" onchange="loadCompliance()"><option value="">All supervisors</option></select>
+        <select id="comp-month" onchange="loadCompliance()">
+          <option value="">All months</option>
+          <option value="1">January</option><option value="2">February</option>
+          <option value="3">March</option><option value="4">April</option>
+          <option value="5">May</option><option value="6">June</option>
+        </select>
+        <select id="comp-week" onchange="loadCompliance()">
+          <option value="">All weeks</option>
+          <option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option><option value="7">Week 7</option><option value="8">Week 8</option><option value="9">Week 9</option><option value="10">Week 10</option><option value="11">Week 11</option><option value="12">Week 12</option><option value="13">Week 13</option><option value="14">Week 14</option><option value="15">Week 15</option><option value="16">Week 16</option><option value="17">Week 17</option><option value="18">Week 18</option><option value="19">Week 19</option><option value="20">Week 20</option><option value="21">Week 21</option><option value="22">Week 22</option><option value="23">Week 23</option><option value="24">Week 24</option><option value="25">Week 25</option><option value="26">Week 26</option><option value="27">Week 27</option><option value="28">Week 28</option><option value="29">Week 29</option><option value="30">Week 30</option><option value="31">Week 31</option><option value="32">Week 32</option><option value="33">Week 33</option><option value="34">Week 34</option><option value="35">Week 35</option><option value="36">Week 36</option><option value="37">Week 37</option><option value="38">Week 38</option><option value="39">Week 39</option><option value="40">Week 40</option><option value="41">Week 41</option><option value="42">Week 42</option><option value="43">Week 43</option><option value="44">Week 44</option><option value="45">Week 45</option><option value="46">Week 46</option><option value="47">Week 47</option><option value="48">Week 48</option><option value="49">Week 49</option><option value="50">Week 50</option><option value="51">Week 51</option><option value="52">Week 52</option><option value="53">Week 53</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="loadCompliance()">↺ Refresh</button>
+      </div>
+      <div class="metrics" id="comp-metrics">
+        <div class="metric"><div class="label">Total assigned</div><div class="value">—</div></div>
+        <div class="metric"><div class="label">Completed</div><div class="value green">—</div></div>
+        <div class="metric"><div class="label">Pending</div><div class="value red">—</div></div>
+        <div class="metric"><div class="label">Compliance</div><div class="value">—</div></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="compliance-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -602,7 +639,7 @@ tr:hover td{background:#FAFAF7}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTw-b9uRJ92idiF3GbmlGpKKXgnrsBqrLfvCXl9vbchXtOkvgOh9X19lgCHoHCZtW9lQ/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNxARsCMs_u4q2sD7eiTD0Nl6PV7te8Yc8Q-_Ce9AT1EuoFBHfIADesmNxrq-B07jBQg/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -657,6 +694,8 @@ async function initApp() {
   loadRecords();
   loadQueue();
   loadAnalytics();
+  loadAuditQueue();
+  loadCompliance();
   if (currentRole === 'admin') loadRoles();
 }
 
@@ -924,8 +963,10 @@ async function populateSupFilter() {
     const sups = [...new Set(all.map(r => r.supervisor).filter(Boolean))].sort();
     const opts = '<option value="">All supervisors</option>' +
       sups.map(s => `<option value="${s}">${s}</option>`).join('');
+    // sups already contains only emails from col AC
     document.getElementById('rec-sup').innerHTML = opts;
     document.getElementById('dash-sup').innerHTML = opts;
+    // Both filters now show supervisor emails from col AC
   } catch(e) { console.error('populateSupFilter error:', e); }
 }
 
@@ -1271,6 +1312,116 @@ async function saveLead() {
   if(!body.leadEmail) return;
   await api('addLead',{},body);
   loadHierarchy(); loadHierarchyAdmin();
+}
+
+// ── AUDIT QUEUE ────────────────────────────────────────────
+async function loadAuditQueue() {
+  try {
+    const queue = await api('getQueue', { supervisor: currentUser.email });
+    const el = document.getElementById('audit-queue-list');
+    if (!queue.length) {
+      el.innerHTML = '<div class="empty">🎉 No pending reviews for you this period</div>';
+      return;
+    }
+    const rows = queue.map(q => `
+      <tr style="cursor:pointer" onclick="prefillForm(${JSON.stringify(q).replace(/"/g,'&quot;')})">
+        <td><strong>${q.ticket}</strong></td>
+        <td>${q.lead_name || q.lead_email || '—'}</td>
+        <td>W${q.week} / M${q.month}</td>
+        <td>${q.wabi_date || '—'}</td>
+        <td><button class="btn btn-primary btn-sm">Start →</button></td>
+      </tr>`).join('');
+    el.innerHTML = `
+      <table>
+        <thead><tr><th>Ticket</th><th>Lead</th><th>Week/Month</th><th>Wabi date</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="font-size:12px;color:var(--text-muted);padding:8px 12px">${queue.length} pending review${queue.length>1?'s':''}</div>`;
+  } catch(e) { console.error('loadAuditQueue:', e); }
+}
+
+function prefillForm(q) {
+  // Scroll to form section
+  document.getElementById('f-half').value     = 'H1 - 2026';
+  document.getElementById('f-month').value    = q.month;
+  document.getElementById('f-week').value     = q.week;
+  document.getElementById('f-wabi-date').value= q.wabi_date || '';
+  document.getElementById('f-ticket').value   = q.ticket;
+  // Set lead dropdown
+  const leadSel = document.getElementById('f-lead');
+  for (let i = 0; i < leadSel.options.length; i++) {
+    if (leadSel.options[i].value === q.lead_email) {
+      leadSel.selectedIndex = i;
+      document.getElementById('f-supervisor').value = leadSel.options[i].dataset.supervisor || currentUser.email;
+      break;
+    }
+  }
+  // Scroll to rubric section
+  document.querySelector('.card .section-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('form-alert').innerHTML =
+    `<div class="alert alert-success">✓ Pre-filled from queue — Ticket ${q.ticket}</div>`;
+}
+
+// ── COMPLIANCE ─────────────────────────────────────────────
+async function loadCompliance() {
+  const params = {
+    supervisor: document.getElementById('comp-sup').value,
+    month:      document.getElementById('comp-month').value,
+    week:       document.getElementById('comp-week').value,
+  };
+  try {
+    const data = await api('getCompliance', params);
+    if (!data.length) {
+      document.getElementById('compliance-table').innerHTML = '<div class="empty">No data found</div>';
+      updateCompMetrics([]);
+      return;
+    }
+    updateCompMetrics(data);
+
+    // Populate supervisor filter
+    const sups = [...new Set(data.map(d => d.supervisor).filter(Boolean))].sort();
+    const compSup = document.getElementById('comp-sup');
+    const curSup  = compSup.value;
+    compSup.innerHTML = '<option value="">All supervisors</option>' +
+      sups.map(s => `<option value="${s}" ${s===curSup?'selected':''}>${s}</option>`).join('');
+
+    const rows = data.map(d => {
+      const pct = d.compliance;
+      const color = pct >= 100 ? 'badge-green' : pct >= 80 ? 'badge-blue' : pct >= 50 ? 'badge-amber' : 'badge-red';
+      const pendingBtns = d.pending_list.length
+        ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
+            ${d.pending_list.slice(0,5).map(p=>`<span class="badge badge-red" title="${p.lead_name}">${p.ticket}</span>`).join('')}
+            ${d.pending_list.length>5?`<span class="badge badge-gray">+${d.pending_list.length-5} more</span>`:''}
+           </div>` : '';
+      return `<tr>
+        <td><strong>${d.supervisor}</strong></td>
+        <td>${MONTH_NAMES[Number(d.month)]||'M'+d.month}</td>
+        <td>W${d.week}</td>
+        <td>${d.assigned}</td>
+        <td style="color:var(--cu-green);font-weight:600">${d.completed}</td>
+        <td>${d.pending}${pendingBtns}</td>
+        <td><span class="badge ${color}">${pct}%</span></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('compliance-table').innerHTML = `
+      <table>
+        <thead><tr><th>Supervisor</th><th>Month</th><th>Week</th><th>Assigned</th><th>Completed</th><th>Pending tickets</th><th>Compliance</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } catch(e) { console.error('loadCompliance:', e); }
+}
+
+function updateCompMetrics(data) {
+  const totalAssigned  = data.reduce((s,d) => s + d.assigned,  0);
+  const totalCompleted = data.reduce((s,d) => s + d.completed, 0);
+  const totalPending   = data.reduce((s,d) => s + d.pending,   0);
+  const overallPct     = totalAssigned > 0 ? Math.round((totalCompleted/totalAssigned)*100) : 0;
+  document.getElementById('comp-metrics').innerHTML = `
+    <div class="metric"><div class="label">Total assigned</div><div class="value">${totalAssigned}</div></div>
+    <div class="metric"><div class="label">Completed</div><div class="value green">${totalCompleted}</div></div>
+    <div class="metric"><div class="label">Pending</div><div class="value ${totalPending>0?'red':''}">${totalPending}</div></div>
+    <div class="metric"><div class="label">Compliance</div><div class="value ${overallPct>=80?'green':overallPct>=50?'amber':'red'}">${overallPct}%</div></div>`;
 }
 </script>
 </body>
