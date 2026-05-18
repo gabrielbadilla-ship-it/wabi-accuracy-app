@@ -678,7 +678,7 @@ tr:hover td{background:#FAFAF7}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNf5FbmOkN27eXjVVi9p0bGuZEv0uFtFZuMtC3fVXzwZW_TvwhZ_Ugl4B909U5duKFNg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1xUrlxDtr6aOBzKRZuxKdY_HwN-LICeqLntfhWkpBU13jIlI8cKmf74WtDkFtlbf7eQ/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -844,7 +844,7 @@ function renderRCChart(data, pct, total) {
   if (!data) return;
   const ctx = document.getElementById('chart-rc').getContext('2d');
   if (chartRC) chartRC.destroy();
-  const labels = ['Context Oversight','Evidence Validation','Wrong Adjustment','Comp w/o Res','Process Align','Esc Reason','Coaching'];
+  const labels = ['Context Oversight','Evidence Validation','Wrong Adjustment Type/Amount','Comp. Without Resolution','Lack of Process Alignment','Incorrect Escalation Reason','Coaching & Guidance'];
   const absVals = [data.context_oversight||0,data.evidence_validation||0,data.wrong_adjustment||0,
     data.comp_without_res||0,data.lack_process||0,data.incorrect_esc||0,data.coaching||0];
   const pctVals = pct ? [pct.context_oversight||0,pct.evidence_validation||0,pct.wrong_adjustment||0,
