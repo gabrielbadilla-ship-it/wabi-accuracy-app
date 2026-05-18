@@ -654,6 +654,7 @@ async function initApp() {
   await loadHierarchy();
   loadDashboard();
   loadRecords();
+  populateSupFilter();
   loadQueue();
   loadAnalytics();
   if (currentRole === 'admin') loadRoles();
@@ -909,16 +910,22 @@ async function loadRecords() {
     month: document.getElementById('rec-month')?.value,
     week: document.getElementById('rec-week')?.value,
     status: document.getElementById('rec-status')?.value,
+    supervisor: document.getElementById('rec-sup')?.value,
   };
   try {
     allRecords = await api('getRecords', params);
-    // Populate supervisor filter from loaded records
-    const supSel = document.getElementById('rec-sup');
-    const currentSup = supSel.value;
-    const sups = [...new Set(allRecords.map(r => r.supervisor).filter(Boolean))].sort();
-    supSel.innerHTML = '<option value="">All supervisors</option>' +
-      sups.map(s => `<option value="${s}" ${s===currentSup?'selected':''}>${s}</option>`).join('');
     renderRecordsTable(allRecords);
+  } catch(e) {}
+}
+
+async function populateSupFilter() {
+  // Load all records without filter to get full supervisor list
+  try {
+    const all = await api('getRecords', { half: CURRENT_HALF });
+    const supSel = document.getElementById('rec-sup');
+    const sups = [...new Set(all.map(r => r.supervisor).filter(Boolean))].sort();
+    supSel.innerHTML = '<option value="">All supervisors</option>' +
+      sups.map(s => `<option value="${s}">${s}</option>`).join('');
   } catch(e) {}
 }
 
