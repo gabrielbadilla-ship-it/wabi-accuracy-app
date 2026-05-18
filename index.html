@@ -639,7 +639,7 @@ tr:hover td{background:#FAFAF7}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNxARsCMs_u4q2sD7eiTD0Nl6PV7te8Yc8Q-_Ce9AT1EuoFBHfIADesmNxrq-B07jBQg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAKcraTtPn5qgFV15IJ2JLgKRKGgs5ZSGLlmLtJF0ZM2GxtKoMVutdFEl213KqGa0rWQ/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -1388,25 +1388,29 @@ async function loadCompliance() {
     const rows = data.map(d => {
       const pct = d.compliance;
       const color = pct >= 100 ? 'badge-green' : pct >= 80 ? 'badge-blue' : pct >= 50 ? 'badge-amber' : 'badge-red';
-      const pendingBtns = d.pending_list.length
+      const statusTag = d.is_closed
+        ? '<span class="badge badge-gray">Closed</span>'
+        : '<span class="badge badge-gold">Active</span>';
+      const pendingBtns = d.pending_list && d.pending_list.length
         ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
             ${d.pending_list.slice(0,5).map(p=>`<span class="badge badge-red" title="${p.lead_name}">${p.ticket}</span>`).join('')}
             ${d.pending_list.length>5?`<span class="badge badge-gray">+${d.pending_list.length-5} more</span>`:''}
            </div>` : '';
-      return `<tr>
+      return `<tr style="${d.is_active?'background:#FFFDF5':''}">
         <td><strong>${d.supervisor}</strong></td>
         <td>${MONTH_NAMES[Number(d.month)]||'M'+d.month}</td>
         <td>W${d.week}</td>
+        <td>${statusTag}</td>
         <td>${d.assigned}</td>
         <td style="color:var(--cu-green);font-weight:600">${d.completed}</td>
-        <td>${d.pending}${pendingBtns}</td>
+        <td>${d.pending || 0}${pendingBtns}</td>
         <td><span class="badge ${color}">${pct}%</span></td>
       </tr>`;
     }).join('');
 
     document.getElementById('compliance-table').innerHTML = `
       <table>
-        <thead><tr><th>Supervisor</th><th>Month</th><th>Week</th><th>Assigned</th><th>Completed</th><th>Pending tickets</th><th>Compliance</th></tr></thead>
+        <thead><tr><th>Supervisor</th><th>Month</th><th>Week</th><th>Status</th><th>Assigned</th><th>Completed</th><th>Pending tickets</th><th>Compliance</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
   } catch(e) { console.error('loadCompliance:', e); }
