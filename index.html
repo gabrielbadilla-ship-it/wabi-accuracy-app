@@ -205,6 +205,7 @@ tr:hover td{background:#FAFAF7}
       <a onclick="nav('queue')" data-page="queue">💬 Feedback Loop <span class="badge" id="queue-badge">0</span></a>
       <a onclick="nav('analytics')" data-page="analytics">📈 Analytics</a>
       <a onclick="nav('compliance')" data-page="compliance">✅ Compliance</a>
+      <a onclick="nav('disputes')" data-page="disputes">⚖️ Disputes <span class="badge" id="disputes-badge">0</span></a>
       <a onclick="nav('admin')" data-page="admin" id="admin-link" style="display:none">⚙️ Admin</a>
     </nav>
     <div class="user-bar">
@@ -445,15 +446,6 @@ tr:hover td{background:#FAFAF7}
           </div>
           <div class="total" id="score-total">Score: — / 100</div>
         </div>
-        <div class="section-title" style="margin-top:20px">Notes</div>
-        <div class="form-grid">
-          <div class="field"><label>Was the Wabi correctly raised?</label>
-            <select id="f-raised"><option value="">Select</option><option>Yes</option><option>No</option></select></div>
-          <div class="field"><label>Feedback provided to Lead?</label>
-            <select id="f-feedback"><option>Yes</option><option>No</option></select></div>
-        </div>
-        <div class="field" style="margin-top:12px"><label>Improvement notes (optional)</label>
-          <textarea id="f-notes" placeholder="Describe any improvement opportunity for the Lead or Specialist..."></textarea></div>
         <div class="actions-row">
           <button class="btn btn-primary" onclick="submitAudit()" id="submit-btn">✅ Submit audit</button>
           <button class="btn btn-secondary" onclick="clearForm()">Clear form</button>
@@ -662,6 +654,28 @@ tr:hover td{background:#FAFAF7}
       </div>
     </div>
 
+    <!-- DISPUTES -->
+    <div id="page-disputes" class="page">
+      <div class="page-title">Disputes</div>
+      <div class="page-sub">Review and resolve audit disputes</div>
+      <div class="metrics" id="disputes-metrics">
+        <div class="metric"><div class="label">Total disputes</div><div class="value">—</div></div>
+        <div class="metric"><div class="label">Open</div><div class="value red">—</div></div>
+        <div class="metric"><div class="label">Accepted</div><div class="value green">—</div></div>
+        <div class="metric"><div class="label">Rejected</div><div class="value amber">—</div></div>
+      </div>
+      <div class="tabs" id="disputes-tabs">
+        <div class="tab active" onclick="disputesTab('open',this)">Open</div>
+        <div class="tab" onclick="disputesTab('resolved',this)">Resolved</div>
+        <div class="tab" onclick="disputesTab('all',this)">All</div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="sticky-table-wrap">
+          <div id="disputes-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+        </div>
+      </div>
+    </div>
+
     <!-- COMPLIANCE -->
     <div id="page-compliance" class="page">
       <div class="page-title">Compliance</div>
@@ -732,7 +746,7 @@ const HISTORICAL_LEAD_SCORES = {
   "djana@cookunity.com": {17:96.67},
   "mariajoseperilla@cookunity.com": {16:94.0,17:81.25}
 };
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwb5A24DSMShzGC6QWAEbfgEyMWQLYyUeP42pWTLdWwpb-vk6ADHI0WUTU3p3gr5cyZVw/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3EHRZtoX-D-jC3-wYcveVKjPpO7iJ3UfuetMV0NBBI67-djAVjm_gV3DXjy9UCaIw-Q/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -791,6 +805,7 @@ async function initApp() {
   loadAuditQueue();
   loadCompliance();
   loadFeedbackLoop();
+  loadDisputes();
   if (currentRole === 'admin') loadRoles();
 }
 
@@ -1248,8 +1263,20 @@ async function openRecord(rowId) {
         ${score} / 100
       </div>
     </div>
-    ${r.improvement_notes?`<div style="margin-bottom:12px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:700;text-transform:uppercase">Improvement notes</div>
-      <div style="font-size:13px;line-height:1.6;background:#FAFAF7;padding:10px;border-radius:8px">${r.improvement_notes}</div></div>`:''}
+    ${[
+      ['Context Oversight', r.context_oversight, 10, r.comment_co],
+      ['Evidence Validation', r.evidence_validation, 15, r.comment_ev],
+      ['Wrong Adjustment', r.wrong_adjustment, 10, r.comment_wa],
+      ['Comp. Without Resolution', r.comp_without_res, 20, r.comment_cwr],
+      ['Lack of Process Alignment', r.lack_process, 15, r.comment_lpa],
+      ['Incorrect Escalation Reason', r.incorrect_esc, 15, r.comment_ier],
+      ['Coaching & Guidance', r.coaching, 15, r.comment_cg],
+    ].filter(([,val,,comment]) => Number(val) === 0 && comment)
+     .map(([label,,max,comment]) => `
+      <div style="background:#FFF8E1;border-radius:8px;padding:10px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--cu-orange);text-transform:uppercase;margin-bottom:4px">${label} — Fail (0/${max} pts)</div>
+        <div style="font-size:13px;line-height:1.5">${comment}</div>
+      </div>`).join('')}
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:700;text-transform:uppercase">Status</div>
     <span class="badge ${statusClass(r.review_status)}">${r.review_status||'Pending'}</span>
     ${(currentRole==='supervisor'||currentRole==='admin')?`
@@ -1257,27 +1284,27 @@ async function openRecord(rowId) {
       <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px">Supervisor action</div>
       <div class="form-grid">
         <div class="field"><label>Status</label>
-          <select id="modal-status" style="display:none"></select>
           <span class="badge ${statusClass(r.review_status)}">${r.review_status}</span></div>
         <div class="field"><label>Coaching date</label>
           <input type="date" id="modal-coaching-date" value="${r.coaching_date||''}"></div>
       </div>
-      <div class="field" style="margin-top:10px"><label>Supervisor notes</label>
-        <textarea id="modal-sup-notes" rows="3">${r.sup_notes||''}</textarea></div>
-      <div class="field" style="margin-top:10px"><label>Dispute reason</label>
-        <textarea id="modal-dispute-reason" rows="2">${r.dispute_reason||''}</textarea></div>
-      <div class="form-grid" style="margin-top:10px">
-        <div class="field"><label>Dispute accepted?</label>
-          <select id="modal-dispute-accepted"><option>—</option><option>Y</option><option>N</option></select></div>
-        <div class="field"><label>Rejection reason</label>
-          <input type="text" id="modal-rejection-reason" value="${r.rejection_reason||''}"></div>
-      </div>
+      ${!r.dispute_yn || r.dispute_yn==='' ? `
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Submit dispute</div>
+        <div class="field"><label>Dispute reason</label>
+          <textarea id="modal-dispute-reason" rows="2" placeholder="Explain why you disagree with this review..."></textarea></div>
+        <div style="margin-top:8px"><button class="btn btn-danger btn-sm" onclick="submitDispute(${r.rowId},'${r.ticket}','${r.lead_email}','${r.supervisor}')">Submit dispute</button></div>
+      </div>` : `
+      <div style="margin-top:14px;padding:10px;background:#FFF8E1;border-radius:8px;font-size:13px">
+        <strong>Dispute submitted</strong>${r.dispute_accepted==='Y'?' — ✅ Accepted':r.dispute_accepted==='N'?' — ❌ Rejected':' — ⏳ Pending review'}
+        ${r.rejection_reason?`<div style="color:var(--text-muted);margin-top:4px">${r.rejection_reason}</div>`:''}
+      </div>`}
     </div>`:''}
   `;
 
   document.getElementById('modal-actions').innerHTML=(currentRole==='supervisor'||currentRole==='admin')
     ?`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveSupAction(${r.rowId})">Save changes</button>`
+      <button class="btn btn-primary" onclick="saveSupAction(${r.rowId})">Save coaching date</button>`
     :`<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
 
   document.getElementById('modal').classList.add('open');
@@ -1286,17 +1313,23 @@ async function openRecord(rowId) {
 async function saveSupAction(rowId) {
   const body = {
     rowId,
-    review_status:    document.getElementById('modal-status')?.value,
-    coaching_date:    document.getElementById('modal-coaching-date')?.value,
-    sup_notes:        document.getElementById('modal-sup-notes')?.value,
-    dispute_reason:   document.getElementById('modal-dispute-reason')?.value||'',
-    dispute_accepted: document.getElementById('modal-dispute-accepted')?.value||'',
-    rejection_reason: document.getElementById('modal-rejection-reason')?.value||'',
+    coaching_date: document.getElementById('modal-coaching-date')?.value || '',
   };
   try {
     await api('supervisorAction',{},body);
-    closeModal(); loadRecords(); loadQueue();
+    closeModal(); loadRecords(); loadFeedbackLoop();
   } catch(e) { alert('Error: '+e.message); }
+}
+
+async function submitDispute(rowId, ticket, leadEmail, supervisor) {
+  const reason = document.getElementById('modal-dispute-reason')?.value?.trim();
+  if (!reason) { alert('Please enter a dispute reason.'); return; }
+  try {
+    await api('submitDispute', {}, { rowId, ticket, lead_email: leadEmail, supervisor, dispute_reason: reason });
+    closeModal();
+    loadDisputes();
+    alert('Dispute submitted successfully.');
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
@@ -1524,6 +1557,131 @@ async function loadHierarchyAdmin() {
       ?`<table><thead><tr><th>Lead</th><th>Email</th><th>Supervisor</th><th>Manager</th></tr></thead><tbody>${rows}</tbody></table>`
       :'<div class="empty">No leads added yet</div>';
   } catch(e) {}
+}
+
+// ── DISPUTES ───────────────────────────────────────────────
+async function loadDisputes() {
+  try {
+    const all    = await api('getDisputes', {});
+    const open   = all.filter(d => !d.dispute_accepted || d.dispute_accepted === '');
+    const accepted = all.filter(d => d.dispute_accepted === 'Y');
+    const rejected = all.filter(d => d.dispute_accepted === 'N');
+
+    document.getElementById('disputes-badge').textContent = open.length;
+    document.getElementById('disputes-metrics').innerHTML = `
+      <div class="metric"><div class="label">Total disputes</div><div class="value">${all.length}</div></div>
+      <div class="metric"><div class="label">Open</div><div class="value ${open.length>0?'red':''}">${open.length}</div></div>
+      <div class="metric"><div class="label">Accepted</div><div class="value green">${accepted.length}</div></div>
+      <div class="metric"><div class="label">Rejected</div><div class="value amber">${rejected.length}</div></div>`;
+
+    window._disputesData = { all, open, resolved: [...accepted, ...rejected] };
+    disputesTab('open', document.querySelector('#disputes-tabs .tab'));
+  } catch(e) { console.error('loadDisputes:', e); }
+}
+
+function disputesTab(status, el) {
+  document.querySelectorAll('#disputes-tabs .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const data = window._disputesData || { all:[], open:[], resolved:[] };
+  const list = status === 'open' ? data.open : status === 'resolved' ? data.resolved : data.all;
+  renderDisputesTable(list);
+}
+
+function renderDisputesTable(disputes) {
+  if (!disputes.length) {
+    document.getElementById('disputes-table').innerHTML = '<div class="empty">No disputes found</div>';
+    return;
+  }
+  const rows = disputes.map(d => {
+    const score = normalizeScore(d.total_score);
+    const statusTag = !d.dispute_accepted || d.dispute_accepted === ''
+      ? '<span class="badge badge-amber">Pending</span>'
+      : d.dispute_accepted === 'Y'
+        ? '<span class="badge badge-green">Accepted</span>'
+        : '<span class="badge badge-red">Rejected</span>';
+    return `<tr onclick="openDisputeDetail(${JSON.stringify(d).replace(/"/g,'&quot;')})" style="cursor:pointer">
+      <td><strong>${d.ticket}</strong></td>
+      <td>${d.lead_email}</td>
+      <td>${d.supervisor}</td>
+      <td>W${d.week} / M${d.month}</td>
+      <td><span class="badge ${scoreClass(score)}">${score}%</span></td>
+      <td style="max-width:200px;font-size:12px;color:var(--text-muted)">${d.dispute_reason?d.dispute_reason.slice(0,80)+'…':'—'}</td>
+      <td>${statusTag}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('disputes-table').innerHTML = `
+    <table>
+      <thead><tr><th>Ticket</th><th>Lead</th><th>Supervisor</th><th>Week/Month</th><th>Score</th><th>Reason</th><th>Status</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function openDisputeDetail(d) {
+  const score = normalizeScore(d.total_score);
+  const isAdmin = currentRole === 'admin';
+  const isOpen  = !d.dispute_accepted || d.dispute_accepted === '';
+
+  const commentsHtml = [
+    ['Context Oversight', d.context_oversight, 10, d.comment_co],
+    ['Evidence Validation', d.evidence_validation, 15, d.comment_ev],
+    ['Wrong Adjustment', d.wrong_adjustment, 10, d.comment_wa],
+    ['Comp. Without Resolution', d.comp_without_res, 20, d.comment_cwr],
+    ['Lack of Process Alignment', d.lack_process, 15, d.comment_lpa],
+    ['Incorrect Escalation Reason', d.incorrect_esc, 15, d.comment_ier],
+    ['Coaching & Guidance', d.coaching, 15, d.comment_cg],
+  ].filter(([,val,,comment]) => Number(val) === 0 && comment)
+   .map(([label,,max,comment]) => `
+    <div style="background:#FFF8E1;border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--cu-orange);text-transform:uppercase;margin-bottom:4px">${label} — Fail (0/${max} pts)</div>
+      <div style="font-size:13px;line-height:1.5">${comment}</div>
+    </div>`).join('');
+
+  document.getElementById('modal-title').textContent = `Dispute — Ticket ${d.ticket}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;font-size:13px">
+      <div><span style="color:var(--text-muted)">Lead</span><br><strong>${d.lead_email}</strong></div>
+      <div><span style="color:var(--text-muted)">Supervisor</span><br><strong>${d.supervisor}</strong></div>
+      <div><span style="color:var(--text-muted)">Reviewer</span><br><strong>${d.reviewer_email}</strong></div>
+      <div><span style="color:var(--text-muted)">Score</span><br><span class="badge ${scoreClass(score)}">${score}%</span></div>
+    </div>
+    <div style="background:#FFF0F5;border-radius:8px;padding:12px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--cu-magenta);text-transform:uppercase;margin-bottom:6px">Dispute reason</div>
+      <div style="font-size:13px;line-height:1.5">${d.dispute_reason||'—'}</div>
+    </div>
+    ${commentsHtml ? `<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Reviewer feedback</div>${commentsHtml}</div>` : ''}
+    ${!isOpen ? `<div style="background:${d.dispute_accepted==='Y'?'#D6EFDF':'#FFE5F0'};border-radius:8px;padding:12px">
+      <div style="font-weight:700">${d.dispute_accepted==='Y'?'✅ Accepted':'❌ Rejected'}</div>
+      ${d.rejection_reason?`<div style="font-size:13px;margin-top:4px">${d.rejection_reason}</div>`:''}
+    </div>` : ''}
+    ${isAdmin && isOpen ? `
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px">Admin decision</div>
+      <div class="form-grid">
+        <div class="field"><label>Decision</label>
+          <select id="dispute-decision"><option value="">Select</option><option value="Y">Accept dispute</option><option value="N">Reject dispute</option></select></div>
+      </div>
+      <div class="field" style="margin-top:10px"><label>Rejection reason (if rejected)</label>
+        <textarea id="dispute-rejection" rows="2" placeholder="Explain why the dispute is rejected..."></textarea></div>
+    </div>` : ''}
+  `;
+
+  document.getElementById('modal-actions').innerHTML = isAdmin && isOpen
+    ? `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+       <button class="btn btn-primary" onclick="resolveDispute(${d.rowId})">Save decision</button>`
+    : `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
+
+  document.getElementById('modal').classList.add('open');
+}
+
+async function resolveDispute(rowId) {
+  const decision = document.getElementById('dispute-decision')?.value;
+  const rejection = document.getElementById('dispute-rejection')?.value || '';
+  if (!decision) { alert('Please select a decision.'); return; }
+  try {
+    await api('resolveDispute', {}, { rowId, dispute_accepted: decision, rejection_reason: rejection });
+    closeModal();
+    loadDisputes();
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
 async function saveLead() {
