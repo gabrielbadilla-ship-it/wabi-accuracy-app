@@ -746,7 +746,7 @@ const HISTORICAL_LEAD_SCORES = {
   "djana@cookunity.com": {17:96.67},
   "mariajoseperilla@cookunity.com": {16:94.0,17:81.25}
 };
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3EHRZtoX-D-jC3-wYcveVKjPpO7iJ3UfuetMV0NBBI67-djAVjm_gV3DXjy9UCaIw-Q/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVNiFD1HkATX-lWMPX5yae8TgGR9i_UBislm3-nBcRIyJ_-9bfi-buFe-Tq5C3PKK36w/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -1164,8 +1164,16 @@ function exportCSV() {
 // ── FEEDBACK LOOP ──────────────────────────────────────────
 async function loadFeedbackLoop() {
   const month = document.getElementById('fl-month').value;
+  // Default: last 2 months if no filter selected
+  const currentMonth = new Date().getMonth() + 1; // 1-12
+  const twoMonthsAgo = currentMonth > 1 ? currentMonth - 1 : 1;
+  const effectiveMonth = month || null; // null = backend filters last 2 months
   try {
-    const d = await api('getFeedbackLoop', { month, supervisor: currentUser.email });
+    const d = await api('getFeedbackLoop', {
+      month: effectiveMonth,
+      supervisor: currentUser.email,
+      min_month: String(twoMonthsAgo)
+    });
 
     // Team metrics
     document.getElementById('fl-metrics').innerHTML = `
