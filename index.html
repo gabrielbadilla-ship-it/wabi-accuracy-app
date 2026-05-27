@@ -746,7 +746,7 @@ const HISTORICAL_LEAD_SCORES = {
   "djana@cookunity.com": {17:96.67},
   "mariajoseperilla@cookunity.com": {16:94.0,17:81.25}
 };
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVNiFD1HkATX-lWMPX5yae8TgGR9i_UBislm3-nBcRIyJ_-9bfi-buFe-Tq5C3PKK36w/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziswWjYF8D4h-LLXdA4siSsK4XHzku9ZIAg_vGtGlrcMR44b-S9l_gSuPQYOEPN6VYag/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -1439,7 +1439,7 @@ async function loadLeadAnalytics() {
 
     // Build table: rows = leads, cols = months
     const monthHeaders = months.map(m => `<th colspan="3" style="text-align:center;border-left:2px solid var(--border)">${MONTH_NAMES[m]||'M'+m}</th>`).join('');
-    const subHeaders   = months.map(() => `<th style="border-left:2px solid var(--border)">Score</th><th>WoW</th><th>vs Target</th>`).join('');
+    const subHeaders   = months.map(() => `<th style="border-left:2px solid var(--border)">Score</th><th>MoM</th><th>vs Target</th>`).join('');
 
     const rows = leadList.map(lead => {
       const monthData = {};
@@ -1449,7 +1449,7 @@ async function loadLeadAnalytics() {
         const d = monthData[m];
         if (!d || d.avgScore === null) return `<td style="border-left:2px solid var(--border);color:#ccc">—</td><td>—</td><td>—</td>`;
         const scoreColor = d.avgScore >= 80 ? 'var(--cu-green)' : 'var(--cu-magenta)';
-        const wowVal  = d.wow  !== null ? d.wow  : null;
+        const wowVal  = d.mom  !== null ? d.mom  : null;
         const varVal  = d.variance !== null ? d.variance : null;
         const wowStr  = wowVal  !== null ? `<span style="color:${wowVal>=0?'var(--cu-green)':'var(--cu-magenta)'}">${wowVal>=0?'↑':'↓'} ${Math.abs(wowVal)}%</span>` : '—';
         const varStr  = varVal  !== null ? `<span style="color:${varVal>=0?'var(--cu-green)':'var(--cu-magenta)'}">${varVal>=0?'+':''}${varVal}%</span>` : '—';
@@ -1468,9 +1468,8 @@ async function loadLeadAnalytics() {
     const totalCells = months.map(m => {
       const gt = d.grandTotals.find(g => g.month === m);
       if (!gt) return `<td style="border-left:2px solid var(--border)">—</td><td>—</td><td>—</td>`;
-      const histWowWeeks = Object.entries(HISTORICAL_WOW_TOTAL).filter(([w])=>weekToMonth(Number(w))===m);
-      const wowAvg = histWowWeeks.length ? Math.round(histWowWeeks.reduce((s,[,v])=>s+v,0)/histWowWeeks.length*10)/10 : null;
-      const wowStr = wowAvg !== null ? `<span style="color:${wowAvg>=0?'var(--cu-green)':'var(--cu-magenta)'}">${wowAvg>=0?'↑':'↓'} ${Math.abs(wowAvg)}%</span>` : '—';
+      const momVal = gt.mom !== null && gt.mom !== undefined ? gt.mom : null;
+      const wowStr = momVal !== null ? `<span style="color:${momVal>=0?'var(--cu-green)':'var(--cu-magenta)'}">${momVal>=0?'↑':'↓'} ${Math.abs(momVal)}%</span>` : '—';
       const varStr = `<span style="color:${gt.variance>=0?'var(--cu-green)':'var(--cu-magenta)'}">${gt.variance>=0?'+':''}${gt.variance}%</span>`;
       return `<td style="border-left:2px solid var(--border);font-weight:700;color:${gt.avgScore>=80?'var(--cu-green)':'var(--cu-magenta)'}">${gt.avgScore}%</td><td style="font-size:12px">${wowStr}</td><td style="font-size:12px">${varStr}</td>`;
     }).join('');
@@ -1510,7 +1509,7 @@ async function loadLeadAnalytics() {
       if (chartLeadTrend) chartLeadTrend.destroy();
       chartLeadTrend = new Chart(ctx, { type:'line', data:{ labels:mNames, datasets:[
         { label:'Avg Score', data:scores, borderColor:'#FFB81C', backgroundColor:'rgba(255,184,28,.1)', fill:true, tension:0.3, pointRadius:4 },
-        { label:'Variance to Target', data:variances, borderColor:'#475CC7', backgroundColor:'rgba(71,92,199,.05)', fill:true, tension:0.3, pointRadius:4 },
+        { label:'Variance to Target (vs 80%)', data:variances, borderColor:'#475CC7', backgroundColor:'rgba(71,92,199,.05)', fill:true, tension:0.3, pointRadius:4 },
         { label:'Target (80%)', data:mNames.map(()=>80), borderColor:'#AA0061', borderDash:[5,5], pointRadius:0, fill:false },
       ]}, options:{ responsive:true, maintainAspectRatio:false,
         scales:{ y:{grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}} } }});
