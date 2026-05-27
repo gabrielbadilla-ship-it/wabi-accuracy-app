@@ -1038,8 +1038,6 @@ async function submitAudit() {
     context_oversight: scores.co, evidence_validation: scores.ev,
     wrong_adjustment: scores.wa, comp_without_res: scores.cwr,
     lack_process: scores.lpa, incorrect_esc: scores.ier, coaching: scores.cg,
-    correctly_raised: document.getElementById('f-raised').value,
-    improvement_notes: document.getElementById('f-notes').value,
   };
   try {
     await api('submitAudit', {}, body);
