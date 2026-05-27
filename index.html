@@ -1042,7 +1042,7 @@ async function submitAudit() {
   try {
     await api('submitAudit', {}, body);
     alertEl.innerHTML=`<div class="alert alert-success">✓ Audit submitted — Score: ${scores.finalScore}/100</div>`;
-    clearForm(); loadRecords(); loadQueue();
+    clearForm(); loadRecords(); loadQueue(); loadAuditQueue();
   } catch(e) { alertEl.innerHTML=`<div class="alert alert-error">Error: ${e.message}</div>`; }
   btn.disabled=false; btn.innerHTML='✅ Submit audit';
 }
