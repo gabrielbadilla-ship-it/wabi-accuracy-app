@@ -332,7 +332,7 @@ tr:hover td{background:#FAFAF7}
           <div class="field"><label>Lead *</label>
             <select id="f-lead"><option value="">Select lead</option></select></div>
           <div class="field"><label>Supervisor</label><input type="text" id="f-supervisor" readonly placeholder="Auto-filled"></div>
-          <div class="field"><label>Specialist email</label><input type="text" id="f-specialist" placeholder="specialist@cookunity.com"></div>
+          <div class="field"><label>Specialist email *</label><input type="text" id="f-specialist" placeholder="specialist@cookunity.com"></div>
         </div>
       </div>
 
@@ -996,7 +996,7 @@ function calcScore() {
 async function submitAudit() {
   const alertEl = document.getElementById('form-alert');
   alertEl.innerHTML = '';
-  const required = [['f-half','Half'],['f-month','Month'],['f-week','Week'],['f-wabi-date','Wabi date'],['f-ticket','Ticket'],['f-lead','Lead']];
+  const required = [['f-half','Half'],['f-month','Month'],['f-week','Week'],['f-wabi-date','Wabi date'],['f-ticket','Ticket'],['f-lead','Lead'],['f-specialist','Specialist email']];
   for (const [id,label] of required) {
     if (!document.getElementById(id).value) {
       alertEl.innerHTML=`<div class="alert alert-error">Please fill in: ${label}</div>`; return;
@@ -1015,10 +1015,15 @@ async function submitAudit() {
   ];
   for (const [rc, label] of failedRCs) {
     const checked = document.querySelector(`input[name="rc-${rc}"]:checked`);
-    if (checked && checked.value === '0') {
+    if (checked && (checked.value === '0' || Number(checked.value) === 0)) {
+      // Make sure comment div is visible
+      const commentDiv = document.getElementById(`comment-${rc}`);
+      if (commentDiv) commentDiv.style.display = 'block';
       const comment = document.getElementById(`f-comment-${rc}`)?.value?.trim();
       if (!comment) {
-        alertEl.innerHTML=`<div class="alert alert-error">Please add feedback for: ${label}</div>`; return;
+        alertEl.innerHTML=`<div class="alert alert-error">Please add feedback for: ${label}</div>`;
+        document.getElementById(`f-comment-${rc}`)?.scrollIntoView({ behavior:'smooth', block:'center' });
+        return;
       }
     }
   }
