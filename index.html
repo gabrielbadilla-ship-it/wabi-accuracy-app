@@ -850,6 +850,11 @@ function normalizeScore(raw) {
   return Math.round(n);
 }
 
+function zdLink(ticket) {
+  if (!ticket) return '—';
+  return `<a href="${'https://cookunity7314.zendesk.com/agent/tickets/'}${ticket}" target="_blank" style="color:var(--cu-blue);font-weight:600;text-decoration:none">${ticket} ↗</a>`;
+}
+
 function scoreClass(s) {
   s = normalizeScore(s);
   return s >= 90 ? 'badge-green' : s >= 80 ? 'badge-blue' : s >= 60 ? 'badge-amber' : 'badge-red';
@@ -1139,7 +1144,7 @@ function renderRecordsTable(records) {
   const rows = records.slice().reverse().map(r => {
     const score = normalizeScore(r.total_score);
     return `<tr onclick="openRecord(${r.rowId})" style="cursor:pointer">
-      <td>${r.ticket||'—'}</td>
+      <td>${zdLink(r.ticket)}</td>
       <td>${r.wabi_date||'—'}</td>
       <td>W${r.week}</td>
       <td>${r.month ? MONTH_NAMES[Number(r.month)] || r.month : '—'}</td>
@@ -1228,7 +1233,7 @@ async function loadQueue() {
 async function openRecord(rowId) {
   const r = await api('getRecord', { rowId });
   const score = normalizeScore(r.total_score);
-  document.getElementById('modal-title').textContent = 'Ticket ' + r.ticket;
+  document.getElementById('modal-title').innerHTML = `Ticket <a href='https://cookunity7314.zendesk.com/agent/tickets/${r.ticket}' target='_blank' style='color:var(--cu-blue);text-decoration:none'>${r.ticket} ↗</a>`;
 
   const rcRow=(label,val,max)=>{
     const pct=max>0?Math.round((Number(val)/max)*100):0;
@@ -1610,7 +1615,7 @@ function renderDisputesTable(disputes) {
         ? '<span class="badge badge-green">Accepted</span>'
         : '<span class="badge badge-red">Rejected</span>';
     return `<tr onclick="openDisputeDetail(${JSON.stringify(d).replace(/"/g,'&quot;')})" style="cursor:pointer">
-      <td><strong>${d.ticket}</strong></td>
+      <td>${zdLink(d.ticket)}</td>
       <td>${d.lead_email}</td>
       <td>${d.supervisor}</td>
       <td>W${d.week} / M${d.month}</td>
@@ -1718,7 +1723,7 @@ async function loadAuditQueue() {
     }
     const rows = queue.map(q => `
       <tr style="cursor:pointer" onclick="prefillForm(${JSON.stringify(q).replace(/"/g,'&quot;')})">
-        <td><strong>${q.ticket}</strong></td>
+        <td>${zdLink(q.ticket)}</td>
         <td>${q.lead_name || q.lead_email || '—'}</td>
         <td>W${q.week} / M${q.month}</td>
         <td>${q.wabi_date || '—'}</td>
@@ -1786,7 +1791,7 @@ async function loadCompliance() {
         : '<span class="badge badge-gold">Active</span>';
       const pendingBtns = d.pending_list && d.pending_list.length
         ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
-            ${d.pending_list.slice(0,5).map(p=>`<span class="badge badge-red" title="${p.lead_name}">${p.ticket}</span>`).join('')}
+            ${d.pending_list.slice(0,5).map(p=>`<a href='https://cookunity7314.zendesk.com/agent/tickets/${p.ticket}' target='_blank' class='badge badge-red' title='${p.lead_name}' style='text-decoration:none'>${p.ticket}</a>`).join('')}
             ${d.pending_list.length>5?`<span class="badge badge-gray">+${d.pending_list.length-5} more</span>`:''}
            </div>` : '';
       return `<tr style="${d.is_active?'background:#FFFDF5':''}">
