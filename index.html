@@ -1078,7 +1078,7 @@ async function loadHierarchy() {
     hierarchy.forEach(h => {
       const opt=document.createElement('option');
       opt.value=h.leadEmail; opt.textContent=h.leadName+' ('+h.leadEmail+')';
-      opt.dataset.supervisor=h.supervisor; sel.appendChild(opt);
+      opt.dataset.supervisor=h.supervisorEmail || h.supervisor; sel.appendChild(opt);
       if (leadSel) {
         const o2=document.createElement('option');
         o2.value=h.leadEmail; o2.textContent=h.leadName; leadSel.appendChild(o2);
@@ -1755,7 +1755,7 @@ function prefillForm(q) {
   for (let i = 0; i < leadSel.options.length; i++) {
     if (leadSel.options[i].value === q.lead_email) {
       leadSel.selectedIndex = i;
-      document.getElementById('f-supervisor').value = leadSel.options[i].dataset.supervisor || currentUser.email;
+      document.getElementById('f-supervisor').value = leadSel.options[i].dataset.supervisor || '';
       break;
     }
   }
