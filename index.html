@@ -1177,11 +1177,9 @@ async function loadFeedbackLoop() {
   const twoMonthsAgo = currentMonth > 1 ? currentMonth - 1 : 1;
   const effectiveMonth = month || null; // null = backend filters last 2 months
   try {
-    const d = await api('getFeedbackLoop', {
-      month: effectiveMonth,
-      supervisor: currentUser.email,
-      min_month: String(twoMonthsAgo)
-    });
+    const flParams = { supervisor: currentUser.email, min_month: String(twoMonthsAgo) };
+    if (effectiveMonth) flParams.month = effectiveMonth;
+    const d = await api('getFeedbackLoop', flParams);
 
     // Team metrics
     document.getElementById('fl-metrics').innerHTML = `
