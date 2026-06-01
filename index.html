@@ -542,12 +542,6 @@ tr:hover td{background:#FAFAF7}
       <div class="page-title">Feedback Loop</div>
       <div class="page-sub">Coaching compliance by month</div>
       <div class="filters-bar" style="position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0">
-        <select id="fl-month" onchange="loadFeedbackLoop()">
-          <option value="">All months</option>
-          <option value="1">January</option><option value="2">February</option>
-          <option value="3">March</option><option value="4">April</option>
-          <option value="5">May</option><option value="6">June</option>
-        </select>
         <button class="btn btn-secondary btn-sm" onclick="loadFeedbackLoop()">↺ Refresh</button>
       </div>
       <!-- Team metrics -->
@@ -746,7 +740,7 @@ const HISTORICAL_LEAD_SCORES = {
   "djana@cookunity.com": {17:96.67},
   "mariajoseperilla@cookunity.com": {16:94.0,17:81.25}
 };
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwB1IDaUr-ps7mtEHR9DN9-U1ORf3-AMUNgxvIezH9qc_P2NailzWZ8peMVj3AdRtqguQ/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwZtXioFQpKOR20EkSAcLZAOk7AjOBeGXhIzd_8eI0GbogveZdk9U-laB_Q6tbV3FaI/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -1171,15 +1165,8 @@ function exportCSV() {
 
 // ── FEEDBACK LOOP ──────────────────────────────────────────
 async function loadFeedbackLoop() {
-  const month = document.getElementById('fl-month').value;
-  // Default: last 2 months if no filter selected
-  const currentMonth = new Date().getMonth() + 1; // 1-12
-  const twoMonthsAgo = currentMonth > 1 ? currentMonth - 1 : 1;
-  const effectiveMonth = month || null; // null = backend filters last 2 months
   try {
-    const flParams = { supervisor: currentUser.email, min_month: String(twoMonthsAgo) };
-    if (effectiveMonth) flParams.month = effectiveMonth;
-    const d = await api('getFeedbackLoop', flParams);
+    const d = await api('getFeedbackLoop', { supervisor: currentUser.email });
 
     // Team metrics
     document.getElementById('fl-metrics').innerHTML = `
@@ -1193,13 +1180,13 @@ async function loadFeedbackLoop() {
     const mRows = d.monthBreakdown.map(m => `
       <tr>
         <td>${MONTH_NAMES_LOCAL[m.month]||'M'+m.month}</td>
-        <td>${m.total}</td>
+        <td>${m.supervisor}</td>
         <td style="color:var(--cu-green);font-weight:600">${m.done}</td>
         <td>${m.pending}</td>
         <td><span class="badge ${m.pct>=80?'badge-green':m.pct>=50?'badge-amber':'badge-red'}">${m.pct}%</span></td>
       </tr>`).join('');
     document.getElementById('fl-month-table').innerHTML = mRows
-      ? `<table><thead><tr><th>Month</th><th>Total</th><th>Delivered</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${mRows}</tbody></table>`
+      ? `<table><thead><tr><th>Month</th><th>Supervisor</th><th>Delivered</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${mRows}</tbody></table>`
       : '<div class="empty">No data</div>';
 
     // Update badge
