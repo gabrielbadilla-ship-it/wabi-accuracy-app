@@ -552,7 +552,7 @@ tr:hover td{background:#FAFAF7}
         <div class="metric"><div class="label">Feedback compliance</div><div class="value">—</div></div>
       </div>
       <!-- Month breakdown -->
-      <div class="card"><h3>By month</h3><div id="fl-month-table"></div></div>
+      <div class="card"><div id="fl-month-table"></div></div>
       <!-- Personal queue — sticky header -->
       <div class="page-title" style="font-size:16px;margin-bottom:8px">Your pending coaching</div>
       <div style="position:sticky;top:56px;z-index:9;background:var(--bg);padding-bottom:4px">
@@ -1177,16 +1177,36 @@ async function loadFeedbackLoop() {
 
     // Month breakdown table
     const MONTH_NAMES_LOCAL = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
-    const mRows = d.monthBreakdown.map(m => `
-      <tr>
-        <td>${MONTH_NAMES_LOCAL[m.month]||'M'+m.month}</td>
-        <td>${m.supervisor}</td>
-        <td style="color:var(--cu-green);font-weight:600">${m.done}</td>
-        <td>${m.pending}</td>
-        <td><span class="badge ${m.pct>=80?'badge-green':m.pct>=50?'badge-amber':'badge-red'}">${m.pct}%</span></td>
-      </tr>`).join('');
-    document.getElementById('fl-month-table').innerHTML = mRows
-      ? `<table><thead><tr><th>Month</th><th>Supervisor</th><th>Delivered</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${mRows}</tbody></table>`
+
+    // Group by month
+    const byMonthGroup = {};
+    d.monthBreakdown.forEach(row => {
+      if (!byMonthGroup[row.month]) byMonthGroup[row.month] = [];
+      byMonthGroup[row.month].push(row);
+    });
+
+    const months = Object.keys(byMonthGroup).map(Number).sort((a,b)=>a-b);
+
+    const makeTable = (m, rows) => {
+      const tableRows = rows.map(r => `
+        <tr>
+          <td style="font-size:12px">${r.supervisor}</td>
+          <td style="color:var(--cu-green);font-weight:600;text-align:center">${r.done}</td>
+          <td style="text-align:center">${r.pending}</td>
+          <td><span class="badge ${r.pct>=80?'badge-green':r.pct>=50?'badge-amber':'badge-red'}">${r.pct}%</span></td>
+        </tr>`).join('');
+      return `
+        <div class="card" style="flex:1;margin:0">
+          <h3>${MONTH_NAMES_LOCAL[m]||'M'+m}</h3>
+          <table>
+            <thead><tr><th>Supervisor</th><th>Delivered</th><th>Pending</th><th>Compliance</th></tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </div>`;
+    };
+
+    document.getElementById('fl-month-table').innerHTML = months.length
+      ? `<div style="display:flex;gap:16px;align-items:flex-start">${months.map(m => makeTable(m, byMonthGroup[m])).join('')}</div>`
       : '<div class="empty">No data</div>';
 
     // Update badge
