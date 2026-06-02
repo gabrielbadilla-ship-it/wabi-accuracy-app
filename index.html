@@ -238,11 +238,38 @@ tr:hover td{background:#FAFAF7}
         <div class="metric"><div class="label">Pending coaching</div><div class="value">—</div></div>
         <div class="metric"><div class="label">Below target (&lt;80)</div><div class="value">—</div></div>
       </div>
-      <div class="card"><h3>Avg score by month</h3><div class="chart-wrap"><canvas id="chart-dash-mom"></canvas></div></div>
-      <div class="charts-2col">
-        <div class="card"><h3>Score distribution</h3><div class="chart-wrap"><canvas id="chart-bands"></canvas></div></div>
-        <div class="card"><h3>Root cause frequency (fails %)</h3><div class="chart-wrap"><canvas id="chart-rc"></canvas></div></div>
+      <!-- Category donuts -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px" id="dash-cat-donuts">
+        <div class="card" style="text-align:center;padding:14px">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Validation</div>
+          <div style="position:relative;width:90px;height:90px;margin:0 auto 8px"><canvas id="d-val" width="90" height="90"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--cu-black)" id="pct-val">—</div></div>
+          <div style="font-size:10px;color:var(--text-muted);text-align:left" id="rc-val-legend"></div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:5px;border-top:1px solid var(--border);text-align:left" id="mom-val"></div>
+        </div>
+        <div class="card" style="text-align:center;padding:14px">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Issue Resolution</div>
+          <div style="position:relative;width:90px;height:90px;margin:0 auto 8px"><canvas id="d-ir" width="90" height="90"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--cu-black)" id="pct-ir">—</div></div>
+          <div style="font-size:10px;color:var(--text-muted);text-align:left" id="rc-ir-legend"></div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:5px;border-top:1px solid var(--border);text-align:left" id="mom-ir"></div>
+        </div>
+        <div class="card" style="text-align:center;padding:14px">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Process & Escalation</div>
+          <div style="position:relative;width:90px;height:90px;margin:0 auto 8px"><canvas id="d-proc" width="90" height="90"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--cu-black)" id="pct-proc">—</div></div>
+          <div style="font-size:10px;color:var(--text-muted);text-align:left" id="rc-proc-legend"></div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:5px;border-top:1px solid var(--border);text-align:left" id="mom-proc"></div>
+        </div>
+        <div class="card" style="text-align:center;padding:14px">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Coaching & Guidance</div>
+          <div style="position:relative;width:90px;height:90px;margin:0 auto 8px"><canvas id="d-cg" width="90" height="90"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--cu-black)" id="pct-cg">—</div></div>
+          <div style="font-size:10px;color:var(--text-muted);text-align:left" id="rc-cg-legend"></div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:5px;border-top:1px solid var(--border);text-align:left" id="mom-cg"></div>
+        </div>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card"><h3>Avg score by month</h3><div class="chart-wrap"><canvas id="chart-dash-mom"></canvas></div></div>
+        <div class="card"><h3>Score by contact reason</h3><div class="chart-wrap"><canvas id="chart-cr"></canvas></div></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px"><div id="dash-cr-table" style="overflow-x:auto"></div></div>
       <div class="card"><h3>By supervisor</h3><div id="dash-sup-table"></div></div>
     </div>
 
@@ -740,7 +767,7 @@ const HISTORICAL_LEAD_SCORES = {
   "djana@cookunity.com": {17:96.67},
   "mariajoseperilla@cookunity.com": {16:94.0,17:81.25}
 };
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw0lWQDIdIg8IwNdOMbYwWsqzS3i4B1zW4qL_UsWX7xrtMLw6NEYbN2XhE39Ge_0lFYQg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXJNZjQJHNxAvA8WOQaqGvN-nOjwV6F7m5T4R5KwKQ68BYNyUM650hwnZggjpGA4SfoA/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const CURRENT_HALF = 'H1 - 2026';
 
@@ -865,6 +892,8 @@ function statusClass(s) {
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────
+let chartDonutVal, chartDonutIR, chartDonutProc, chartDonutCG, chartCR;
+
 async function loadDashboard() {
   const params = {
     month: document.getElementById('dash-month').value,
@@ -872,7 +901,7 @@ async function loadDashboard() {
     half: CURRENT_HALF,
   };
   try {
-    const d = await api('getDashboard', params);
+    const d = await api('getDashboardV2', params);
     const belowTarget = (d.byBand['Below 60']||0) + (d.byBand['60-79']||0);
     document.getElementById('dash-metrics').innerHTML = `
       <div class="metric"><div class="label">Total audits</div><div class="value">${d.total}</div></div>
@@ -880,9 +909,9 @@ async function loadDashboard() {
       <div class="metric"><div class="label">Pending coaching</div><div class="value amber">${d.pending||0}</div></div>
       <div class="metric"><div class="label">Below target</div><div class="value ${belowTarget>0?'red':''}">${belowTarget}</div></div>
     `;
-    renderBandsChart(d.byBand);
-    renderRCChart(d.rcFrequency, d.rcPct, d.rcTotal);
     renderDashMomChart(d.avgByMonth);
+    renderCategoryDonuts(d.cat, d.prevCat, d.rc, params.month);
+    renderContactReasonChart(d.contactReasons);
     const rows = Object.entries(d.bySupervisor||{}).map(([sup,data]) => `
       <tr><td>${sup}</td><td>${data.count}</td>
       <td><span class="badge ${data.avgScore>=80?'badge-green':data.avgScore>=60?'badge-amber':'badge-red'}">${data.avgScore}%</span></td></tr>`).join('');
@@ -932,24 +961,108 @@ function renderRCChart(data, pct, total) {
   });
 }
 
+function scoreColor(s) {
+  return s >= 90 ? '#218848' : s >= 80 ? '#475CC7' : s >= 60 ? '#F96F15' : '#AA0061';
+}
+
+function renderDonut(canvasId, pct, color) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return null;
+  const c = ctx.getContext('2d');
+  if (window['_donut_'+canvasId]) window['_donut_'+canvasId].destroy();
+  const chart = new Chart(c, {
+    type: 'doughnut',
+    data: { datasets: [{ data: [pct, 100-pct], backgroundColor: [color, '#F0EFE9'], borderWidth: 0 }] },
+    options: { cutout: '72%', responsive: false, plugins: { legend:{display:false}, tooltip:{enabled:false} }, animation:{duration:500} }
+  });
+  window['_donut_'+canvasId] = chart;
+  return chart;
+}
+
+function renderCategoryDonuts(cat, prevCat, rc, monthFilter) {
+  const cats = [
+    { id:'val',  pct:cat.val,  rcs:[['Context Oversight', rc.co, rc.fail_co], ['Evidence Validation', rc.ev, rc.fail_ev]], prev: prevCat?.val },
+    { id:'ir',   pct:cat.ir,   rcs:[['Wrong Adjustment', rc.wa, rc.fail_wa], ['Comp. w/o Resolution', rc.cwr, rc.fail_cwr]], prev: prevCat?.ir },
+    { id:'proc', pct:cat.proc, rcs:[['Lack of Process Align.', rc.lpa, rc.fail_lpa], ['Incorrect Esc. Reason', rc.ier, rc.fail_ier]], prev: prevCat?.proc },
+    { id:'cg',   pct:cat.cg,   rcs:[['Coaching & Guidance', rc.cg, rc.fail_cg]], prev: prevCat?.cg },
+  ];
+  cats.forEach(c => {
+    const color = scoreColor(c.pct);
+    renderDonut('d-'+c.id, c.pct, color);
+    document.getElementById('pct-'+c.id).textContent = c.pct+'%';
+    document.getElementById('pct-'+c.id).style.color = color;
+    // RC legend
+    document.getElementById('rc-'+c.id+'-legend').innerHTML = c.rcs.map(([label, pct, fails]) =>
+      `<div style="display:flex;justify-content:space-between;padding:2px 0">
+        <span>${label}</span>
+        <span style="font-weight:600;color:${scoreColor(pct)}">${pct}%</span>
+      </div>`).join('');
+    // MoM
+    const momEl = document.getElementById('mom-'+c.id);
+    if (c.prev !== null && c.prev !== undefined && monthFilter) {
+      const diff = c.pct - c.prev;
+      const totalFails = c.rcs.reduce((s,[,, f]) => s+f, 0);
+      momEl.innerHTML = `<span style="color:${diff>=0?'#218848':'#AA0061'}">${diff>=0?'↑':'↓'} ${Math.abs(diff)}% vs prev month</span> · ${totalFails} affected`;
+    } else {
+      const totalFails = c.rcs.reduce((s,[,, f]) => s+f, 0);
+      momEl.textContent = totalFails + ' reviews affected';
+    }
+  });
+}
+
+function renderContactReasonChart(data) {
+  if (!data || !data.length) return;
+  const ctx = document.getElementById('chart-cr');
+  if (!ctx) return;
+  if (chartCR) chartCR.destroy();
+  const labels = data.map(d => d.reason);
+  const scores = data.map(d => d.avgScore);
+  chartCR = new Chart(ctx.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: scores, backgroundColor: scores.map(s => scoreColor(s)), borderRadius: 4, borderSkipped: false }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      scales: { x: { min:60, max:100, grid:{color:'#F2F1EC'}, ticks:{callback:v=>v+'%',font:{size:10}} }, y:{grid:{display:false},ticks:{font:{size:10}}} },
+      plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.raw}% avg score`}} } }
+  });
+  // Table
+  const rows = data.map(d => `<tr>
+    <td style="padding:8px 12px">${d.reason}</td>
+    <td style="text-align:center;color:var(--text-muted)">${d.reviewed}</td>
+    <td style="text-align:center"><span class="badge ${scoreClass(d.avgScore)}">${d.avgScore}%</span></td>
+    <td style="text-align:center;color:${d.fails>0?'var(--cu-magenta)':'var(--text-muted)'};font-weight:${d.fails>0?'600':'400'}">${d.fails}</td>
+  </tr>`).join('');
+  document.getElementById('dash-cr-table').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#FAFAF7">
+        <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Contact reason</th>
+        <th style="padding:8px 12px;text-align:center;font-size:11px;color:var(--text-muted);text-transform:uppercase">Reviews</th>
+        <th style="padding:8px 12px;text-align:center;font-size:11px;color:var(--text-muted);text-transform:uppercase">Avg score</th>
+        <th style="padding:8px 12px;text-align:center;font-size:11px;color:var(--text-muted);text-transform:uppercase">Fails (&lt;80%)</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
 function renderDashMomChart(avgByMonth) {
   if (!avgByMonth || !avgByMonth.length) return;
   const ctx = document.getElementById('chart-dash-mom').getContext('2d');
   if (chartDashMom) chartDashMom.destroy();
+  const labels = avgByMonth.map(d => MONTH_NAMES[d.month] || 'M'+d.month);
   chartDashMom = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: avgByMonth.map(d => MONTH_NAMES[d.month] || 'M'+d.month),
-      datasets: [{
-        label: 'Avg score', data: avgByMonth.map(d => d.avg),
-        borderColor: '#FFB81C', backgroundColor: 'rgba(255,184,28,.1)',
-        fill: true, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#FFB81C'
-      }]
+      labels,
+      datasets: [
+        { label: 'Avg score', data: avgByMonth.map(d => d.avg),
+          borderColor: '#FFB81C', backgroundColor: 'rgba(255,184,28,.1)',
+          fill: true, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#FFB81C' },
+        { label: 'Target 80%', data: labels.map(() => 80),
+          borderColor: '#AA0061', borderDash: [5,4], pointRadius: 0, borderWidth: 1.5, fill: false }
+      ]
     },
     options: { responsive:true, maintainAspectRatio:false,
-      scales:{ y:{min:0,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}} },
-      plugins:{ legend:{display:false},
-        tooltip:{ callbacks:{ label: c => ` ${c.raw}%` } } } }
+      scales:{ y:{min:60,max:100,grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}} },
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.dataset.label}: ${c.raw}%` } } } }
   });
 }
 
@@ -1788,12 +1901,19 @@ async function loadCompliance() {
     compSup.innerHTML = '<option value="">All supervisors</option>' +
       sups.map(s => `<option value="${s}" ${s===curSup?'selected':''}>${s}</option>`).join('');
 
+    // Load incidents for markers
+    let incidents = {};
+    try { const inc = await api('getIncidents'); inc.forEach(i => { incidents[i.week] = i.note; }); } catch(e) {}
+
     const rows = data.map(d => {
       const pct = d.compliance;
       const color = pct >= 100 ? 'badge-green' : pct >= 80 ? 'badge-blue' : pct >= 50 ? 'badge-amber' : 'badge-red';
-      const statusTag = d.is_closed
-        ? '<span class="badge badge-gray">Closed</span>'
-        : '<span class="badge badge-gold">Active</span>';
+      const incidentNote = incidents[d.week];
+      const statusTag = incidentNote
+        ? `<span class="badge badge-amber" title="${incidentNote}">⚠️ Incident</span>`
+        : d.is_closed
+          ? '<span class="badge badge-gray">Closed</span>'
+          : '<span class="badge badge-gold">Active</span>';
       const pendingBtns = d.pending_list && d.pending_list.length
         ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
             ${d.pending_list.slice(0,5).map(p=>`<a href='https://cookunity7314.zendesk.com/agent/tickets/${p.ticket}' target='_blank' class='badge badge-red' title='${p.lead_name}' style='text-decoration:none'>${p.ticket}</a>`).join('')}
