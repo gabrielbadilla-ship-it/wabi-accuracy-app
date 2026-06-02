@@ -227,6 +227,7 @@ tr:hover td{background:var(--card-bg)}
       <strong id="user-name">—</strong>
       <div id="user-email" style="font-size:11px;color:#888;margin-top:2px"></div>
       <span class="role-tag" id="user-role-badge">viewer</span>
+      <button id="dark-toggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode" style="background:transparent;border:0.5px solid rgba(255,255,255,0.15);border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;transition:border .25s">🌙</button>
       <span class="sign-out" onclick="signOut()">Sign out</span>
     </div>
   </div>
@@ -814,13 +815,13 @@ function manualLogin() {
   initApp();
 }
 
-async function toggleDarkMode() {
+function toggleDarkMode() {
   const isDark = document.body.classList.toggle('dark-mode');
   document.getElementById('dark-toggle').textContent = isDark ? '☀️' : '🌙';
   localStorage.setItem('wabi-dark', isDark ? '1' : '0');
 }
 
-function initApp() {
+async function initApp() {
   // Restore dark mode preference
   if (localStorage.getItem('wabi-dark') === '1') {
     document.body.classList.add('dark-mode');
