@@ -1954,10 +1954,9 @@ async function loadCompliance() {
 }
 
 function toggleComplianceDetail(rowId, weekData, weeks, incidents) {
-  const detailRow   = document.getElementById(rowId + '-detail');
-  const detailInner = document.getElementById(rowId + '-detail-inner');
-  const arrow       = document.getElementById(rowId + '-arrow');
-  const isOpen      = detailRow.style.display !== 'none';
+  const detailRow = document.getElementById(rowId + '-detail');
+  const arrow     = document.getElementById(rowId + '-arrow');
+  const isOpen    = detailRow.style.display !== 'none';
 
   if (isOpen) {
     detailRow.style.display = 'none';
@@ -1967,48 +1966,44 @@ function toggleComplianceDetail(rowId, weekData, weeks, incidents) {
   arrow.textContent = '▼';
   detailRow.style.display = '';
 
-  const rows = weeks.map(w => {
+  // Clear existing cells
+  while (detailRow.firstChild) detailRow.removeChild(detailRow.firstChild);
+
+  // Legend cell (sticky left)
+  const legendTd = document.createElement('td');
+  legendTd.style.cssText = 'padding:6px 12px;font-size:10px;color:var(--text-muted);background:#FAFAF7;position:sticky;left:0;z-index:1;font-weight:600;white-space:nowrap;border-right:0.5px solid var(--border)';
+  legendTd.innerHTML = 'A = Assigned<br>C = Completed<br>P = Pending';
+  detailRow.appendChild(legendTd);
+
+  // Overall spacer
+  const spacer = document.createElement('td');
+  spacer.style.cssText = 'background:#FAFAF7;border-right:0.5px solid var(--border)';
+  detailRow.appendChild(spacer);
+
+  // One td per week
+  weeks.forEach(w => {
+    const td = document.createElement('td');
+    td.style.cssText = 'text-align:center;padding:6px 4px;background:#FAFAF7;border-right:0.5px solid var(--border)';
     const incNote = incidents[w];
-    const d = weekData[w];
-    if (!d && !incNote) return '';
-
-    const statusTag = incNote
-      ? `<span class="badge badge-amber">⚠️ Incident</span>`
-      : d.is_active
-        ? '<span class="badge badge-gold">Active</span>'
-        : '<span class="badge badge-gray">Closed</span>';
-
     if (incNote) {
-      return `<tr style="border-bottom:0.5px solid var(--border)">
-        <td style="padding:7px 10px;font-size:12px;font-weight:600;color:var(--text)">W${w}</td>
-        <td colspan="3" style="padding:7px 10px;font-size:12px;color:var(--text-muted);font-style:italic">${incNote}</td>
-        <td style="padding:7px 10px">${statusTag}</td>
-      </tr>`;
+      td.innerHTML = '<span style="font-size:10px;color:var(--text-muted);font-style:italic">Incident</span>';
+    } else {
+      const d = weekData[w];
+      if (!d) {
+        td.innerHTML = '<span style="color:var(--text-muted);font-size:11px">—</span>';
+      } else {
+        const statusTag = d.is_active
+          ? '<span style="font-size:10px;color:#B8860B;font-weight:600">Active</span>'
+          : '<span style="font-size:10px;color:var(--text-muted)">Closed</span>';
+        td.innerHTML = `
+          <div style="font-size:10px;color:var(--text-muted)">A: ${d.assigned}</div>
+          <div style="font-size:10px;color:var(--cu-green);font-weight:600">C: ${d.completed}</div>
+          <div style="font-size:10px;color:${d.pending>0?'var(--cu-magenta)':'var(--text-muted)'}">P: ${d.pending}</div>
+          <div style="margin-top:2px">${statusTag}</div>`;
+      }
     }
-
-    const pct = d.compliance;
-    const col = pct >= 100 ? 'var(--cu-green)' : pct >= 80 ? 'var(--cu-blue)' : pct >= 50 ? 'var(--cu-orange)' : 'var(--cu-magenta)';
-
-    return `<tr style="border-bottom:0.5px solid var(--border)">
-      <td style="padding:7px 10px;font-size:12px;font-weight:600;color:var(--text)">W${w}</td>
-      <td style="padding:7px 10px;font-size:12px;text-align:center;color:var(--text-muted)">${d.assigned}</td>
-      <td style="padding:7px 10px;font-size:12px;text-align:center;color:var(--cu-green);font-weight:600">${d.completed}</td>
-      <td style="padding:7px 10px;font-size:12px;text-align:center;color:${d.pending>0?'var(--cu-magenta)':'var(--text-muted)'}">${d.pending}</td>
-      <td style="padding:7px 10px">${statusTag}</td>
-    </tr>`;
-  }).join('');
-
-  detailInner.innerHTML = `
-    <table style="width:100%;border-collapse:collapse;font-size:12px">
-      <thead><tr style="background:var(--border)">
-        <th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--text-muted);text-transform:uppercase">Week</th>
-        <th style="padding:6px 10px;text-align:center;font-size:10px;color:var(--text-muted);text-transform:uppercase">Assigned</th>
-        <th style="padding:6px 10px;text-align:center;font-size:10px;color:var(--text-muted);text-transform:uppercase">Completed</th>
-        <th style="padding:6px 10px;text-align:center;font-size:10px;color:var(--text-muted);text-transform:uppercase">Pending</th>
-        <th style="padding:6px 10px;text-align:center;font-size:10px;color:var(--text-muted);text-transform:uppercase">Status</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
+    detailRow.appendChild(td);
+  });
 }
 
 
