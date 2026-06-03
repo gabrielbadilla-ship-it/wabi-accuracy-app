@@ -1413,7 +1413,7 @@ async function openRecord(rowId) {
       </div>`).join('')}
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:700;text-transform:uppercase">Status</div>
     <span class="badge ${statusClass(r.review_status)}">${r.review_status||'Pending'}</span>
-    ${(currentRole==='supervisor'||currentRole==='admin')?`
+    ${(currentRole==='supervisor'||currentRole==='admin'||currentRole==='qa')?`
     <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
       <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px">Supervisor action</div>
       <div class="form-grid">
@@ -1436,7 +1436,7 @@ async function openRecord(rowId) {
     </div>`:''}
   `;
 
-  document.getElementById('modal-actions').innerHTML=(currentRole==='supervisor'||currentRole==='admin')
+  document.getElementById('modal-actions').innerHTML=(currentRole==='supervisor'||currentRole==='admin'||currentRole==='qa')
     ?`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveSupAction(${r.rowId})">Save coaching date</button>`
     :`<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
@@ -1751,7 +1751,7 @@ function renderDisputesTable(disputes) {
 
 function openDisputeDetail(d) {
   const score = normalizeScore(d.total_score);
-  const isAdmin = currentRole === 'admin';
+  const isAdmin = currentRole === 'admin' || currentRole === 'qa';
   const isOpen  = !d.dispute_accepted || d.dispute_accepted === '';
 
   const commentsHtml = [
