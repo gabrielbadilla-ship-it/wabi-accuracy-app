@@ -1899,11 +1899,13 @@ async function loadCompliance() {
 
     const headerCols = weeks.map(w => {
       const incNote = incidents[w];
-      return `<th style="text-align:center;min-width:52px;white-space:nowrap;font-size:10px">${incNote ? `<span title="${incNote}" style="cursor:help">W${w} ⚠️</span>` : `W${w}`}</th>`;
+      return `<th style="text-align:center;min-width:52px;white-space:nowrap;font-size:10px;padding:8px 6px">${incNote ? `<span title="${incNote}" style="cursor:help">W${w}<br>⚠️</span>` : `W${w}`}</th>`;
     }).join('');
 
     const rows = Object.entries(supMap).sort((a,b) => a[0].localeCompare(b[0])).map(([sup, weekData]) => {
       const cells = weeks.map(w => {
+        const incNote = incidents[w];
+        if (incNote) return `<td style="text-align:center;font-size:16px" title="${incNote}">⚠️</td>`;
         const d = weekData[w];
         if (!d) return `<td style="text-align:center;color:var(--text-muted);font-size:12px">—</td>`;
         const pct = d.compliance;
@@ -1925,29 +1927,31 @@ async function loadCompliance() {
       const incStr = JSON.stringify(incidents).replace(/"/g,'&quot;');
 
       return `
-        <tr style="cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''" onclick="toggleComplianceDetail('${rowId}', ${weekDataStr}, ${weeksStr}, ${incStr})">
-          <td style="font-size:12px;white-space:nowrap">
-            <span style="margin-right:6px;font-size:10px;color:var(--text-muted);transition:transform .2s;display:inline-block" id="${rowId}-arrow">▶</span>
+        <tr style="cursor:pointer;border-bottom:0.5px solid var(--border)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''" onclick="toggleComplianceDetail('${rowId}', ${weekDataStr}, ${weeksStr}, ${incStr})">
+          <td style="font-size:12px;white-space:nowrap;padding:9px 12px;position:sticky;left:0;background:#fff;z-index:1">
+            <span style="margin-right:6px;font-size:10px;color:var(--text-muted)" id="${rowId}-arrow">▶</span>
             ${sup}
           </td>
-          <td style="text-align:center"><span style="background:${overallBg};color:${overallCol};font-weight:700;font-size:12px;padding:2px 9px;border-radius:10px">${overallPct}%</span></td>
+          <td style="text-align:center;padding:9px 6px"><span style="background:${overallBg};color:${overallCol};font-weight:700;font-size:12px;padding:2px 9px;border-radius:10px">${overallPct}%</span></td>
           ${cells}
         </tr>
         <tr id="${rowId}-detail" style="display:none">
-          <td colspan="${weeks.length + 2}" style="padding:0;background:var(--bg);border-bottom:2px solid var(--border)">
+          <td colspan="${weeks.length + 2}" style="padding:0;background:#FAFAF7;border-bottom:2px solid var(--border)">
             <div id="${rowId}-detail-inner" style="padding:10px 24px"></div>
           </td>
         </tr>`;
     }).join('');
 
     document.getElementById('compliance-table').innerHTML = `
-      <div style="overflow-x:auto">
+      <div style="overflow-x:auto;max-height:600px;overflow-y:auto">
         <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead><tr style="background:var(--cu-black)">
-            <th style="padding:8px 12px;text-align:left;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Supervisor</th>
-            <th style="padding:8px 10px;text-align:center;color:#FFB81C;font-size:10px;text-transform:uppercase;white-space:nowrap">Overall</th>
-            ${headerCols}
-          </tr></thead>
+          <thead style="position:sticky;top:0;z-index:3">
+            <tr style="background:var(--cu-black)">
+              <th style="padding:8px 12px;text-align:left;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;position:sticky;left:0;z-index:4;background:var(--cu-black)">Supervisor</th>
+              <th style="padding:8px 10px;text-align:center;color:#FFB81C;font-size:10px;text-transform:uppercase;white-space:nowrap">Overall</th>
+              ${headerCols}
+            </tr>
+          </thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
@@ -1970,18 +1974,34 @@ function toggleComplianceDetail(rowId, weekData, weeks, incidents) {
 
   const ZD = 'https://cookunity7314.zendesk.com/agent/tickets/';
   const rows = weeks.map(w => {
+    const incNote = incidents[w];
     const d = weekData[w];
-    if (!d) return '';
-    const pct = d.compliance;
-    const col = pct >= 100 ? 'var(--cu-green)' : pct >= 80 ? 'var(--cu-blue)' : pct >= 50 ? 'var(--cu-orange)' : 'var(--cu-magenta)';
-    const statusTag = incidents[w]
+    if (!d && !incNote) return '';
+
+    const statusTag = incNote
       ? `<span class="badge badge-amber">⚠️ Incident</span>`
       : d.is_active
         ? '<span class="badge badge-gold">Active</span>'
         : '<span class="badge badge-gray">Closed</span>';
+
+    if (incNote) {
+      return `<tr style="border-bottom:0.5px solid var(--border)">
+        <td style="padding:7px 10px;font-size:12px;font-weight:600;color:var(--text)">W${w}</td>
+        <td colspan="4" style="padding:7px 10px;font-size:12px;color:var(--text-muted);font-style:italic">${incNote}</td>
+        <td style="padding:7px 10px">${statusTag}</td>
+      </tr>`;
+    }
+
+    const pct = d.compliance;
+    const col = pct >= 100 ? 'var(--cu-green)' : pct >= 80 ? 'var(--cu-blue)' : pct >= 50 ? 'var(--cu-orange)' : 'var(--cu-magenta)';
+
+    // Show ALL pending (even closed weeks)
     const pendingLinks = d.pending_list && d.pending_list.length
       ? d.pending_list.map(p => `<a href="${ZD}${p.ticket}" target="_blank" style="color:var(--cu-blue);font-size:11px;margin-right:6px">${p.ticket}</a>`).join('')
-      : '<span style="color:var(--text-muted);font-size:11px">—</span>';
+      : d.pending > 0
+        ? `<span style="color:var(--text-muted);font-size:11px">${d.pending} not completed</span>`
+        : '<span style="color:var(--text-muted);font-size:11px">—</span>';
+
     return `<tr style="border-bottom:0.5px solid var(--border)">
       <td style="padding:7px 10px;font-size:12px;font-weight:600;color:var(--text)">W${w}</td>
       <td style="padding:7px 10px;font-size:12px;text-align:center;color:var(--text-muted)">${d.assigned}</td>
