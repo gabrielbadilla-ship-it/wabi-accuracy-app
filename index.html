@@ -1934,7 +1934,7 @@ async function loadCompliance() {
           <td style="text-align:center;padding:9px 6px"><span style="background:${overallBg};color:${overallCol};font-weight:700;font-size:12px;padding:2px 9px;border-radius:10px">${overallPct}%</span></td>
           ${cells}
         </tr>
-        <tr id="${rowId}-detail" style="display:none;border-bottom:2px solid var(--cu-gold);background:#FAFAF7"></tr>`;
+        <tr id="${rowId}-detail" style="display:none"></tr>`;
     }).join('');
 
     document.getElementById('compliance-table').innerHTML = `
@@ -1961,48 +1961,67 @@ function toggleComplianceDetail(rowId, weekData, weeks, incidents) {
   if (isOpen) {
     detailRow.style.display = 'none';
     arrow.textContent = '▶';
+    // Remove the 3 extra rows if they exist
+    ['assigned','completed','pending'].forEach(type => {
+      const r = document.getElementById(rowId + '-' + type);
+      if (r) r.remove();
+    });
     return;
   }
   arrow.textContent = '▼';
   detailRow.style.display = '';
 
-  // Clear existing cells
-  while (detailRow.firstChild) detailRow.removeChild(detailRow.firstChild);
+  const refRow = detailRow;
+  const tbody  = refRow.parentNode;
 
-  // Legend cell (sticky left)
-  const legendTd = document.createElement('td');
-  legendTd.style.cssText = 'padding:6px 12px;font-size:10px;color:var(--text-muted);background:#FAFAF7;position:sticky;left:0;z-index:1;font-weight:600;white-space:nowrap;border-right:0.5px solid var(--border)';
-  legendTd.innerHTML = 'A = Assigned<br>C = Completed<br>P = Pending';
-  detailRow.appendChild(legendTd);
+  // Remove existing detail rows if any
+  ['assigned','completed','pending'].forEach(type => {
+    const r = document.getElementById(rowId + '-' + type);
+    if (r) r.remove();
+  });
 
-  // Overall spacer
-  const spacer = document.createElement('td');
-  spacer.style.cssText = 'background:#FAFAF7;border-right:0.5px solid var(--border)';
-  detailRow.appendChild(spacer);
+  // Build 3 rows: Assigned, Completed, Pending
+  const rowDefs = [
+    { id: 'assigned',  label: 'Assigned',  getValue: d => d ? String(d.assigned) : '—',  color: 'var(--text-muted)' },
+    { id: 'completed', label: 'Completed', getValue: d => d ? String(d.completed) : '—', color: 'var(--cu-green)', bold: true },
+    { id: 'pending',   label: 'Pending',   getValue: d => d ? String(d.pending) : '—',   colorFn: d => d && d.pending > 0 ? 'var(--cu-magenta)' : 'var(--text-muted)' },
+  ];
 
-  // One td per week
-  weeks.forEach(w => {
-    const td = document.createElement('td');
-    td.style.cssText = 'text-align:center;padding:6px 4px;background:#FAFAF7;border-right:0.5px solid var(--border)';
-    const incNote = incidents[w];
-    if (incNote) {
-      td.innerHTML = '<span style="font-size:10px;color:var(--text-muted);font-style:italic">Incident</span>';
-    } else {
-      const d = weekData[w];
-      if (!d) {
-        td.innerHTML = '<span style="color:var(--text-muted);font-size:11px">—</span>';
+  rowDefs.forEach((def, rowIdx) => {
+    const tr = document.createElement('tr');
+    tr.id = rowId + '-' + def.id;
+    tr.style.cssText = 'background:#FAFAF7;border-bottom:' + (rowIdx === 2 ? '2px solid var(--cu-gold)' : '0.5px solid var(--border)');
+
+    // Label cell (sticky left)
+    const labelTd = document.createElement('td');
+    labelTd.style.cssText = 'padding:5px 12px;font-size:10px;color:var(--text-muted);background:#FAFAF7;position:sticky;left:0;z-index:1;font-weight:600;white-space:nowrap;border-right:0.5px solid var(--border)';
+    labelTd.textContent = def.label;
+    tr.appendChild(labelTd);
+
+    // Overall spacer
+    const spacer = document.createElement('td');
+    spacer.style.cssText = 'background:#FAFAF7;border-right:0.5px solid var(--border)';
+    tr.appendChild(spacer);
+
+    // One td per week
+    weeks.forEach(w => {
+      const td = document.createElement('td');
+      td.style.cssText = 'text-align:center;padding:5px 4px;background:#FAFAF7;border-right:0.5px solid var(--border)';
+      const incNote = incidents[w];
+      if (incNote) {
+        if (rowIdx === 0) td.innerHTML = '<span style="font-size:10px;color:var(--text-muted);font-style:italic">Incident</span>';
+        else td.innerHTML = '';
       } else {
-        const statusTag = d.is_active
-          ? '<span style="font-size:10px;color:#B8860B;font-weight:600">Active</span>'
-          : '<span style="font-size:10px;color:var(--text-muted)">Closed</span>';
-        td.innerHTML = `
-          <div style="font-size:10px;color:var(--text-muted)">A: ${d.assigned}</div>
-          <div style="font-size:10px;color:var(--cu-green);font-weight:600">C: ${d.completed}</div>
-          <div style="font-size:10px;color:${d.pending>0?'var(--cu-magenta)':'var(--text-muted)'}">P: ${d.pending}</div>
-          <div style="margin-top:2px">${statusTag}</div>`;
+        const d = weekData[w];
+        const val = def.getValue(d);
+        const color = def.colorFn ? def.colorFn(d) : def.color;
+        td.innerHTML = `<span style="font-size:11px;color:${color};${def.bold?'font-weight:600':''}">${val}</span>`;
       }
-    }
-    detailRow.appendChild(td);
+      tr.appendChild(td);
+    });
+
+    // Insert after detailRow
+    tbody.insertBefore(tr, detailRow.nextSibling);
   });
 }
 
