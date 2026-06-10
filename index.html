@@ -1150,6 +1150,13 @@ async function submitAudit() {
     context_oversight: scores.co, evidence_validation: scores.ev,
     wrong_adjustment: scores.wa, comp_without_res: scores.cwr,
     lack_process: scores.lpa, incorrect_esc: scores.ier, coaching: scores.cg,
+    comment_co:  document.getElementById('f-comment-co')?.value  || '',
+    comment_ev:  document.getElementById('f-comment-ev')?.value  || '',
+    comment_wa:  document.getElementById('f-comment-wa')?.value  || '',
+    comment_cwr: document.getElementById('f-comment-cwr')?.value || '',
+    comment_lpa: document.getElementById('f-comment-lpa')?.value || '',
+    comment_ier: document.getElementById('f-comment-ier')?.value || '',
+    comment_cg:  document.getElementById('f-comment-cg')?.value  || '',
   };
   try {
     await api('submitAudit', {}, body);
