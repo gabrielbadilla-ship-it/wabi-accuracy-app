@@ -60,7 +60,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* MAIN */
 #main{flex:1;overflow-y:auto;padding:28px 32px;background:var(--bg)}
-.page{display:none}
+.page{display:none;min-height:100%}
 .page.active{display:block}
 .page-title{font-size:22px;font-weight:700;margin-bottom:4px;color:var(--cu-black)}
 .page-sub{color:var(--text-muted);font-size:13px;margin-bottom:24px}
@@ -2376,9 +2376,7 @@ function renderKB(items) {
       </div>`;
 
     Object.entries(grouped[cat]).forEach(([sub, items]) => {
-      if (sub !== '_') {
-        html += `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin:0 0 10px 2px">${sub}</div>`;
-      }
+
       items.forEach(item => {
         html += `
         <div class="card" style="border-left:4px solid ${cfg.color};margin-bottom:12px;padding:16px 20px">
