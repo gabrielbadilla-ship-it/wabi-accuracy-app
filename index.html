@@ -206,7 +206,7 @@ tr:hover td{background:var(--card-bg)}
       <a onclick="nav('analytics')" data-page="analytics">📈 Analytics</a>
       <a onclick="nav('compliance')" data-page="compliance">✅ Compliance</a>
       <a onclick="nav('disputes')" data-page="disputes">⚖️ Disputes <span class="badge" id="disputes-badge">0</span></a>
-      <a onclick="nav('knowledge')" data-page="knowledge">📚 Knowledge Hub</a>
+      <a onclick="nav('knowledge')" data-page="knowledge">📖 Rubric</a>
       <a onclick="nav('admin')" data-page="admin" id="admin-link" style="display:none">⚙️ Admin</a>
     </nav>
     <div class="user-bar">
@@ -725,7 +725,7 @@ tr:hover td{background:var(--card-bg)}
 
     <!-- KNOWLEDGE HUB -->
     <div id="page-knowledge" class="page">
-      <div class="page-title">Knowledge Hub</div>
+      <div class="page-title">Rubric</div>
       <div class="page-sub">Evaluation guide — root causes, definitions and coaching actions</div>
 
       <div class="filters-bar" style="margin-bottom:20px">
@@ -875,6 +875,8 @@ function nav(page) {
   document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  if (page === 'knowledge') initKnowledge();
+  if (page === 'compliance') loadCompliance();
 }
 
 // ── SCORE HELPERS ──────────────────────────────────────────
