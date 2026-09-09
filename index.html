@@ -206,6 +206,7 @@ tr:hover td{background:var(--card-bg)}
       <a onclick="nav('analytics')" data-page="analytics">📈 Analytics</a>
       <a onclick="nav('compliance')" data-page="compliance">✅ Compliance</a>
       <a onclick="nav('disputes')" data-page="disputes">⚖️ Disputes <span class="badge" id="disputes-badge">0</span></a>
+      <a onclick="nav('knowledge')" data-page="knowledge">📚 Knowledge Hub</a>
       <a onclick="nav('admin')" data-page="admin" id="admin-link" style="display:none">⚙️ Admin</a>
     </nav>
     <div class="user-bar">
@@ -719,6 +720,27 @@ tr:hover td{background:var(--card-bg)}
       </div>
       <div id="compliance-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
       </div>
+    </div>
+
+
+    <!-- KNOWLEDGE HUB -->
+    <div id="page-knowledge" class="page">
+      <div class="page-title">Knowledge Hub</div>
+      <div class="page-sub">Evaluation guide — root causes, definitions and coaching actions</div>
+
+      <div class="filters-bar" style="margin-bottom:20px">
+        <input type="text" id="kb-search" placeholder="🔍  Search root cause or category..." oninput="filterKB()" style="width:320px">
+        <select id="kb-cat-filter" onchange="filterKB()">
+          <option value="">All categories</option>
+          <option value="VALIDATION">Validation</option>
+          <option value="ISSUE RESOLUTION">Issue Resolution</option>
+          <option value="PROCESS & ESCALATION">Process & Escalation</option>
+          <option value="COACHING AND GUIDANCE">Coaching & Guidance</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('kb-search').value='';document.getElementById('kb-cat-filter').value='';filterKB()">✕ Clear</button>
+      </div>
+
+      <div id="kb-content"></div>
     </div>
 
   </div>
@@ -2062,6 +2084,348 @@ function updateCompMetrics(data) {
     <div class="metric"><div class="label">Pending</div><div class="value ${totalPending>0?'red':''}">${totalPending}</div></div>
     <div class="metric"><div class="label">Compliance</div><div class="value ${overallPct>=80?'green':overallPct>=50?'amber':'red'}">${overallPct}%</div></div>`;
 }
+
+// ── KNOWLEDGE HUB ─────────────────────────────────────────
+const KB_DATA = [
+  // ── VALIDATION · CONTEXT ────────────────────────────────
+  {
+    category: "VALIDATION",
+    subcategory: "Context",
+    rootCause: "Customer sentiment",
+    catColor: "#FFB81C",
+    definition: "Lead approved a standard resolution without considering the customer's emotional state or escalation level. Applies when the customer expressed strong frustration, threatened social media exposure, or showed signs of churn risk — situations that may require a resolution outside of standard policy to de-escalate.",
+    questions: [
+      "Did the customer express strong frustration, distress, or a threat (e.g. social media, chargeback)?",
+      "Was the customer's tone visible in the ticket or Wabi context?",
+      "Did the nature of the case (e.g. dangerous foreign object, repeated issue) make sentiment especially relevant?",
+      "Did the Lead's resolution match the emotional weight of the situation?"
+    ],
+    coaching: "Coach the Lead to always review the ticket conversation before approving — not just the Wabi fields. When sentiment signals a risk of churn or escalation, the resolution may need to go beyond standard policy to de-escalate effectively.",
+    skill: "Validation & Investigation"
+  },
+  {
+    category: "VALIDATION",
+    subcategory: "Context",
+    rootCause: "Prior escalations",
+    catColor: "#FFB81C",
+    definition: "Lead approved a resolution without checking whether the customer had previous escalations for the same issue, which could indicate a recurring problem or a pattern that should influence the decision.",
+    questions: [
+      "Did the customer have prior escalations for the same root cause?",
+      "Would knowing about prior escalations have changed the type or amount of compensation?",
+      "Did the Lead's response treat this as a first-time issue when it wasn't?",
+      "Was the customer's frustration level consistent with having experienced the same problem before?"
+    ],
+    coaching: "Coach the Lead to check escalation history in Admin before approving any Wabi. Recurring issues for the same customer signal a pattern that may require a different resolution approach or management visibility.",
+    skill: "Validation & Investigation"
+  },
+  {
+    category: "VALIDATION",
+    subcategory: "Context",
+    rootCause: "Customer profile",
+    catColor: "#FFB81C",
+    definition: "Lead approved a resolution without verifying the customer's profile — e.g. ARPU, LTR, order count, or plan type — which are key factors in determining the appropriate compensation level and approach.",
+    questions: [
+      "Did the Lead verify the customer's ARPU or LTR before approving?",
+      "Was the compensation level appropriate for the customer's value tier?",
+      "Would a High ARPU customer have received the same resolution from a well-informed Lead?",
+      "Did the Specialist include profile information in the Wabi, or should the Lead have looked it up?"
+    ],
+    coaching: "Coach the Lead to always check ARPU and LTR in Admin before approving a compensation. Customer profile directly influences the compensation tier and the level of effort we put into retaining that customer.",
+    skill: "Validation & Investigation"
+  },
+  // ── VALIDATION · EVIDENCE ────────────────────────────────
+  {
+    category: "VALIDATION",
+    subcategory: "Evidence",
+    rootCause: "Account & Platform Records",
+    catColor: "#FFB81C",
+    definition: "Lead approved without checking or requesting verification from internal tools (Braze, Mixpanel, Admin) when account-level information was relevant — e.g. whether a promo was sent, a plan was changed, a skip was processed, or a credit was previously applied.",
+    questions: [
+      "Did the case involve a billing dispute, promo issue, or account action?",
+      "Could Braze, Mixpanel, or Admin have confirmed or contradicted the customer's claim?",
+      "Did the Lead approve based solely on the Specialist's description without verifying internally?",
+      "Would checking Admin have revealed a relevant action (e.g. plan change, prior credit, skip event)?"
+    ],
+    coaching: "Coach the Lead to always validate account-level claims using internal tools before approving. Approving without checking Braze, Mixpanel, or Admin increases the risk of compensating for something the customer or system already handled.",
+    skill: "Validation & Investigation"
+  },
+  {
+    category: "VALIDATION",
+    subcategory: "Evidence",
+    rootCause: "Delivery Evidence",
+    catColor: "#FFB81C",
+    definition: "Lead approved without verifying or requesting delivery-related evidence — e.g. Onfleet tracking, POD, carrier side conversation, or Logistics coordination — when the case involved a delivery issue.",
+    questions: [
+      "Did the case involve an undelivered, delayed, or misdelivered order?",
+      "Was the POD checked or requested before approving?",
+      "Was Onfleet tracking reviewed to confirm the delivery attempt?",
+      "Should a carrier side conversation (UPS, FedEx, Veho, etc.) have been opened before approving?",
+      "Was Logistics contacted when driver coordination was needed?"
+    ],
+    coaching: "Coach the Lead to always verify delivery evidence before approving compensation for delivery issues. POD, Onfleet data, and carrier communication are the primary tools to confirm what actually happened — approving without them leaves the decision unsupported.",
+    skill: "Validation & Investigation"
+  },
+  {
+    category: "VALIDATION",
+    subcategory: "Evidence",
+    rootCause: "Customer Evidence",
+    catColor: "#FFB81C",
+    definition: "Lead approved a compensation without asking the Specialist to include supporting documentation from the customer — e.g. photos of damaged meals, broken seals, foreign objects, or screenshots — when the claim required visual proof to be validated.",
+    questions: [
+      "Did the case involve a physical issue (damaged packaging, foreign object, wrong item)?",
+      "Did the Specialist include customer photos or screenshots in the Wabi?",
+      "Would visual evidence have confirmed or changed the compensation decision?",
+      "Did the Lead approve a claim that required proof without asking for it?"
+    ],
+    coaching: "Coach the Lead that for physical product issues, customer-provided evidence is required before approving. Photos uploaded to the Wabi serve as the proof that the claim is real — approving without them creates a pattern of unverified compensations.",
+    skill: "Validation & Investigation"
+  },
+  // ── ISSUE RESOLUTION · WRONG ADJUSTMENT ──────────────────
+  {
+    category: "ISSUE RESOLUTION",
+    subcategory: "Wrong Adjustment",
+    rootCause: "Compensation type",
+    catColor: "#AA0061",
+    definition: "Lead approved the wrong form of compensation for the case — e.g. approved a credit when a refund was required, or applied a discount when a credit was the correct resolution per policy.",
+    questions: [
+      "Did the case qualify for a refund, credit, or discount per the applicable policy?",
+      "Did the Lead approve a different type than what was warranted?",
+      "Did the Specialist request one type and the Lead approve a different one without justification?",
+      "Is the compensation type aligned with the escalation level and root cause?"
+    ],
+    coaching: "Coach the Lead on the difference between compensation types and when each applies. Credit, refund, and discount are not interchangeable — the correct type depends on the root cause, escalation level, and applicable policy.",
+    skill: "Process & Policy Execution"
+  },
+  {
+    category: "ISSUE RESOLUTION",
+    subcategory: "Wrong Adjustment",
+    rootCause: "Compensation amount",
+    catColor: "#AA0061",
+    definition: "Lead approved a compensation amount that doesn't match the case — either too high (overcompensation without justification) or too low (undercompensation given the customer's profile, sentiment, or nature of the issue). Includes approving the wrong discount percentage or credit tier.",
+    questions: [
+      "Was the approved amount within the correct tier for this customer profile and issue type?",
+      "Did the Lead overcompensate without a clear justification based on context or sentiment?",
+      "Did the Lead undercompensate for a case that warranted a higher tier given ARPU or escalation risk?",
+      "Was the discount percentage or credit amount consistent with the applicable compensation matrix?"
+    ],
+    coaching: "Coach the Lead on how to calibrate compensation amounts using the customer's profile, the nature of the issue, and the applicable matrix. Both overcompensation and undercompensation have operational and financial impact — the goal is accurate, justified decisions.",
+    skill: "Process & Policy Execution"
+  },
+  {
+    category: "ISSUE RESOLUTION",
+    subcategory: "Wrong Adjustment",
+    rootCause: "Compensation omission",
+    catColor: "#AA0061",
+    definition: "Lead denied a compensation request or provided a resolution with no compensation when the case clearly warranted one — either by explicitly rejecting the Specialist's request, or by responding to a Wabi Question without indicating a compensation that should have been applied given the circumstances.",
+    questions: [
+      "Did the case involve a legitimate customer issue that typically warrants compensation?",
+      "Did the Lead reject the Specialist's request without a clear policy-based justification?",
+      "Did the Lead respond to a Wabi Question with guidance only, when the situation also required a compensation to be approved?"
+    ],
+    coaching: "Coach the Lead to distinguish between cases where compensation is discretionary and cases where it is clearly warranted. Denying or omitting compensation without a solid justification leaves the customer without a resolution and the Specialist without clear direction.",
+    skill: "Process & Policy Execution"
+  },
+  // ── PROCESS & ESCALATION ─────────────────────────────────
+  {
+    category: "PROCESS & ESCALATION",
+    subcategory: "",
+    rootCause: "Sup/Management escalation",
+    catColor: "#218848",
+    definition: "Lead approved a resolution that required escalation to a supervisor or manager — e.g. a custom amount outside standard tiers, a policy exception, or a high-value compensation — without flagging it for approval first.",
+    questions: [
+      "Did the compensation amount or type require manager or supervisor approval per policy?",
+      "Did the Lead approve a custom amount or exception without escalating?",
+      "Was the resolution within the Lead's approval authority?",
+      "Would the same decision have required sign-off from a senior team member?"
+    ],
+    coaching: "Coach the Lead on the approval thresholds and escalation triggers they are responsible for recognizing. Approving outside their authority — even with good intent — creates financial and operational risk and bypasses the controls that exist for a reason.",
+    skill: "Process & Policy Execution"
+  },
+  {
+    category: "PROCESS & ESCALATION",
+    subcategory: "",
+    rootCause: "Incorrect Process",
+    catColor: "#218848",
+    definition: "Lead applied a process that didn't correspond to this case — either a standing process that doesn't match the case type, or a standard process that had been temporarily overridden by an incident update or temporary guideline. When the Lead wasn't sure which process currently applied, the case should have been escalated for confirmation before deciding, rather than resolved on assumed or outdated guidance.",
+    questions: [
+      "Did the Lead use the correct standing process for this type of case, or was there a more specific matrix/SOP that should have applied?",
+      "Was there an active incident or temporary SOP override in effect for this case type or period?",
+      "Did the Lead apply the standard process when a specific override was in effect?",
+      "If the Lead wasn't sure which process applied, did they escalate to confirm before deciding?",
+      "Would the outcome have been different had the correct/current process been applied?"
+    ],
+    coaching: "Coach the Lead that when they aren't certain which process currently governs a case — whether because the case type points to a different SOP/matrix, or because an incident/temporary guideline may override the standard one — the right move is to confirm or escalate before deciding, not to proceed on assumed or outdated guidance. Note in the feedback whether this was a standing-process mismatch (triage/training gap) or a missed incident update (comms/currency gap).",
+    skill: "Process & Policy Execution"
+  },
+  {
+    category: "PROCESS & ESCALATION",
+    subcategory: "",
+    rootCause: "Missing next steps",
+    catColor: "#218848",
+    definition: "Lead approved the compensation but did not indicate the necessary next step to fully resolve the case or prevent the issue from recurring — whether a required hand-off to another team (e.g. FSQA for food safety cases, Logistics for delivery issues, or Jira for technical cases) or a needed account update (e.g. correcting delivery instructions, skip dates, or plan settings).",
+    questions: [
+      "Did the case involve a food safety concern that requires an FSQA hand-off?",
+      "Was there a delivery issue that required Logistics coordination or driver contact?",
+      "Did the case reveal a system or technical issue that requires a Jira ticket?",
+      "Did the case involve an account setting that needs correcting to prevent recurrence?",
+      "Would the case be fully resolved without this hand-off or account update?"
+    ],
+    coaching: "Coach the Lead that compensation alone does not close a case when a required hand-off or account correction is involved. FSQA, Logistics, and Jira hand-offs — and account updates like delivery instructions, skip dates, or plan settings — exist to prevent the same issue from recurring. The Lead's role is to ensure the Specialist knows exactly what to do after the Wabi is answered.",
+    skill: "Resolution Ownership"
+  },
+  {
+    category: "PROCESS & ESCALATION",
+    subcategory: "",
+    rootCause: "Escalation reason",
+    catColor: "#218848",
+    definition: "Lead resolved the case without ensuring the escalation reason (ER) was correct — whether by approving an incorrect reason submitted by the Specialist without correcting it, by responding without specifying the correct reason when the Specialist needed direction, or by actively indicating an incorrect or outdated reason themselves (e.g. wrong L1/L2/L3 classification).",
+    questions: [
+      "Did the escalation reason in the Wabi match what actually happened in the case?",
+      "Was there evidence in the Wabi that contradicted the reason selected, and did the Lead catch it?",
+      "Did the Lead's response include a clear, specific escalation reason when one was required?",
+      "Did the Lead indicate an outdated or incorrect L1/L2/L3 classification?",
+      "Would the correct classification have changed how the case is reported or routed?"
+    ],
+    coaching: "Coach the Lead that the escalation reason must be confirmed and communicated as part of resolving the Wabi, not corrected afterward. Approving an incorrect reason, leaving it unspecified, or indicating an outdated one corrupts the data that operations, finance, and leadership use to identify trends and take action.",
+    skill: "Process & Policy Execution"
+  },
+  // ── COACHING AND GUIDANCE ─────────────────────────────────
+  {
+    category: "COACHING AND GUIDANCE",
+    subcategory: "",
+    rootCause: "Validation source",
+    catColor: "#475CC7",
+    definition: "The Lead validated missing information independently — e.g. checked ARPU in Admin, reviewed sentiment in the ticket, or verified a promo in Braze — but did not instruct the Specialist on where to find this information or how to include it in future Wabis.",
+    questions: [
+      "Did the Lead verify information that was missing from the Wabi?",
+      "Did the Lead tell the Specialist where they found that information?",
+      "Did the Lead instruct the Specialist to include this type of information in future escalations?",
+      "Would the Specialist know how to find this information next time based on the Lead's response?"
+    ],
+    coaching: "Coach the Lead that resolving the current case is only half the job. When they verify missing information themselves, they should share the source and the expectation with the Specialist — that's what turns a one-time fix into a repeatable behavior.",
+    skill: "Specialist Development"
+  },
+  {
+    category: "COACHING AND GUIDANCE",
+    subcategory: "",
+    rootCause: "Incomplete Lead response",
+    catColor: "#475CC7",
+    definition: "The Specialist raised a question or concern beyond the compensation request — not directly related to closing the case — and the Lead only addressed the compensation without responding to the additional inquiry.",
+    questions: [
+      "Did the Specialist ask a question or raise a concern beyond the compensation request?",
+      "Was that question answered in the Lead's response?",
+      "Was the question relevant to how the Specialist handles similar cases in the future?",
+      "Would leaving it unanswered affect the Specialist's ability to act correctly next time?"
+    ],
+    coaching: "Coach the Lead that Wabis are a two-way communication tool. When a Specialist asks something beyond the immediate case, ignoring it leaves a knowledge gap that may surface in future escalations or customer interactions.",
+    skill: "Specialist Development"
+  },
+  {
+    category: "COACHING AND GUIDANCE",
+    subcategory: "",
+    rootCause: "Specialist knowledge gap",
+    catColor: "#475CC7",
+    definition: "The Lead's response or the Specialist's Wabi revealed a gap in process or policy knowledge, and the Lead did not take the opportunity to clarify or educate — e.g. the Specialist was unaware a specific SOP existed for that type of case. Applies only to gaps in the Specialist's knowledge that the Lead failed to correct or teach. If the error is the Lead's own misapplication or misinterpretation of a process, use Incorrect Process instead.",
+    questions: [
+      "Did the Specialist's Wabi reveal a misunderstanding of a policy or process?",
+      "Is this a gap in the Specialist's understanding — not an error in the Lead's own decision (which would fall under Incorrect Process)?",
+      "Did the Lead's response address that knowledge gap?",
+      "Was there a teachable moment that the Lead passed on?",
+      "Would the Specialist handle a similar case differently after reading the Lead's response?"
+    ],
+    coaching: "Coach the Lead that knowledge gaps visible in a Wabi are an early signal — catching them here is more efficient than addressing them after a pattern of errors develops. The Lead's response to a Wabi is a coaching touchpoint, not just an approval.",
+    skill: "Specialist Development"
+  },
+];
+
+const CAT_CONFIG = {
+  "VALIDATION":            { color: "#FFB81C", bg: "#FFF8E7", label: "Validation",            icon: "🔍" },
+  "ISSUE RESOLUTION":      { color: "#AA0061", bg: "#FCE8F3", label: "Issue Resolution",       icon: "⚖️" },
+  "PROCESS & ESCALATION":  { color: "#218848", bg: "#EBF7EF", label: "Process & Escalation",   icon: "📋" },
+  "COACHING AND GUIDANCE": { color: "#475CC7", bg: "#EEF0FD", label: "Coaching & Guidance",    icon: "🎯" },
+};
+
+function renderKB(items) {
+  const container = document.getElementById('kb-content');
+  if (!items.length) {
+    container.innerHTML = '<div class="empty">No results found.</div>';
+    return;
+  }
+
+  // Group by category
+  const grouped = {};
+  items.forEach(item => {
+    if (!grouped[item.category]) grouped[item.category] = {};
+    const sub = item.subcategory || '_';
+    if (!grouped[item.category][sub]) grouped[item.category][sub] = [];
+    grouped[item.category][sub].push(item);
+  });
+
+  let html = '';
+  const catOrder = ["VALIDATION","ISSUE RESOLUTION","PROCESS & ESCALATION","COACHING AND GUIDANCE"];
+  catOrder.forEach(cat => {
+    if (!grouped[cat]) return;
+    const cfg = CAT_CONFIG[cat];
+    html += `<div style="margin-bottom:32px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <span style="font-size:20px">${cfg.icon}</span>
+        <h2 style="font-size:17px;font-weight:700;color:${cfg.color};letter-spacing:.03em">${cfg.label}</h2>
+        <div style="flex:1;height:2px;background:${cfg.color};opacity:.2;border-radius:2px"></div>
+      </div>`;
+
+    Object.entries(grouped[cat]).forEach(([sub, items]) => {
+      if (sub !== '_') {
+        html += `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin:0 0 10px 2px">${sub}</div>`;
+      }
+      items.forEach(item => {
+        html += `
+        <div class="card" style="border-left:4px solid ${cfg.color};margin-bottom:12px;padding:16px 20px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+            <div style="font-size:14px;font-weight:700;color:var(--cu-black)">${item.rootCause}</div>
+            <span style="background:${cfg.bg};color:${cfg.color};font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;white-space:nowrap;margin-left:12px">${item.skill}</span>
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">${item.definition}</p>
+
+          <details style="margin-bottom:10px">
+            <summary style="font-size:11px;font-weight:700;color:${cfg.color};cursor:pointer;user-select:none;margin-bottom:6px">
+              🤔 What should I ask myself before selecting this?
+            </summary>
+            <ul style="margin:8px 0 0 0;padding-left:18px">
+              ${item.questions.map(q => `<li style="font-size:11.5px;color:var(--cu-black);margin-bottom:4px;line-height:1.5">${q}</li>`).join('')}
+            </ul>
+          </details>
+
+          <div style="background:#F7F6F2;border-radius:8px;padding:10px 14px;border-left:3px solid ${cfg.color}">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${cfg.color};margin-bottom:4px">💡 Coaching action</div>
+            <p style="font-size:11.5px;color:var(--cu-black);margin:0;line-height:1.6">${item.coaching}</p>
+          </div>
+        </div>`;
+      });
+    });
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+}
+
+function filterKB() {
+  const search = document.getElementById('kb-search').value.toLowerCase();
+  const catFilter = document.getElementById('kb-cat-filter').value;
+  const filtered = KB_DATA.filter(item => {
+    const matchCat = !catFilter || item.category === catFilter;
+    const matchSearch = !search ||
+      item.rootCause.toLowerCase().includes(search) ||
+      item.definition.toLowerCase().includes(search) ||
+      item.coaching.toLowerCase().includes(search) ||
+      item.subcategory.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+  renderKB(filtered);
+}
+
+function initKnowledge() {
+  renderKB(KB_DATA);
+}
+
 </script>
 </body>
 </html>
