@@ -24,7 +24,6 @@
   --white:      #FFFFFF;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
 
 /* LOGIN */
@@ -42,8 +41,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 #login-error{color:#f87171;font-size:12px;text-align:center;min-height:16px}
 
 /* APP SHELL */
-#app{display:none}
-#sidebar{position:fixed;left:0;top:0;width:224px;height:100vh;background:var(--cu-black);overflow-y:auto;display:flex;flex-direction:column;z-index:100}
+#app{display:none;height:100vh;flex-direction:row;overflow:hidden}
+#sidebar{width:224px;height:100vh;background:var(--cu-black);overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column}
 #sidebar .brand{padding:20px 16px 14px;border-bottom:1px solid #3a3938}
 #sidebar .brand .logo{color:var(--cu-gold);font-size:15px;font-weight:700;letter-spacing:-.3px}
 #sidebar .brand .logo span{color:var(--white)}
@@ -60,7 +59,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 #sidebar .user-bar .sign-out:hover{color:#fff}
 
 /* MAIN */
-#main{margin-left:224px;height:100vh;overflow-y:scroll;padding:28px 32px;background:var(--bg)}
+#main{flex:1;overflow-y:auto;padding:28px 32px;background:var(--bg)}
 .page{display:none}
 .page.active{display:block}
 .page-title{font-size:22px;font-weight:700;margin-bottom:4px;color:var(--cu-black)}
