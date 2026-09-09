@@ -728,7 +728,7 @@ tr:hover td{background:var(--card-bg)}
       <div class="page-title">Rubric</div>
       <div class="page-sub">Evaluation guide — root causes, definitions and coaching actions</div>
 
-      <div class="filters-bar" style="margin-bottom:20px">
+      <div class="filters-bar" style="position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0;margin-bottom:8px">
         <input type="text" id="kb-search" placeholder="🔍  Search root cause or category..." oninput="filterKB()" style="width:320px">
         <select id="kb-cat-filter" onchange="filterKB()">
           <option value="">All categories</option>
@@ -740,7 +740,7 @@ tr:hover td{background:var(--card-bg)}
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('kb-search').value='';document.getElementById('kb-cat-filter').value='';filterKB()">✕ Clear</button>
       </div>
 
-      <div id="kb-content"></div>
+      <div id="kb-content" style="overflow-y:auto;max-height:calc(100vh - 200px)"></div>
     </div>
 
   </div>
