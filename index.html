@@ -365,115 +365,103 @@ tr:hover td{background:var(--card-bg)}
       </div>
 
       <div class="card">
-        <div class="section-title">1. Validation — 25 pts</div>
-        <div class="rc-group">
-          <h4>Context Oversight — 10 pts</h4>
-          <p>All key background details verified: recurring issue, customer history, churn indicators, ARPU, prior compensation.</p>
-          <div class="rc-options">
-            <label><input type="radio" name="rc-co" value="10" onchange="calcScore();toggleComment('co',false)"> <span>✓ Pass (10 pts)</span></label>
-            <label><input type="radio" name="rc-co" value="0" onchange="calcScore();toggleComment('co',true)"> <span>✗ Fail (−10 pts)</span></label>
-          </div>
-          <div id="comment-co" style="display:none;margin-top:10px">
-            <div class="field"><label>Feedback — Context Oversight *</label>
-              <textarea id="f-comment-co" placeholder="Explain what was missing or incorrect and what good looks like..." rows="3"></textarea></div>
-          </div>
-        </div>
-        <div class="rc-group">
-          <h4>Evidence Validation — 15 pts</h4>
-          <p>Required validations documented: Admin, tracking, POD, screenshots, Braze/Mixpanel logs.</p>
-          <div class="rc-options">
-            <label><input type="radio" name="rc-ev" value="15" onchange="calcScore();toggleComment('ev',false)"> <span>✓ Pass (15 pts)</span></label>
-            <label><input type="radio" name="rc-ev" value="0" onchange="calcScore();toggleComment('ev',true)"> <span>✗ Fail (−15 pts)</span></label>
-          </div>
-          <div id="comment-ev" style="display:none;margin-top:10px">
-            <div class="field"><label>Feedback — Evidence Validation *</label>
-              <textarea id="f-comment-ev" placeholder="Explain what evidence was missing or insufficient..." rows="3"></textarea></div>
-          </div>
-        </div>
-      </div>
+        <div class="section-title">Evaluation</div>
 
-      <div class="card">
-        <div class="section-title">2. Issue Resolution — 30 pts</div>
-        <div class="rc-group">
-          <h4>Wrong Adjustment Type or Amount — 10 pts</h4>
-          <p>Adjustment aligns with C&R Matrix: correct scenario, type, and amount.</p>
-          <div class="rc-options">
-            <label><input type="radio" name="rc-wa" value="10" onchange="calcScore();toggleComment('wa',false)"> <span>✓ Pass (10 pts)</span></label>
-            <label><input type="radio" name="rc-wa" value="0" onchange="calcScore();toggleComment('wa',true)"> <span>✗ Fail (−10 pts)</span></label>
+        <!-- 1. VALIDATION -->
+        <div class="rc-group" style="margin-bottom:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <h4 style="font-size:14px;font-weight:700;color:var(--cu-black)">1. Validation <span style="color:var(--text-muted);font-weight:400;font-size:12px">— 35 pts</span></h4>
+            <div class="rc-options" style="gap:12px">
+              <label><input type="radio" name="rc-val" value="35" onchange="calcScore();toggleRootCause('val',false)"> <span>✓ Pass</span></label>
+              <label><input type="radio" name="rc-val" value="0" onchange="calcScore();toggleRootCause('val',true)"> <span>✗ Fail</span></label>
+            </div>
           </div>
-          <div id="comment-wa" style="display:none;margin-top:10px">
-            <div class="field"><label>Feedback — Wrong Adjustment *</label>
-              <textarea id="f-comment-wa" placeholder="Explain what the correct adjustment type/amount should have been..." rows="3"></textarea></div>
-          </div>
-        </div>
-        <div class="rc-group">
-          <h4>Compensation Without Resolution — 20 pts</h4>
-          <p>Root issue addressed: required follow-up (Jira, Logistics, investigation) triggered.</p>
-          <div class="rc-options">
-            <label><input type="radio" name="rc-cwr" value="20" onchange="calcScore();toggleComment('cwr',false)"> <span>✓ Pass (20 pts)</span></label>
-            <label><input type="radio" name="rc-cwr" value="0" onchange="calcScore();toggleComment('cwr',true)"> <span>✗ Fail (−20 pts)</span></label>
-          </div>
-          <div id="comment-cwr" style="display:none;margin-top:10px">
-            <div class="field"><label>Feedback — Compensation Without Resolution *</label>
-              <textarea id="f-comment-cwr" placeholder="Explain what root issue was not addressed and what follow-up was required..." rows="3"></textarea></div>
+          <div id="rc-val-detail" style="display:none;background:var(--bg);border-radius:8px;padding:12px 16px;margin-top:8px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:10px">What failed? (select all that apply)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-val-sub" value="Customer sentiment" style="margin-top:2px"> Customer sentiment</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-val-sub" value="Prior escalations" style="margin-top:2px"> Prior escalations</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-val-sub" value="Customer profile" style="margin-top:2px"> Customer profile</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-val-sub" value="Account & Platform Records" style="margin-top:2px"> Account & Platform Records</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-val-sub" value="Delivery Evidence" style="margin-top:2px"> Delivery Evidence</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-val-sub" value="Customer Evidence" style="margin-top:2px"> Customer Evidence</label>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="section-title">3. Process & Escalation — 30 pts</div>
-        <div class="rc-group">
-          <h4>Lack of Process Alignment — 15 pts</h4>
-          <p>Decision aligns with SOPs and Matrix. No undocumented workarounds.</p>
-          <div class="rc-options">
-            <label><input type="radio" name="rc-lpa" value="15" onchange="calcScore();toggleComment('lpa',false)"> <span>✓ Pass (15 pts)</span></label>
-            <label><input type="radio" name="rc-lpa" value="0" onchange="calcScore();toggleComment('lpa',true)"> <span>✗ Fail (−15 pts)</span></label>
+        <!-- 2. ISSUE RESOLUTION -->
+        <div class="rc-group" style="margin-bottom:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <h4 style="font-size:14px;font-weight:700;color:var(--cu-black)">2. Issue Resolution <span style="color:var(--text-muted);font-weight:400;font-size:12px">— 20 pts</span></h4>
+            <div class="rc-options" style="gap:12px">
+              <label><input type="radio" name="rc-ir" value="20" onchange="calcScore();toggleRootCause('ir',false)"> <span>✓ Pass</span></label>
+              <label><input type="radio" name="rc-ir" value="0" onchange="calcScore();toggleRootCause('ir',true)"> <span>✗ Fail</span></label>
+            </div>
           </div>
-          <div id="comment-lpa" style="display:none;margin-top:10px">
-            <div class="field"><label>Feedback — Lack of Process Alignment *</label>
-              <textarea id="f-comment-lpa" placeholder="Explain which SOP or process was not followed and what should have been done..." rows="3"></textarea></div>
-          </div>
-        </div>
-        <div class="rc-group">
-          <h4>Incorrect Escalation Reason — 15 pts</h4>
-          <p>Lead verified the Escalation Reason in Admin is correct before approving.</p>
-          <div class="rc-options">
-            <label><input type="radio" name="rc-ier" value="15" onchange="calcScore();toggleComment('ier',false)"> <span>✓ Pass (15 pts)</span></label>
-            <label><input type="radio" name="rc-ier" value="0" onchange="calcScore();toggleComment('ier',true)"> <span>✗ Fail (−15 pts)</span></label>
-          </div>
-          <div id="comment-ier" style="display:none;margin-top:10px">
-            <div class="field"><label>Feedback — Incorrect Escalation Reason *</label>
-              <textarea id="f-comment-ier" placeholder="Explain what the correct escalation reason should have been..." rows="3"></textarea></div>
+          <div id="rc-ir-detail" style="display:none;background:var(--bg);border-radius:8px;padding:12px 16px;margin-top:8px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:10px">What failed? (select all that apply)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-ir-sub" value="Compensation type" style="margin-top:2px"> Compensation type</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-ir-sub" value="Compensation amount" style="margin-top:2px"> Compensation amount</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-ir-sub" value="Compensation omission" style="margin-top:2px"> Compensation omission</label>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="section-title">4. Coaching & Guidance — 15 pts</div>
-        <div class="rc-group">
-          <h4>Coaching & Guidance — 15 pts</h4>
-          <p>Decision explicit (approve/deny + amount + type). Rationale tied to policy/Matrix.</p>
-          <div class="rc-options">
-            <label><input type="radio" name="rc-cg" value="15" onchange="calcScore();toggleComment('cg',false)"> <span>✓ Pass (15 pts)</span></label>
-            <label><input type="radio" name="rc-cg" value="0" onchange="calcScore();toggleComment('cg',true)"> <span>✗ Fail (−15 pts)</span></label>
+        <!-- 3. PROCESS & ESCALATION -->
+        <div class="rc-group" style="margin-bottom:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <h4 style="font-size:14px;font-weight:700;color:var(--cu-black)">3. Process & Escalation <span style="color:var(--text-muted);font-weight:400;font-size:12px">— 35 pts</span></h4>
+            <div class="rc-options" style="gap:12px">
+              <label><input type="radio" name="rc-pe" value="35" onchange="calcScore();toggleRootCause('pe',false)"> <span>✓ Pass</span></label>
+              <label><input type="radio" name="rc-pe" value="0" onchange="calcScore();toggleRootCause('pe',true)"> <span>✗ Fail</span></label>
+            </div>
           </div>
-          <div id="comment-cg" style="display:none;margin-top:10px">
-            <div class="field"><label>Feedback — Coaching & Guidance *</label>
-              <textarea id="f-comment-cg" placeholder="Explain what was unclear or missing in the guidance provided..." rows="3"></textarea></div>
+          <div id="rc-pe-detail" style="display:none;background:var(--bg);border-radius:8px;padding:12px 16px;margin-top:8px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:10px">What failed? (select all that apply)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-pe-sub" value="Sup/Management escalation" style="margin-top:2px"> Sup/Management escalation</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-pe-sub" value="Incorrect Process" style="margin-top:2px"> Incorrect Process</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-pe-sub" value="Missing next steps" style="margin-top:2px"> Missing next steps</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-pe-sub" value="Escalation reason" style="margin-top:2px"> Escalation reason</label>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="score-preview">
-          <div class="score-grid">
-            <div class="cat"><div class="pts" id="pts-val">—</div><div class="name">Validation</div></div>
-            <div class="cat"><div class="pts" id="pts-ir">—</div><div class="name">Issue Res.</div></div>
-            <div class="cat"><div class="pts" id="pts-proc">—</div><div class="name">Process</div></div>
-            <div class="cat"><div class="pts" id="pts-coach">—</div><div class="name">Coaching</div></div>
+        <!-- 4. COACHING & GUIDANCE -->
+        <div class="rc-group" style="margin-bottom:24px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <h4 style="font-size:14px;font-weight:700;color:var(--cu-black)">4. Coaching & Guidance <span style="color:var(--text-muted);font-weight:400;font-size:12px">— 10 pts</span></h4>
+            <div class="rc-options" style="gap:12px">
+              <label><input type="radio" name="rc-cg" value="10" onchange="calcScore();toggleRootCause('cg',false)"> <span>✓ Pass</span></label>
+              <label><input type="radio" name="rc-cg" value="0" onchange="calcScore();toggleRootCause('cg',true)"> <span>✗ Fail</span></label>
+            </div>
           </div>
-          <div class="total" id="score-total">Score: — / 100</div>
+          <div id="rc-cg-detail" style="display:none;background:var(--bg);border-radius:8px;padding:12px 16px;margin-top:8px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:10px">What failed? (select all that apply)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-cg-sub" value="Validation source" style="margin-top:2px"> Validation source</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-cg-sub" value="Incomplete Lead response" style="margin-top:2px"> Incomplete Lead response</label>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="rc-cg-sub" value="Specialist knowledge gap" style="margin-top:2px"> Specialist knowledge gap</label>
+            </div>
+          </div>
         </div>
+
+        <!-- SCORE -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1px solid var(--border);margin-bottom:16px">
+          <div class="total" id="score-total" style="font-size:18px;font-weight:700">Score: — / 100</div>
+          <div id="score-badge" style="font-size:12px;color:var(--text-muted)"></div>
+        </div>
+
+        <!-- COMMENT (shown only if any Fail) -->
+        <div id="comment-section" style="display:none">
+          <div class="field">
+            <label style="font-weight:600">Feedback & Coaching Notes <span style="color:var(--cu-magenta)">*</span></label>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Required when any category is marked as Fail. Be specific — explain what was missing, why it matters, and what good looks like.</p>
+            <textarea id="f-comment-final" placeholder="e.g. Lead approved the credit without checking Onfleet tracking or requesting the POD. For undelivered cases, delivery evidence must be validated before approving compensation..." rows="4"></textarea>
+          </div>
+        </div>
+
         <div class="actions-row">
           <button class="btn btn-primary" onclick="submitAudit()" id="submit-btn">✅ Submit audit</button>
           <button class="btn btn-secondary" onclick="clearForm()">Clear form</button>
@@ -1086,109 +1074,58 @@ function renderDashMomChart(avgByMonth) {
 }
 
 // ── SCORE CALC (form) ──────────────────────────────────────
-function getRC(name) {
-  const el = document.querySelector(`input[name="rc-${name}"]:checked`);
-  return el ? Number(el.value) : null;
-}
 
-function toggleComment(rc, show) {
-  const el = document.getElementById(`comment-${rc}`);
+function toggleRootCause(cat, show) {
+  const el = document.getElementById(`rc-${cat}-detail`);
   if (el) el.style.display = show ? 'block' : 'none';
   if (!show) {
-    const ta = document.getElementById(`f-comment-${rc}`);
+    // Uncheck all sub-checkboxes
+    document.querySelectorAll(`input[name="rc-${cat}-sub"]`).forEach(cb => cb.checked = false);
+  }
+}
+
+
+function calcScore() {
+  const val = getRC2('val'); // 35 pts
+  const ir  = getRC2('ir');  // 20 pts
+  const pe  = getRC2('pe');  // 35 pts
+  const cg  = getRC2('cg');  // 10 pts
+
+  const total = (val ?? 0) + (ir ?? 0) + (pe ?? 0) + (cg ?? 0);
+  const allAnswered = val !== null && ir !== null && pe !== null && cg !== null;
+
+  const totalEl = document.getElementById('score-total');
+  const badgeEl = document.getElementById('score-badge');
+
+  if (!allAnswered) {
+    totalEl.textContent = 'Score: — / 100';
+    if (badgeEl) badgeEl.textContent = '';
+    return;
+  }
+
+  totalEl.textContent = `Score: ${total} / 100`;
+  totalEl.style.color = total >= 90 ? 'var(--cu-green)' : total >= 70 ? 'var(--cu-orange)' : 'var(--cu-magenta)';
+
+  if (badgeEl) {
+    badgeEl.textContent = total >= 90 ? '✓ Above target' : '✗ Below target (90)';
+    badgeEl.style.color = total >= 90 ? 'var(--cu-green)' : 'var(--cu-magenta)';
+  }
+
+  // Show comment section if any Fail
+  const anyFail = val === 0 || ir === 0 || pe === 0 || cg === 0;
+  const commentSection = document.getElementById('comment-section');
+  if (commentSection) commentSection.style.display = anyFail ? 'block' : 'none';
+  if (!anyFail) {
+    const ta = document.getElementById('f-comment-final');
     if (ta) ta.value = '';
   }
 }
 
-function calcScore() {
-  const co=getRC('co'), ev=getRC('ev'), wa=getRC('wa'), cwr=getRC('cwr');
-  const lpa=getRC('lpa'), ier=getRC('ier'), cg=getRC('cg');
-
-  const catVal   = (co===null||ev===null)   ? 0 : (co+ev);
-  const catIR    = (wa===null||cwr===null)  ? 0 : (wa+cwr);
-  const catProc  = (lpa===null||ier===null) ? 0 : (lpa+ier);
-  const catCoach = cg===null ? 0 : cg;
-  const rawScore = catVal + catIR + catProc + catCoach;
-  const allScored = co!==null && ev!==null && wa!==null && cwr!==null && lpa!==null && ier!==null && cg!==null;
-  const finalScore = allScored ? rawScore : 0;
-
-  document.getElementById('pts-val').textContent   = co===null||ev===null ? '—' : catVal+'/25';
-  document.getElementById('pts-ir').textContent    = wa===null||cwr===null ? '—' : catIR+'/30';
-  document.getElementById('pts-proc').textContent  = lpa===null||ier===null ? '—' : catProc+'/30';
-  document.getElementById('pts-coach').textContent = cg===null ? '—' : catCoach+'/15';
-
-  const el = document.getElementById('score-total');
-  el.textContent = allScored ? `Score: ${finalScore} / 100` : 'Score: — / 100';
-  el.style.background = allScored ? scoreBgColor(finalScore) : 'var(--cu-black)';
-  return { co:co||0, ev:ev||0, wa:wa||0, cwr:cwr||0, lpa:lpa||0, ier:ier||0, cg:cg||0, finalScore };
+function getRC2(name) {
+  const selected = document.querySelector(`input[name="rc-${name}"]:checked`);
+  return selected ? Number(selected.value) : null;
 }
 
-// ── SUBMIT ─────────────────────────────────────────────────
-async function submitAudit() {
-  const alertEl = document.getElementById('form-alert');
-  alertEl.innerHTML = '';
-  const required = [['f-half','Half'],['f-month','Month'],['f-week','Week'],['f-wabi-date','Wabi date'],['f-ticket','Ticket'],['f-lead','Lead'],['f-specialist','Specialist email']];
-  for (const [id,label] of required) {
-    if (!document.getElementById(id).value) {
-      alertEl.innerHTML=`<div class="alert alert-error">Please fill in: ${label}</div>`; return;
-    }
-  }
-  for (const rc of ['co','ev','wa','cwr','lpa','ier','cg']) {
-    if (!document.querySelector(`input[name="rc-${rc}"]:checked`)) {
-      alertEl.innerHTML=`<div class="alert alert-error">Please score all rubric categories.</div>`; return;
-    }
-  }
-  // Validate comments for failed categories
-  const failedRCs = [
-    ['co','Context Oversight'],['ev','Evidence Validation'],['wa','Wrong Adjustment'],
-    ['cwr','Compensation Without Resolution'],['lpa','Lack of Process Alignment'],
-    ['ier','Incorrect Escalation Reason'],['cg','Coaching & Guidance']
-  ];
-  for (const [rc, label] of failedRCs) {
-    const checked = document.querySelector(`input[name="rc-${rc}"]:checked`);
-    if (checked && (checked.value === '0' || Number(checked.value) === 0)) {
-      // Make sure comment div is visible
-      const commentDiv = document.getElementById(`comment-${rc}`);
-      if (commentDiv) commentDiv.style.display = 'block';
-      const comment = document.getElementById(`f-comment-${rc}`)?.value?.trim();
-      if (!comment) {
-        alertEl.innerHTML=`<div class="alert alert-error">Please add feedback for: ${label}</div>`;
-        document.getElementById(`f-comment-${rc}`)?.scrollIntoView({ behavior:'smooth', block:'center' });
-        return;
-      }
-    }
-  }
-  const scores = calcScore();
-  const btn = document.getElementById('submit-btn');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Submitting...';
-  const body = {
-    reviewer_email: currentUser.email,
-    half: document.getElementById('f-half').value,
-    month: document.getElementById('f-month').value,
-    week: document.getElementById('f-week').value,
-    wabi_date: document.getElementById('f-wabi-date').value,
-    ticket: document.getElementById('f-ticket').value,
-    lead_email: document.getElementById('f-lead').value,
-    supervisor: document.getElementById('f-supervisor').value,
-    specialist: document.getElementById('f-specialist').value,
-    context_oversight: scores.co, evidence_validation: scores.ev,
-    wrong_adjustment: scores.wa, comp_without_res: scores.cwr,
-    lack_process: scores.lpa, incorrect_esc: scores.ier, coaching: scores.cg,
-    comment_co:  document.getElementById('f-comment-co')?.value  || '',
-    comment_ev:  document.getElementById('f-comment-ev')?.value  || '',
-    comment_wa:  document.getElementById('f-comment-wa')?.value  || '',
-    comment_cwr: document.getElementById('f-comment-cwr')?.value || '',
-    comment_lpa: document.getElementById('f-comment-lpa')?.value || '',
-    comment_ier: document.getElementById('f-comment-ier')?.value || '',
-    comment_cg:  document.getElementById('f-comment-cg')?.value  || '',
-  };
-  try {
-    await api('submitAudit', {}, body);
-    alertEl.innerHTML=`<div class="alert alert-success">✓ Audit submitted — Score: ${scores.finalScore}/100</div>`;
-    clearForm(); loadRecords(); loadQueue(); loadAuditQueue();
-  } catch(e) { alertEl.innerHTML=`<div class="alert alert-error">Error: ${e.message}</div>`; }
-  btn.disabled=false; btn.innerHTML='✅ Submit audit';
-}
 
 function clearForm() {
   ['f-half','f-month','f-week','f-wabi-date','f-ticket','f-specialist','f-notes'].forEach(id => {
@@ -1196,14 +1133,122 @@ function clearForm() {
   });
   document.getElementById('f-lead').value='';
   document.getElementById('f-supervisor').value='';
+  // Reset radios and checkboxes
   document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
-  ['co','ev','wa','cwr','lpa','ier','cg'].forEach(rc => {
-    toggleComment(rc, false);
-  });
-  ['pts-val','pts-ir','pts-proc','pts-coach'].forEach(id=>document.getElementById(id).textContent='—');
+  document.querySelectorAll('input[type=checkbox]').forEach(c=>c.checked=false);
+  // Hide root cause details
+  ['val','ir','pe','cg'].forEach(cat => toggleRootCause(cat, false));
+  // Hide comment section
+  const cs = document.getElementById('comment-section');
+  if (cs) cs.style.display='none';
+  const ta = document.getElementById('f-comment-final');
+  if (ta) ta.value='';
+  // Reset score
   const st=document.getElementById('score-total');
-  st.textContent='Score: — / 100'; st.style.background='var(--cu-black)';
+  if (st) { st.textContent='Score: — / 100'; st.style.color=''; }
+  const sb=document.getElementById('score-badge');
+  if (sb) sb.textContent='';
   document.getElementById('form-alert').innerHTML='';
+}
+
+async function submitAudit() {
+  const alertEl = document.getElementById('form-alert');
+  alertEl.innerHTML = '';
+
+  // Validate required header fields
+  const required = [
+    ['f-half','Half'], ['f-month','Month'], ['f-week','Week'],
+    ['f-wabi-date','Wabi Date'], ['f-ticket','Ticket'], ['f-lead','Lead']
+  ];
+  for (const [id, label] of required) {
+    const el = document.getElementById(id);
+    if (!el || !el.value.trim()) {
+      alertEl.innerHTML = `<div class="alert alert-error">Please fill in: ${label}</div>`;
+      el?.scrollIntoView({ behavior:'smooth', block:'center' });
+      return;
+    }
+  }
+
+  // Validate all 4 categories answered
+  const val = getRC2('val');
+  const ir  = getRC2('ir');
+  const pe  = getRC2('pe');
+  const cg  = getRC2('cg');
+
+  if (val === null || ir === null || pe === null || cg === null) {
+    alertEl.innerHTML = '<div class="alert alert-error">Please mark Pass or Fail for all 4 categories.</div>';
+    return;
+  }
+
+  // Validate root causes selected when Fail
+  const failMap = { val, ir, pe, cg };
+  const catNames = { val:'Validation', ir:'Issue Resolution', pe:'Process & Escalation', cg:'Coaching & Guidance' };
+  for (const [cat, score] of Object.entries(failMap)) {
+    if (score === 0) {
+      const checked = document.querySelectorAll(`input[name="rc-${cat}-sub"]:checked`);
+      if (!checked.length) {
+        alertEl.innerHTML = `<div class="alert alert-error">Please select at least one root cause for: ${catNames[cat]}</div>`;
+        return;
+      }
+    }
+  }
+
+  // Validate comment if any Fail
+  const anyFail = val === 0 || ir === 0 || pe === 0 || cg === 0;
+  const comment = document.getElementById('f-comment-final')?.value?.trim() || '';
+  if (anyFail && !comment) {
+    alertEl.innerHTML = '<div class="alert alert-error">Please add a Feedback & Coaching Note — required when any category is marked as Fail.</div>';
+    document.getElementById('f-comment-final')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+
+  // Collect root causes
+  const getRootCauses = (cat) =>
+    [...document.querySelectorAll(`input[name="rc-${cat}-sub"]:checked`)].map(c => c.value);
+
+  const total = val + ir + pe + cg;
+
+  const body = {
+    reviewer_email: currentUser.email,
+    half:      document.getElementById('f-half').value,
+    month:     document.getElementById('f-month').value,
+    week:      document.getElementById('f-week').value,
+    wabi_date: document.getElementById('f-wabi-date').value,
+    ticket:    document.getElementById('f-ticket').value,
+    lead_email: document.getElementById('f-lead').value,
+    supervisor: document.getElementById('f-supervisor').value,
+    specialist: document.getElementById('f-specialist')?.value || '',
+    // New category scores
+    score_validation:  val,
+    score_issue_res:   ir,
+    score_process_esc: pe,
+    score_coaching:    cg,
+    total_score: total,
+    // Root causes (comma-separated)
+    rc_validation:  getRootCauses('val').join(', '),
+    rc_issue_res:   getRootCauses('ir').join(', '),
+    rc_process_esc: getRootCauses('pe').join(', '),
+    rc_coaching:    getRootCauses('cg').join(', '),
+    // Single comment
+    comment: comment,
+    feedback_yn: anyFail ? 'Yes' : 'No',
+  };
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  try {
+    await api('submitAudit', {}, body);
+    alertEl.innerHTML = `<div class="alert alert-success">✓ Audit submitted — Score: ${total}/100</div>`;
+    clearForm();
+    loadAuditQueue();
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✅ Submit audit';
+  }
 }
 
 // ── HIERARCHY ──────────────────────────────────────────────
