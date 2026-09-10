@@ -175,17 +175,25 @@ tr:hover td{background:var(--card-bg)}
 #page-records .filters-bar{position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0;margin-bottom:0}
 #page-records .page-title{position:sticky;top:0;background:var(--bg);z-index:11;padding-top:4px}
 
-/* ── EVAL CHIPS ─────────────────────────────────────────── */
-.rc-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit}
-.rc-chip:hover{border-color:var(--cu-black);color:var(--cu-black)}
-.rc-chip.active{border-color:transparent;color:#fff;font-weight:600}
-.rc-chip[data-cat="val"].active{background:var(--cu-gold);color:var(--cu-black)}
-.rc-chip[data-cat="ir"].active{background:var(--cu-magenta)}
-.rc-chip[data-cat="pe"].active{background:var(--cu-green)}
-.rc-chip[data-cat="cg"].active{background:var(--cu-blue)}
-.rc-help{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(0,0,0,0.12);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;transition:background .15s}
-.rc-help:hover{background:rgba(0,0,0,0.25)}
-.eval-category.has-fail{border-color:var(--cu-magenta)!important;background:#fff8fa}
+/* ── EVAL CARDS ─────────────────────────────────────────── */
+.rc-cards-list{display:flex;flex-direction:column;gap:8px}
+.rc-card{padding:10px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;transition:all .15s;user-select:none}
+.rc-card:hover{border-color:var(--cu-black);background:var(--bg)}
+.rc-card.active{border-color:transparent!important}
+.rc-card[data-cat="val"].active{background:#FFF8E7;border-color:var(--cu-gold)!important}
+.rc-card[data-cat="ir"].active{background:#FCE8F3;border-color:var(--cu-magenta)!important}
+.rc-card[data-cat="pe"].active{background:#EBF7EF;border-color:var(--cu-green)!important}
+.rc-card[data-cat="cg"].active{background:#EEF0FD;border-color:var(--cu-blue)!important}
+.rc-card-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.rc-card-name{font-size:12px;font-weight:700;color:var(--cu-black)}
+.rc-card[data-cat="val"].active .rc-card-name{color:var(--cu-black)}
+.rc-card[data-cat="ir"].active .rc-card-name{color:var(--cu-magenta)}
+.rc-card[data-cat="pe"].active .rc-card-name{color:var(--cu-green)}
+.rc-card[data-cat="cg"].active .rc-card-name{color:var(--cu-blue)}
+.rc-card-desc{font-size:11.5px;color:var(--text-muted);line-height:1.5}
+.rc-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--border);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;transition:background .15s;border:none;color:var(--text-muted)}
+.rc-help:hover{background:var(--cu-black);color:var(--white)}
+.eval-category.has-fail{border-color:var(--cu-magenta)!important;background:#fff9fb}
 </style>
 </head>
 <body>
@@ -378,10 +386,9 @@ tr:hover td{background:var(--card-bg)}
 
       <div class="card">
         <div class="section-title">Evaluation</div>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px">Select the root causes that failed. Selecting any root cause marks that category as Fail. No selection = Pass.</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px">Select any root cause that failed. Selecting one automatically marks that category as Fail. No selection = Pass.</p>
 
-        <!-- 1. VALIDATION -->
-        <div class="eval-category" id="cat-val" style="margin-bottom:20px;padding:16px;border-radius:10px;border:1.5px solid var(--border);transition:border .2s">
+        <div class="eval-category" id="cat-val" style="margin-bottom:16px;padding:16px;border-radius:10px;border:1.5px solid var(--border);transition:all .2s">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div>
               <span style="font-size:14px;font-weight:700;color:var(--cu-black)">1. Validation</span>
@@ -389,30 +396,52 @@ tr:hover td{background:var(--card-bg)}
             </div>
             <span id="cat-val-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:#EBF7EF;color:var(--cu-green)">✓ Pass</span>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px">
-            <button type="button" class="rc-chip" data-cat="val" data-rc="Customer sentiment" onclick="toggleChip(this)">
-              Customer sentiment <span class="rc-help" onclick="showHelp(event,'val','Customer sentiment')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="val" data-rc="Prior escalations" onclick="toggleChip(this)">
-              Prior escalations <span class="rc-help" onclick="showHelp(event,'val','Prior escalations')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="val" data-rc="Customer profile" onclick="toggleChip(this)">
-              Customer profile <span class="rc-help" onclick="showHelp(event,'val','Customer profile')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="val" data-rc="Account & Platform Records" onclick="toggleChip(this)">
-              Account & Platform Records <span class="rc-help" onclick="showHelp(event,'val','Account & Platform Records')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="val" data-rc="Delivery Evidence" onclick="toggleChip(this)">
-              Delivery Evidence <span class="rc-help" onclick="showHelp(event,'val','Delivery Evidence')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="val" data-rc="Customer Evidence" onclick="toggleChip(this)">
-              Customer Evidence <span class="rc-help" onclick="showHelp(event,'val','Customer Evidence')">?</span>
-            </button>
+          <div class="rc-cards-list">
+            <div class="rc-card" data-cat="val" data-rc="Customer sentiment" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Customer sentiment</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Customer sentiment')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead approved a standard resolution without considering the customer's emotional state or escalation level — strong frustration, churn risk, or social media threat.</div>
+            </div>
+            <div class="rc-card" data-cat="val" data-rc="Prior escalations" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Prior escalations</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Prior escalations')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead approved without checking whether the customer had previous escalations for the same issue, which could indicate a recurring problem.</div>
+            </div>
+            <div class="rc-card" data-cat="val" data-rc="Customer profile" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Customer profile</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Customer profile')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead approved without verifying the customer's profile — ARPU, LTR, order count, or plan type — which determines the appropriate compensation level.</div>
+            </div>
+            <div class="rc-card" data-cat="val" data-rc="Account & Platform Records" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Account & Platform Records</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Account & Platform Records')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead approved without checking internal tools (Braze, Mixpanel, Admin) when account-level information was relevant to the case.</div>
+            </div>
+            <div class="rc-card" data-cat="val" data-rc="Delivery Evidence" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Delivery Evidence</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Delivery Evidence')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead approved without verifying delivery evidence — Onfleet tracking, POD, carrier side conversation, or Logistics coordination.</div>
+            </div>
+            <div class="rc-card" data-cat="val" data-rc="Customer Evidence" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Customer Evidence</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Customer Evidence')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead approved without asking for supporting documentation from the customer — photos of damaged meals, broken seals, foreign objects, or screenshots.</div>
+            </div>
           </div>
         </div>
-
-        <!-- 2. ISSUE RESOLUTION -->
-        <div class="eval-category" id="cat-ir" style="margin-bottom:20px;padding:16px;border-radius:10px;border:1.5px solid var(--border);transition:border .2s">
+        <div class="eval-category" id="cat-ir" style="margin-bottom:16px;padding:16px;border-radius:10px;border:1.5px solid var(--border);transition:all .2s">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div>
               <span style="font-size:14px;font-weight:700;color:var(--cu-black)">2. Issue Resolution</span>
@@ -420,46 +449,70 @@ tr:hover td{background:var(--card-bg)}
             </div>
             <span id="cat-ir-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:#EBF7EF;color:var(--cu-green)">✓ Pass</span>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px">
-            <button type="button" class="rc-chip" data-cat="ir" data-rc="Compensation type" onclick="toggleChip(this)">
-              Compensation type <span class="rc-help" onclick="showHelp(event,'ir','Compensation type')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="ir" data-rc="Compensation amount" onclick="toggleChip(this)">
-              Compensation amount <span class="rc-help" onclick="showHelp(event,'ir','Compensation amount')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="ir" data-rc="Compensation omission" onclick="toggleChip(this)">
-              Compensation omission <span class="rc-help" onclick="showHelp(event,'ir','Compensation omission')">?</span>
-            </button>
+          <div class="rc-cards-list">
+            <div class="rc-card" data-cat="ir" data-rc="Compensation type" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Compensation type</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Compensation type')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead approved the wrong form of compensation — e.g. credit when a refund was required, or a discount when a credit was the correct resolution.</div>
+            </div>
+            <div class="rc-card" data-cat="ir" data-rc="Compensation amount" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Compensation amount</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Compensation amount')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead approved an amount that doesn't match the case — too high (overcompensation) or too low (undercompensation) given the customer's profile and the issue.</div>
+            </div>
+            <div class="rc-card" data-cat="ir" data-rc="Compensation omission" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Compensation omission</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Compensation omission')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead denied or omitted compensation when the case clearly warranted one — either by rejecting the request or responding without indicating any compensation.</div>
+            </div>
           </div>
         </div>
-
-        <!-- 3. PROCESS & ESCALATION -->
-        <div class="eval-category" id="cat-pe" style="margin-bottom:20px;padding:16px;border-radius:10px;border:1.5px solid var(--border);transition:border .2s">
+        <div class="eval-category" id="cat-pe" style="margin-bottom:16px;padding:16px;border-radius:10px;border:1.5px solid var(--border);transition:all .2s">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div>
               <span style="font-size:14px;font-weight:700;color:var(--cu-black)">3. Process & Escalation</span>
               <span style="font-size:11px;color:var(--text-muted);margin-left:8px">35 pts</span>
             </div>
-            <span id="cat-pe-badge" style="font-size:11px;font-weight:707;padding:3px 10px;border-radius:10px;background:#EBF7EF;color:var(--cu-green)">✓ Pass</span>
+            <span id="cat-pe-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:#EBF7EF;color:var(--cu-green)">✓ Pass</span>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px">
-            <button type="button" class="rc-chip" data-cat="pe" data-rc="Sup/Management escalation" onclick="toggleChip(this)">
-              Sup/Management escalation <span class="rc-help" onclick="showHelp(event,'pe','Sup/Management escalation')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="pe" data-rc="Incorrect Process" onclick="toggleChip(this)">
-              Incorrect Process <span class="rc-help" onclick="showHelp(event,'pe','Incorrect Process')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="pe" data-rc="Missing next steps" onclick="toggleChip(this)">
-              Missing next steps <span class="rc-help" onclick="showHelp(event,'pe','Missing next steps')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="pe" data-rc="Escalation reason" onclick="toggleChip(this)">
-              Escalation reason <span class="rc-help" onclick="showHelp(event,'pe','Escalation reason')">?</span>
-            </button>
+          <div class="rc-cards-list">
+            <div class="rc-card" data-cat="pe" data-rc="Sup/Management escalation" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Sup/Management escalation</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Sup/Management escalation')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead approved a resolution that required supervisor or manager approval — custom amount, policy exception, or high-value compensation — without flagging it.</div>
+            </div>
+            <div class="rc-card" data-cat="pe" data-rc="Incorrect Process" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Incorrect Process</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Incorrect Process')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead applied a process that doesn't correspond to this case, or applied a standard process when a temporary override or incident guideline was in effect.</div>
+            </div>
+            <div class="rc-card" data-cat="pe" data-rc="Missing next steps" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Missing next steps</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Missing next steps')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead approved the compensation but did not indicate a required escalation (FSQA, Logistics, Jira) or a needed account update to fully resolve the case.</div>
+            </div>
+            <div class="rc-card" data-cat="pe" data-rc="Escalation reason" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Escalation reason</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Escalation reason')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead resolved the case without ensuring the escalation reason was correct — approved an incorrect reason, left it unspecified, or indicated an outdated classification.</div>
+            </div>
           </div>
         </div>
-
-        <!-- 4. COACHING & GUIDANCE -->
-        <div class="eval-category" id="cat-cg" style="margin-bottom:24px;padding:16px;border-radius:10px;border:1.5px solid var(--border);transition:border .2s">
+        <div class="eval-category" id="cat-cg" style="margin-bottom:16px;padding:16px;border-radius:10px;border:1.5px solid var(--border);transition:all .2s">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div>
               <span style="font-size:14px;font-weight:700;color:var(--cu-black)">4. Coaching & Guidance</span>
@@ -467,16 +520,28 @@ tr:hover td{background:var(--card-bg)}
             </div>
             <span id="cat-cg-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:#EBF7EF;color:var(--cu-green)">✓ Pass</span>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px">
-            <button type="button" class="rc-chip" data-cat="cg" data-rc="Validation source" onclick="toggleChip(this)">
-              Validation source <span class="rc-help" onclick="showHelp(event,'cg','Validation source')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="cg" data-rc="Incomplete Lead response" onclick="toggleChip(this)">
-              Incomplete Lead response <span class="rc-help" onclick="showHelp(event,'cg','Incomplete Lead response')">?</span>
-            </button>
-            <button type="button" class="rc-chip" data-cat="cg" data-rc="Specialist knowledge gap" onclick="toggleChip(this)">
-              Specialist knowledge gap <span class="rc-help" onclick="showHelp(event,'cg','Specialist knowledge gap')">?</span>
-            </button>
+          <div class="rc-cards-list">
+            <div class="rc-card" data-cat="cg" data-rc="Validation source" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Validation source</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Validation source')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead validated missing information independently but did not instruct the Specialist on where to find it or how to include it in future Wabis.</div>
+            </div>
+            <div class="rc-card" data-cat="cg" data-rc="Incomplete Lead response" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Incomplete Lead response</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Incomplete Lead response')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead only addressed the compensation without responding to an additional question or concern the Specialist raised beyond the immediate case.</div>
+            </div>
+            <div class="rc-card" data-cat="cg" data-rc="Specialist knowledge gap" onclick="toggleChip(this)">
+              <div class="rc-card-header">
+                <span class="rc-card-name">Specialist knowledge gap</span>
+                <button type="button" class="rc-help" onclick="showHelp(event,'Specialist knowledge gap')" title="What should I ask myself?">?</button>
+              </div>
+              <div class="rc-card-desc">Lead's response revealed a gap in the Specialist's process or policy knowledge and the Lead did not take the opportunity to clarify or educate.</div>
+            </div>
           </div>
         </div>
 
@@ -485,14 +550,14 @@ tr:hover td{background:var(--card-bg)}
           <div class="field">
             <label style="font-weight:600">Feedback & Coaching Notes <span style="color:var(--cu-magenta)">*</span></label>
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Required when any category fails. Be specific — what was missing, why it matters, and what good looks like.</p>
-            <textarea id="f-comment-final" placeholder="e.g. Lead approved the credit without checking Onfleet tracking or requesting the POD. For undelivered cases, delivery evidence must be validated before approving compensation..." rows="4"></textarea>
+            <textarea id="f-comment-final" placeholder="e.g. Lead approved the credit without checking Onfleet tracking or requesting the POD..." rows="4"></textarea>
           </div>
         </div>
 
         <!-- SCORE + ACTIONS -->
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid var(--border)">
           <div>
-            <div class="total" id="score-total" style="font-size:18px;font-weight:700">Score: 100 / 100</div>
+            <div class="total" id="score-total" style="font-size:18px;font-weight:700;color:var(--cu-green)">Score: 100 / 100</div>
             <div id="score-badge" style="font-size:12px;color:var(--cu-green);margin-top:2px">✓ Above target (90)</div>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
@@ -504,12 +569,13 @@ tr:hover td{background:var(--card-bg)}
     </div>
 
     <!-- HELP POPOVER -->
-    <div id="rc-help-popover" style="display:none;position:fixed;z-index:999;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:16px;max-width:360px;font-size:12px">
+    <div id="rc-help-popover" style="display:none;position:fixed;z-index:9999;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:16px;max-width:360px;font-size:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <strong id="popover-title" style="font-size:13px"></strong>
-        <span onclick="document.getElementById('rc-help-popover').style.display='none'" style="cursor:pointer;color:var(--text-muted);font-size:16px;line-height:1">×</span>
+        <strong id="popover-title" style="font-size:13px;color:var(--cu-black)"></strong>
+        <span onclick="document.getElementById('rc-help-popover').style.display='none'" style="cursor:pointer;color:var(--text-muted);font-size:18px;line-height:1;padding:0 4px">×</span>
       </div>
-      <ul id="popover-questions" style="padding-left:16px;color:var(--text-muted);line-height:1.7"></ul>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">What should I ask myself?</div>
+      <ul id="popover-questions" style="padding-left:16px;color:var(--cu-black);line-height:1.7;margin:0"></ul>
     </div>
 
     <!-- RECORDS -->
@@ -1129,12 +1195,15 @@ function toggleRootCause(cat, show) {
 
 
 function getSelectedChips(cat) {
-  return [...document.querySelectorAll(`.rc-chip[data-cat="${cat}"].active`)].map(c => c.dataset.rc);
+  return [...document.querySelectorAll(`.rc-card[data-cat="${cat}"].active`)].map(c => c.dataset.rc);
 }
 
-function toggleChip(btn) {
-  btn.classList.toggle('active');
-  updateCategory(btn.dataset.cat);
+function toggleChip(el) {
+  // el could be the card or a child — walk up to rc-card
+  const card = el.closest ? el.closest('.rc-card') : el;
+  if (!card) return;
+  card.classList.toggle('active');
+  updateCategory(card.dataset.cat);
   calcScore();
 }
 
@@ -1187,20 +1256,37 @@ function calcScore() {
   }
 }
 
-const RC_QUESTIONS = {};
-KB_DATA.forEach(item => { RC_QUESTIONS[item.rootCause] = item.questions; });
+const RC_QUESTIONS = {
+  "Customer sentiment": ["Did the customer express strong frustration, distress, or a threat (e.g. social media, chargeback)?","Was the customer's tone visible in the ticket or Wabi context?","Did the nature of the case make sentiment especially relevant?","Did the Lead's resolution match the emotional weight of the situation?"],
+  "Prior escalations": ["Did the customer have prior escalations for the same root cause?","Would knowing about prior escalations have changed the compensation?","Did the Lead's response treat this as a first-time issue when it wasn't?"],
+  "Customer profile": ["Did the Lead verify the customer's ARPU or LTR before approving?","Was the compensation level appropriate for the customer's value tier?","Did the Specialist include profile information, or should the Lead have looked it up?"],
+  "Account & Platform Records": ["Did the case involve a billing dispute, promo issue, or account action?","Could Braze, Mixpanel, or Admin have confirmed or contradicted the customer's claim?","Would checking Admin have revealed a relevant action (plan change, prior credit, skip event)?"],
+  "Delivery Evidence": ["Did the case involve an undelivered, delayed, or misdelivered order?","Was the POD checked or requested before approving?","Was Onfleet tracking reviewed to confirm the delivery attempt?","Should a carrier side conversation have been opened before approving?"],
+  "Customer Evidence": ["Did the case involve a physical issue (damaged packaging, foreign object, wrong item)?","Did the Specialist include customer photos or screenshots in the Wabi?","Did the Lead approve a claim that required proof without asking for it?"],
+  "Compensation type": ["Did the case qualify for a refund, credit, or discount per the applicable policy?","Did the Lead approve a different type than what was warranted?","Is the compensation type aligned with the escalation level and root cause?"],
+  "Compensation amount": ["Was the approved amount within the correct tier for this customer profile?","Did the Lead overcompensate without a clear justification?","Did the Lead undercompensate given ARPU or escalation risk?"],
+  "Compensation omission": ["Did the case involve a legitimate issue that typically warrants compensation?","Did the Lead reject the request without a clear policy-based justification?","Did the Lead respond to a Wabi Question with guidance only, when compensation was also needed?"],
+  "Sup/Management escalation": ["Did the compensation amount or type require manager approval per policy?","Did the Lead approve a custom amount or exception without escalating?","Was the resolution within the Lead's approval authority?"],
+  "Incorrect Process": ["Did the Lead use the correct standing process for this type of case?","Was there an active incident or temporary SOP override in effect?","If the Lead wasn't sure which process applied, did they escalate to confirm before deciding?"],
+  "Missing next steps": ["Did the case involve a food safety concern requiring FSQA?","Was there a delivery issue requiring Logistics coordination?","Did the case reveal a system issue requiring a Jira ticket?","Did the case involve an account setting that needs correcting to prevent recurrence?"],
+  "Escalation reason": ["Did the escalation reason in the Wabi match what actually happened?","Was there evidence that contradicted the reason selected, and did the Lead catch it?","Did the Lead's response include a clear, specific escalation reason when one was required?"],
+  "Validation source": ["Did the Lead verify information that was missing from the Wabi?","Did the Lead tell the Specialist where they found that information?","Would the Specialist know how to find this information next time based on the Lead's response?"],
+  "Incomplete Lead response": ["Did the Specialist ask a question beyond the compensation request?","Was that question answered in the Lead's response?","Would leaving it unanswered affect the Specialist's ability to act correctly next time?"],
+  "Specialist knowledge gap": ["Did the Specialist's Wabi reveal a misunderstanding of a policy or process?","Is this a gap in the Specialist's understanding — not an error in the Lead's own decision?","Was there a teachable moment that the Lead passed on?"],
+};
 
-function showHelp(event, cat, rc) {
+function showHelp(event, rc) {
   event.stopPropagation();
   const popover = document.getElementById('rc-help-popover');
-  const questions = RC_QUESTIONS[rc] || [];
+  const qs = RC_QUESTIONS[rc] || [];
   document.getElementById('popover-title').textContent = rc;
-  document.getElementById('popover-questions').innerHTML = questions.map(q => `<li style="margin-bottom:4px">${q}</li>`).join('');
-  // Position near click
+  document.getElementById('popover-questions').innerHTML = qs.map(q => `<li style="margin-bottom:6px">${q}</li>`).join('');
   const rect = event.target.getBoundingClientRect();
   popover.style.display = 'block';
-  popover.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
-  popover.style.left = Math.min(rect.left, window.innerWidth - 380) + 'px';
+  const top = rect.bottom + 8;
+  const left = Math.min(rect.left, window.innerWidth - 380);
+  popover.style.top = top + 'px';
+  popover.style.left = left + 'px';
 }
 
 // Close popover on outside click
@@ -1218,7 +1304,7 @@ function clearForm() {
   document.getElementById('f-lead').value='';
   document.getElementById('f-supervisor').value='';
   // Reset chips
-  document.querySelectorAll('.rc-chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.rc-card').forEach(c => c.classList.remove('active'));
   ['val','ir','pe','cg'].forEach(cat => updateCategory(cat));
   // Hide comment section
   const cs = document.getElementById('comment-section');
