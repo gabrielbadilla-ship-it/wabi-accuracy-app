@@ -1874,11 +1874,15 @@ async function loadAuditQueue() {
         <td><button class="btn btn-primary btn-sm">Start →</button></td>
       </tr>`).join('');
     el.innerHTML = `
-      <table>
-        <thead><tr><th>Ticket</th><th>Lead</th><th>Week/Month</th><th>Wabi date</th><th></th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div style="font-size:12px;color:var(--text-muted);padding:8px 12px">${queue.length} pending review${queue.length>1?'s':''}</div>`;
+      <div style="overflow-y:auto;max-height:220px;border:1px solid var(--border);border-radius:8px">
+        <table style="width:100%">
+          <thead style="position:sticky;top:0;background:var(--white);z-index:1">
+            <tr><th>Ticket</th><th>Lead</th><th>Week/Month</th><th>Wabi date</th><th></th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);padding:6px 4px">${queue.length} pending review${queue.length>1?'s':''}</div>`;
   } catch(e) { console.error('loadAuditQueue:', e); }
 }
 
