@@ -570,11 +570,10 @@ tr:hover td{background:var(--card-bg)}
 
     <!-- HELP POPOVER -->
     <div id="rc-help-popover" style="display:none;position:fixed;z-index:9999;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:16px;max-width:360px;font-size:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <strong id="popover-title" style="font-size:13px;color:var(--cu-black)"></strong>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted)">What should I ask myself?</div>
         <span onclick="document.getElementById('rc-help-popover').style.display='none'" style="cursor:pointer;color:var(--text-muted);font-size:18px;line-height:1;padding:0 4px">×</span>
       </div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">What should I ask myself?</div>
       <ul id="popover-questions" style="padding-left:16px;color:var(--cu-black);line-height:1.7;margin:0"></ul>
     </div>
 
@@ -1279,7 +1278,6 @@ function showHelp(event, rc) {
   event.stopPropagation();
   const popover = document.getElementById('rc-help-popover');
   const qs = RC_QUESTIONS[rc] || [];
-  document.getElementById('popover-title').textContent = rc;
   document.getElementById('popover-questions').innerHTML = qs.map(q => `<li style="margin-bottom:6px">${q}</li>`).join('');
   const rect = event.target.getBoundingClientRect();
   popover.style.display = 'block';
