@@ -495,6 +495,9 @@ tr:hover td{background:var(--card-bg)}
                 <button type="button" class="rc-help" onclick="showHelp(event,'Incorrect Process')" title="What should I ask myself?">?</button>
               </div>
               <div class="rc-card-desc">Lead applied a process that doesn't correspond to this case, or applied a standard process when a temporary override or incident guideline was in effect.</div>
+              <div style="margin-top:8px;padding:8px 10px;border-radius:6px;background:#FFF8E7;border-left:3px solid var(--cu-gold);font-size:11px;color:var(--cu-black);line-height:1.5">
+                ⚠️ <strong>Before selecting:</strong> if the process is unclear or undocumented, do not mark this as Fail. Flag the gap in <strong>#cx-training-process-update</strong> instead. If selecting, please include the link to the correct process in your feedback.
+              </div>
             </div>
             <div class="rc-card" data-cat="pe" data-rc="Missing next steps" onclick="toggleChip(this)">
               <div class="rc-card-header">
@@ -545,12 +548,22 @@ tr:hover td{background:var(--card-bg)}
           </div>
         </div>
 
-        <!-- COMMENT -->
+        <!-- SELECTED TAGS + FEEDBACK -->
         <div id="comment-section" style="display:none;margin-bottom:20px">
+          <!-- Selected root causes as tags -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">Selected root causes</div>
+            <div id="selected-rc-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px"></div>
+          </div>
+          <!-- Generate button -->
+          <button type="button" onclick="generateFeedbackTemplate()" style="margin-bottom:14px;padding:7px 16px;border-radius:8px;border:1.5px solid var(--cu-gold);background:var(--white);color:var(--cu-black);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--cu-gold)'" onmouseout="this.style.background='var(--white)'">
+            ✍️ Generate feedback template
+          </button>
+          <!-- Feedback textarea -->
           <div class="field">
             <label style="font-weight:600">Feedback & Coaching Notes <span style="color:var(--cu-magenta)">*</span></label>
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Required when any category fails. Be specific — what was missing, why it matters, and what good looks like.</p>
-            <textarea id="f-comment-final" placeholder="e.g. Lead approved the credit without checking Onfleet tracking or requesting the POD..." rows="4"></textarea>
+            <textarea id="f-comment-final" placeholder="Click 'Generate feedback template' to pre-fill with selected root causes, then add your notes..." rows="5"></textarea>
           </div>
         </div>
 
@@ -1198,12 +1211,67 @@ function getSelectedChips(cat) {
 }
 
 function toggleChip(el) {
-  // el could be the card or a child — walk up to rc-card
   const card = el.closest ? el.closest('.rc-card') : el;
   if (!card) return;
   card.classList.toggle('active');
   updateCategory(card.dataset.cat);
   calcScore();
+  updateSelectedTags();
+}
+
+function updateSelectedTags() {
+  const tagsContainer = document.getElementById('selected-rc-tags');
+  if (!tagsContainer) return;
+
+  const catColors = { val:'#FFB81C', ir:'#AA0061', pe:'#218848', cg:'#475CC7' };
+  const catTextColors = { val:'#2C2B2B', ir:'#fff', pe:'#fff', cg:'#fff' };
+
+  const selected = [...document.querySelectorAll('.rc-card.active')];
+
+  tagsContainer.innerHTML = selected.length
+    ? selected.map(card => {
+        const cat = card.dataset.cat;
+        const rc = card.dataset.rc;
+        const bg = catColors[cat] || '#7A7870';
+        const tc = catTextColors[cat] || '#fff';
+        return `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;background:${bg};color:${tc};font-size:11px;font-weight:600">
+          ${rc}
+          <span onclick="deselectRC('${cat}','${rc}')" style="cursor:pointer;opacity:.7;font-size:13px;line-height:1" title="Remove">×</span>
+        </span>`;
+      }).join('')
+    : '<span style="font-size:12px;color:var(--text-muted);font-style:italic">No root causes selected yet</span>';
+}
+
+function deselectRC(cat, rc) {
+  const card = [...document.querySelectorAll(`.rc-card[data-cat="${cat}"]`)]
+    .find(c => c.dataset.rc === rc);
+  if (card) {
+    card.classList.remove('active');
+    updateCategory(cat);
+    calcScore();
+    updateSelectedTags();
+  }
+}
+
+function generateFeedbackTemplate() {
+  const selected = [...document.querySelectorAll('.rc-card.active')];
+  if (!selected.length) return;
+
+  const lines = selected.map(card => {
+    const rc = card.dataset.rc;
+    let line = `• ${rc}:\n`;
+    if (rc === 'Incorrect Process') {
+      line += '  → Please include the link to the correct process.\n';
+    }
+    return line;
+  });
+
+  const ta = document.getElementById('f-comment-final');
+  if (ta) {
+    ta.value = lines.join('\n');
+    ta.focus();
+    ta.setSelectionRange(ta.value.indexOf('\n') + 1, ta.value.indexOf('\n') + 1);
+  }
 }
 
 function updateCategory(cat) {
@@ -1304,6 +1372,7 @@ function clearForm() {
   // Reset chips
   document.querySelectorAll('.rc-card').forEach(c => c.classList.remove('active'));
   ['val','ir','pe','cg'].forEach(cat => updateCategory(cat));
+  updateSelectedTags();
   // Hide comment section
   const cs = document.getElementById('comment-section');
   if (cs) cs.style.display='none';
