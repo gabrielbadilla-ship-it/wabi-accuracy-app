@@ -895,7 +895,7 @@ const HISTORICAL_LEAD_SCORES = {
 };
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyn2dHx0ZoIMaG60n4LwFpgsWPjGMLTnPJ7luLbN1mY0afOEM28dzqQhVVsoAvlzS8Y/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
-const CURRENT_HALF = 'H1 - 2026';
+const CURRENT_HALF = 'H2 2026';
 
 let currentUser = null;
 let currentRole = 'viewer';
@@ -2149,10 +2149,16 @@ async function loadAuditQueue() {
 
 function prefillForm(q) {
   // Scroll to form section
-  document.getElementById('f-half').value     = 'H1 - 2026';
+  document.getElementById('f-half').value     = q.half || CURRENT_HALF || '';
   document.getElementById('f-month').value    = q.month;
   document.getElementById('f-week').value     = q.week;
-  document.getElementById('f-wabi-date').value= q.wabi_date || '';
+  // Normalize wabi_date to YYYY-MM-DD regardless of timezone
+  let wabiDate = q.wabi_date || '';
+  if (wabiDate && wabiDate.includes('T')) {
+    // Parse as local date by taking only the date part
+    wabiDate = wabiDate.split('T')[0];
+  }
+  document.getElementById('f-wabi-date').value= wabiDate;
   document.getElementById('f-ticket').value   = q.ticket;
   // Set lead dropdown
   const leadSel = document.getElementById('f-lead');
