@@ -964,18 +964,19 @@ async function api(action, params = {}, body = null) {
   url.searchParams.set('action', action);
   Object.entries(params).forEach(([k,v]) => { if(v !== undefined && v !== '') url.searchParams.set(k, v); });
 
-  let res;
   if (body) {
-    // POST: send action + body as JSON in query param to avoid CORS preflight
     url.searchParams.set('payload', JSON.stringify({ action, ...body }));
-    res = await fetch(url.toString(), { method: 'GET' });
-  } else {
-    res = await fetch(url.toString(), { method: 'GET' });
   }
+
+  const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
   const text = await res.text();
   const json = JSON.parse(text);
-  if (!json.ok) throw new Error(json.error || 'API error');
-  return json.data;
+
+  // Handle both {ok, data} wrapper and direct response formats
+  if (json.error) throw new Error(json.error);
+  if (json.hasOwnProperty('ok') && !json.ok) throw new Error(json.error || 'API error');
+  if (json.hasOwnProperty('data')) return json.data;
+  return json;
 }
 
 // ── NAV ────────────────────────────────────────────────────
