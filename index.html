@@ -308,79 +308,31 @@ tr:hover td{background:var(--card-bg)}
 
       <div class="card">
         <div class="section-title">Audit info</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Select a ticket from your pending reviews above to auto-fill this section.</p>
+
+        <!-- Hidden inputs for form submission -->
+        <input type="hidden" id="f-half">
+        <input type="hidden" id="f-month">
+        <input type="hidden" id="f-week">
+        <input type="hidden" id="f-wabi-date">
+        <input type="hidden" id="f-ticket">
+        <input type="hidden" id="f-lead">
+        <input type="hidden" id="f-supervisor">
+
+        <!-- Read-only display -->
+        <div id="f-audit-display" style="background:var(--bg);border-radius:10px;padding:16px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Half</div><div id="d-half" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
+          <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Month</div><div id="d-month" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
+          <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Week</div><div id="d-week" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
+          <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Wabi Date</div><div id="d-wabi-date" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
+          <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Ticket</div><div id="d-ticket" style="font-size:13px;font-weight:600;color:var(--cu-blue)">—</div></div>
+          <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Lead</div><div id="d-lead" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
+          <div style="grid-column:span 3"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Supervisor</div><div id="d-supervisor" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
+        </div>
+
+        <!-- Only editable field -->
         <div class="form-grid">
-          <div class="field"><label>Half *</label>
-            <select id="f-half"><option value="">Select</option><option>H1 2026</option><option>H2 2026</option><option>H1 2027</option></select></div>
-          <div class="field"><label>Month *</label>
-            <select id="f-month"><option value="">Select</option>
-            <option value="1">1 — January</option><option value="2">2 — February</option>
-            <option value="3">3 — March</option><option value="4">4 — April</option>
-            <option value="5">5 — May</option><option value="6">6 — June</option>
-            <option value="7">7 — July</option><option value="8">8 — August</option>
-            <option value="9">9 — September</option><option value="10">10 — October</option>
-            <option value="11">11 — November</option><option value="12">12 — December</option></select></div>
-          <div class="field"><label>Week *</label>
-            <select id="f-week"><option value="">Select</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
-            <option value="13">13</option>
-            <option value="14">14</option>
-            <option value="15">15</option>
-            <option value="16">16</option>
-            <option value="17">17</option>
-            <option value="18">18</option>
-            <option value="19">19</option>
-            <option value="20">20</option>
-            <option value="21">21</option>
-            <option value="22">22</option>
-            <option value="23">23</option>
-            <option value="24">24</option>
-            <option value="25">25</option>
-            <option value="26">26</option>
-            <option value="27">27</option>
-            <option value="28">28</option>
-            <option value="29">29</option>
-            <option value="30">30</option>
-            <option value="31">31</option>
-            <option value="32">32</option>
-            <option value="33">33</option>
-            <option value="34">34</option>
-            <option value="35">35</option>
-            <option value="36">36</option>
-            <option value="37">37</option>
-            <option value="38">38</option>
-            <option value="39">39</option>
-            <option value="40">40</option>
-            <option value="41">41</option>
-            <option value="42">42</option>
-            <option value="43">43</option>
-            <option value="44">44</option>
-            <option value="45">45</option>
-            <option value="46">46</option>
-            <option value="47">47</option>
-            <option value="48">48</option>
-            <option value="49">49</option>
-            <option value="50">50</option>
-            <option value="51">51</option>
-            <option value="52">52</option>
-            <option value="53">53</option>
-            </select></div>
-          <div class="field"><label>Wabi date *</label><input type="date" id="f-wabi-date"></div>
-          <div class="field"><label>Ticket number *</label><input type="text" id="f-ticket" placeholder="e.g. 1234567"></div>
-          <div class="field"><label>Lead *</label>
-            <select id="f-lead"><option value="">Select lead</option></select></div>
-          <div class="field"><label>Supervisor</label><input type="text" id="f-supervisor" readonly placeholder="Auto-filled"></div>
-          <div class="field"><label>Specialist email *</label><input type="text" id="f-specialist" placeholder="specialist@cookunity.com"></div>
+          <div class="field"><label>Specialist email</label><input type="text" id="f-specialist" placeholder="specialist@cookunity.com"></div>
         </div>
       </div>
 
@@ -1365,11 +1317,12 @@ document.addEventListener('click', () => {
 
 
 function clearForm() {
-  ['f-half','f-month','f-week','f-wabi-date','f-ticket','f-specialist','f-notes'].forEach(id => {
+  ['f-half','f-month','f-week','f-wabi-date','f-ticket','f-specialist','f-notes','f-lead','f-supervisor'].forEach(id => {
     const el=document.getElementById(id); if(el) el.value='';
   });
-  document.getElementById('f-lead').value='';
-  document.getElementById('f-supervisor').value='';
+  ['d-half','d-month','d-week','d-wabi-date','d-ticket','d-lead','d-supervisor'].forEach(id => {
+    const el=document.getElementById(id); if(el) el.textContent='—';
+  });
   // Reset chips
   document.querySelectorAll('.rc-card').forEach(c => c.classList.remove('active'));
   ['val','ir','pe','cg'].forEach(cat => updateCategory(cat));
@@ -1394,8 +1347,13 @@ async function submitAudit() {
   // Validate required header fields
   const required = [
     ['f-half','Half'], ['f-month','Month'], ['f-week','Week'],
-    ['f-wabi-date','Wabi Date'], ['f-ticket','Ticket'], ['f-lead','Lead']
+    ['f-wabi-date','Wabi Date'], ['f-ticket','Ticket'],
   ];
+  // Also check lead
+  if (!document.getElementById('f-lead').value.trim()) {
+    alertEl.innerHTML = '<div class="alert alert-error">Please select a ticket from your pending reviews first.</div>';
+    return;
+  }
   for (const [id, label] of required) {
     const el = document.getElementById(id);
     if (!el || !el.value.trim()) {
@@ -1471,23 +1429,15 @@ async function submitAudit() {
 async function loadHierarchy() {
   try {
     hierarchy = await api('getHierarchy');
-    const sel = document.getElementById('f-lead');
-    sel.innerHTML = '<option value="">Select lead</option>';
+    // Populate lead-filter dropdown in analytics
     const leadSel = document.getElementById('lead-filter');
-    if (leadSel) leadSel.innerHTML = '<option value="">All leads</option>';
-    hierarchy.forEach(h => {
-      const opt=document.createElement('option');
-      opt.value=h.leadEmail; opt.textContent=h.leadName+' ('+h.leadEmail+')';
-      opt.dataset.supervisor=h.supervisorEmail || h.supervisor; sel.appendChild(opt);
-      if (leadSel) {
+    if (leadSel) {
+      leadSel.innerHTML = '<option value="">All leads</option>';
+      hierarchy.forEach(h => {
         const o2=document.createElement('option');
         o2.value=h.leadEmail; o2.textContent=h.leadName; leadSel.appendChild(o2);
-      }
-    });
-    sel.onchange = () => {
-      const opt=sel.options[sel.selectedIndex];
-      document.getElementById('f-supervisor').value=opt.dataset.supervisor||'';
-    };
+      });
+    }
   } catch(e) {}
 }
 
@@ -2148,31 +2098,37 @@ async function loadAuditQueue() {
 }
 
 function prefillForm(q) {
-  // Scroll to form section
-  document.getElementById('f-half').value     = q.half || CURRENT_HALF || '';
-  document.getElementById('f-month').value    = q.month;
-  document.getElementById('f-week').value     = q.week;
-  // Normalize wabi_date to YYYY-MM-DD regardless of timezone
+  // Normalize wabi_date
   let wabiDate = q.wabi_date || '';
-  if (wabiDate && wabiDate.includes('T')) {
-    // Parse as local date by taking only the date part
-    wabiDate = wabiDate.split('T')[0];
-  }
-  document.getElementById('f-wabi-date').value= wabiDate;
-  document.getElementById('f-ticket').value   = q.ticket;
-  // Set lead dropdown
-  const leadSel = document.getElementById('f-lead');
-  for (let i = 0; i < leadSel.options.length; i++) {
-    if (leadSel.options[i].value === q.lead_email) {
-      leadSel.selectedIndex = i;
-      document.getElementById('f-supervisor').value = leadSel.options[i].dataset.supervisor || '';
-      break;
-    }
-  }
-  // Scroll to rubric section
-  document.querySelector('.card .section-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (wabiDate && wabiDate.includes('T')) wabiDate = wabiDate.split('T')[0];
+
+  // Find supervisor from hierarchy
+  const leadInfo = hierarchy.find(h => h.leadEmail === q.lead_email) || {};
+  const supervisor = leadInfo.supervisorEmail || q.supervisor_email || '';
+  const leadName = leadInfo.leadName || q.lead_name || q.lead_email || '';
+
+  // Set hidden inputs for form submission
+  document.getElementById('f-half').value      = q.half || CURRENT_HALF || '';
+  document.getElementById('f-month').value     = q.month;
+  document.getElementById('f-week').value      = q.week;
+  document.getElementById('f-wabi-date').value = wabiDate;
+  document.getElementById('f-ticket').value    = q.ticket;
+  document.getElementById('f-lead').value      = q.lead_email || '';
+  document.getElementById('f-supervisor').value= supervisor;
+
+  // Update display fields
+  document.getElementById('d-half').textContent      = q.half || CURRENT_HALF || '—';
+  document.getElementById('d-month').textContent     = q.month || '—';
+  document.getElementById('d-week').textContent      = q.week || '—';
+  document.getElementById('d-wabi-date').textContent = wabiDate || '—';
+  document.getElementById('d-ticket').textContent    = q.ticket || '—';
+  document.getElementById('d-lead').textContent      = leadName;
+  document.getElementById('d-supervisor').textContent= supervisor || '—';
+
+  // Scroll and alert
   document.getElementById('form-alert').innerHTML =
     `<div class="alert alert-success">✓ Pre-filled from queue — Ticket ${q.ticket}</div>`;
+  document.getElementById('f-audit-display').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── COMPLIANCE ─────────────────────────────────────────────
