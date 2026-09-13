@@ -242,7 +242,7 @@ tr:hover td{background:var(--card-bg)}
     <!-- DASHBOARD -->
     <div id="page-dashboard" class="page active">
       <div class="page-title">Dashboard</div>
-      <div class="page-sub">Wabi Accuracy overview — H1 2026</div>
+      <div class="page-sub">Wabi Accuracy overview — <span class="current-half-label"></span></div>
       <div class="filters-bar">
         <select id="dash-month" onchange="loadDashboard()">
           <option value="">All months</option>
@@ -545,7 +545,7 @@ tr:hover td{background:var(--card-bg)}
     <!-- RECORDS -->
     <div id="page-records" class="page">
       <div class="page-title">All Records</div>
-      <div class="page-sub">Full audit history — H1 2026</div>
+      <div class="page-sub">Full audit history — <span class="current-half-label"></span></div>
       <div class="filters-bar">
         <select id="rec-sup" onchange="loadRecords()"><option value="">All supervisors</option></select>
         <select id="rec-month" onchange="loadRecords()">
@@ -662,7 +662,7 @@ tr:hover td{background:var(--card-bg)}
     <!-- ANALYTICS -->
     <div id="page-analytics" class="page">
       <div class="page-title">Analytics</div>
-      <div class="page-sub">Score trends and lead performance — H1 2026</div>
+      <div class="page-sub">Score trends and lead performance — <span class="current-half-label"></span></div>
       <div class="tabs">
         <div class="tab active" onclick="analyticsTab('trends',this)">📈 Trends</div>
         <div class="tab" onclick="analyticsTab('leads',this)">👤 Lead Performance</div>
@@ -762,7 +762,7 @@ tr:hover td{background:var(--card-bg)}
     <!-- COMPLIANCE -->
     <div id="page-compliance" class="page">
       <div class="page-title">Compliance</div>
-      <div class="page-sub">Samples assigned vs audited — H1 2026</div>
+      <div class="page-sub">Samples assigned vs audited — <span class="current-half-label"></span></div>
       <div class="filters-bar" style="position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0">
         <select id="comp-quarter" onchange="loadCompliance()">
           <option value="">All quarters</option>
@@ -849,6 +849,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaItiS9fMHt0eHv0yO-
 const ALLOWED_DOMAIN = 'cookunity.com';
 const _now = new Date();
 const CURRENT_HALF = (_now.getMonth() < 6 ? 'H1' : 'H2') + ' ' + _now.getFullYear();
+document.querySelectorAll('.current-half-label').forEach(el => el.textContent = CURRENT_HALF);
 
 let currentUser = null;
 let currentRole = 'viewer';
