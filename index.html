@@ -847,7 +847,8 @@ const HISTORICAL_LEAD_SCORES = {
 };
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaItiS9fMHt0eHv0yO-eC3DnyFCf34fvoXBdBaxwKWwDTVcCchjoXv2n5fuaFt7EcO/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
-const CURRENT_HALF = 'H2 2026';
+const _now = new Date();
+const CURRENT_HALF = (_now.getMonth() < 6 ? 'H1' : 'H2') + ' ' + _now.getFullYear();
 
 let currentUser = null;
 let currentRole = 'viewer';
