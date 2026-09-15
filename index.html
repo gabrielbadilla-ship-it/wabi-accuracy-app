@@ -332,7 +332,7 @@ tr:hover td{background:var(--card-bg)}
 
         <!-- Only editable field -->
         <div class="form-grid">
-          <div class="field"><label>Specialist email</label><input type="text" id="f-specialist" placeholder="specialist@cookunity.com"></div>
+          <div class="field"><label>Specialist email <span style="color:var(--cu-magenta)">*</span></label><input type="text" id="f-specialist" placeholder="specialist@cookunity.com"></div>
         </div>
       </div>
 
@@ -515,7 +515,7 @@ tr:hover td{background:var(--card-bg)}
           <div class="field">
             <label style="font-weight:600">Feedback & Coaching Notes <span style="color:var(--cu-magenta)">*</span></label>
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Required when any category fails. Be specific — what was missing, why it matters, and what good looks like.</p>
-            <textarea id="f-comment-final" placeholder="Click 'Generate feedback template' to pre-fill with selected root causes, then add your notes..." rows="5"></textarea>
+            <textarea id="f-comment-final" placeholder="Click 'Generate feedback template' to pre-fill with selected root causes, then add your notes..." rows="5" oninput="this.style.height='auto';this.style.height=(this.scrollHeight)+ 'px'" style="overflow-y:hidden;min-height:120px;resize:none"></textarea>
           </div>
         </div>
 
@@ -1349,7 +1349,7 @@ async function submitAudit() {
   // Validate required header fields
   const required = [
     ['f-half','Half'], ['f-month','Month'], ['f-week','Week'],
-    ['f-wabi-date','Wabi Date'], ['f-ticket','Ticket'],
+    ['f-wabi-date','Wabi Date'], ['f-ticket','Ticket'], ['f-specialist','Specialist email'],
   ];
   // Also check lead
   if (!document.getElementById('f-lead').value.trim()) {
