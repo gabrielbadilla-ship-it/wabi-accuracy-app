@@ -1047,6 +1047,18 @@ async function loadDashboard() {
 }
 
 // ── VOLUME & EFFICIENCY (Part 1) ────────────────────────────
+// Handles "Reopen %" whether Sheets stored it as text ("12%") or
+// auto-converted it to a decimal with percent formatting (0.12) — a
+// common Sheets quirk when a script writes a value that looks like a
+// percentage.
+function formatPct(v) {
+  if (v === '' || v === null || v === undefined) return '—';
+  if (typeof v === 'string' && v.trim().endsWith('%')) return v.trim();
+  const n = Number(v);
+  if (isNaN(n)) return String(v);
+  return Math.round(n <= 1 ? n * 100 : n) + '%';
+}
+
 async function loadVolumeOverview() {
   try {
     const rows = await api('getWeeklySummary', {});
@@ -1070,7 +1082,7 @@ async function loadVolumeOverview() {
       <div class="metrics" style="margin-bottom:16px">
         <div class="metric"><div class="label">Wabis — ${MONTH_NAMES[effectiveMonth]||'M'+effectiveMonth}</div><div class="value">${monthTotal}</div></div>
         <div class="metric"><div class="label">Wabis — last week (W${latest['Week']})</div><div class="value">${latest['Total Wabis']||0}</div></div>
-        <div class="metric"><div class="label">Reopen % (last week)</div><div class="value">${latest['Reopen %']||'—'}</div></div>
+        <div class="metric"><div class="label">Reopen % (last week)</div><div class="value">${formatPct(latest['Reopen %'])}</div></div>
         <div class="metric"><div class="label">Avg FRT (min)</div><div class="value">${latest['Avg FRT (min)']!==''?latest['Avg FRT (min)']:'—'}</div></div>
         <div class="metric"><div class="label">Avg Full Res (min)</div><div class="value">${latest['Avg Full Res (min)']!==''?latest['Avg Full Res (min)']:'—'}</div></div>
       </div>
