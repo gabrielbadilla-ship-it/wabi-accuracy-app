@@ -245,21 +245,22 @@ tr:hover td{background:var(--card-bg)}
       <div class="page-title">Dashboard</div>
       <div class="page-sub">Wabi Accuracy overview — <span class="current-half-label"></span></div>
       <div class="filters-bar">
-        <select id="dash-month" onchange="loadDashboard()">
+        <select id="dash-month" onchange="loadDashboard(); loadVolumeOverview();">
           <option value="">All months</option>
           <option value="1">January</option><option value="2">February</option>
           <option value="3">March</option><option value="4">April</option>
           <option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option>
+          <option value="9">September</option><option value="10">October</option>
+          <option value="11">November</option><option value="12">December</option>
         </select>
         <select id="dash-sup" onchange="loadDashboard()"><option value="">All supervisors</option></select>
-        <button class="btn btn-secondary btn-sm" onclick="loadDashboard(); loadComplianceOverview();">↺ Refresh</button>
+        <button class="btn btn-secondary btn-sm" onclick="loadDashboard(); loadVolumeOverview(); loadComplianceOverview();">↺ Refresh</button>
       </div>
 
       <!-- ══════════ PART 1: VOLUME & EFFICIENCY (Wabi Weekly Summary / Lead Weekly Volume) ══════════ -->
       <h3 style="font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:4px 0 12px;padding-top:8px;border-top:1px solid var(--border)">📊 Volume & Efficiency</h3>
-      <div id="vol-section" style="margin-bottom:24px">
-        <div class="empty">Coming next — waiting on the header row of Wabi Weekly Summary / Lead Weekly Volume to wire this up.</div>
-      </div>
+      <div id="vol-section" style="margin-bottom:24px"></div>
 
       <!-- ══════════ PART 2: AUDIT ACCURACY ══════════ -->
       <h3 style="font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:4px 0 12px;padding-top:8px;border-top:1px solid var(--border)">🎯 Audit Accuracy</h3>
@@ -574,6 +575,9 @@ tr:hover td{background:var(--card-bg)}
           <option value="1">January</option><option value="2">February</option>
           <option value="3">March</option><option value="4">April</option>
           <option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option>
+          <option value="9">September</option><option value="10">October</option>
+          <option value="11">November</option><option value="12">December</option>
         </select>
         <select id="rec-week" onchange="loadRecords()">
           <option value="">All weeks</option>
@@ -704,6 +708,9 @@ tr:hover td{background:var(--card-bg)}
             <option value="1">January</option><option value="2">February</option>
             <option value="3">March</option><option value="4">April</option>
             <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
           </select>
         </div>
         <!-- Summary metrics -->
@@ -928,6 +935,7 @@ async function initApp() {
   // Dashboard + sidebar badges (Feedback Loop, Disputes) load next,
   // together in the background — they're needed right away for the UI.
   loadDashboard();
+  loadVolumeOverview();
   loadComplianceOverview();
   loadFeedbackLoop();
   loadDisputes();
@@ -1038,6 +1046,86 @@ async function loadDashboard() {
       ? `<table><thead><tr><th>Lead</th><th>Audits</th><th>Avg score</th></tr></thead><tbody>${leadRows}</tbody></table>`
       : '<div class="empty">No data yet</div>';
   } catch(e) { console.error('loadDashboard:', e); }
+}
+
+// ── VOLUME & EFFICIENCY (Part 1) ────────────────────────────
+async function loadVolumeOverview() {
+  try {
+    const rows = await api('getWeeklySummary', {});
+    const el = document.getElementById('vol-section');
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty">No data yet</div>';
+      return;
+    }
+
+    const sorted = [...rows].sort((a,b) => Number(a['Week']) - Number(b['Week']));
+    const latest = sorted[sorted.length - 1];
+
+    // "This month" always reflects a real month — the dash-month filter
+    // if one is set, otherwise the most recent month recorded.
+    const monthFilter = document.getElementById('dash-month').value;
+    const effectiveMonth = monthFilter ? Number(monthFilter) : Number(latest['Month']);
+    const monthRows = sorted.filter(r => Number(r['Month']) === effectiveMonth);
+    const monthTotal = monthRows.reduce((s,r) => s + (Number(r['Total Wabis'])||0), 0);
+
+    el.innerHTML = `
+      <div class="metrics" style="margin-bottom:16px">
+        <div class="metric"><div class="label">Wabis — ${MONTH_NAMES[effectiveMonth]||'M'+effectiveMonth}</div><div class="value">${monthTotal}</div></div>
+        <div class="metric"><div class="label">Wabis — last week (W${latest['Week']})</div><div class="value">${latest['Total Wabis']||0}</div></div>
+        <div class="metric"><div class="label">Reopen % (last week)</div><div class="value">${latest['Reopen %']||'—'}</div></div>
+        <div class="metric"><div class="label">Avg FRT (min)</div><div class="value">${latest['Avg FRT (min)']!==''?latest['Avg FRT (min)']:'—'}</div></div>
+        <div class="metric"><div class="label">Avg Full Res (min)</div><div class="value">${latest['Avg Full Res (min)']!==''?latest['Avg Full Res (min)']:'—'}</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card"><h3>Wabis per week</h3><div class="chart-wrap"><canvas id="chart-vol-weekly"></canvas></div></div>
+        <div class="card"><h3>By contact reason — W${latest['Week']}</h3><div class="chart-wrap"><canvas id="chart-vol-reasons"></canvas></div></div>
+      </div>`;
+
+    renderVolumeWeeklyChart(sorted.slice(-12));
+    renderVolumeReasonsChart(latest);
+  } catch(e) { console.error('loadVolumeOverview:', e); }
+}
+
+let chartVolWeekly, chartVolReasons;
+
+function renderVolumeWeeklyChart(rows) {
+  const ctx = document.getElementById('chart-vol-weekly')?.getContext('2d');
+  if (!ctx) return;
+  if (chartVolWeekly) chartVolWeekly.destroy();
+  chartVolWeekly = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => 'W'+r['Week']),
+      datasets: [{ data: rows.map(r => Number(r['Total Wabis'])||0), backgroundColor: '#FFB81C', borderRadius: 6, borderSkipped: false }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.raw} Wabis`}} },
+      scales:{ y:{beginAtZero:true,grid:{color:'#F2F1EC'}}, x:{grid:{display:false}} } }
+  });
+}
+
+function renderVolumeReasonsChart(row) {
+  const ctx = document.getElementById('chart-vol-reasons')?.getContext('2d');
+  if (!ctx) return;
+  if (chartVolReasons) chartVolReasons.destroy();
+  const reasons = [
+    ['Order Management',    row['Order Management']],
+    ['Delivery Experience', row['Delivery Experience']],
+    ['Billing and Payments',row['Billing and Payments']],
+    ['Account Management',  row['Account Management']],
+    ['Meal Experience',     row['Meal Experience']],
+    ['Other',               row['Other']],
+  ];
+  chartVolReasons = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: reasons.map(r => r[0]),
+      datasets: [{ data: reasons.map(r => Number(r[1])||0), backgroundColor: '#475CC7', borderRadius: 4, borderSkipped: false }]
+    },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{beginAtZero:true,grid:{color:'#F2F1EC'}}, y:{grid:{display:false},ticks:{font:{size:11}}} } }
+  });
 }
 
 // ── SUPERVISOR COMPLIANCE (Part 3) ──────────────────────────
