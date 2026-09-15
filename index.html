@@ -515,7 +515,7 @@ tr:hover td{background:var(--card-bg)}
           <div class="field">
             <label style="font-weight:600">Feedback & Coaching Notes <span style="color:var(--cu-magenta)">*</span></label>
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Required when any category fails. Be specific — what was missing, why it matters, and what good looks like.</p>
-            <textarea id="f-comment-final" placeholder="Click 'Generate feedback template' to pre-fill with selected root causes, then add your notes..." rows="5" oninput="this.style.height='auto';this.style.height=(this.scrollHeight)+ 'px'" style="overflow-y:hidden;min-height:120px;resize:none"></textarea>
+            <textarea id="f-comment-final" placeholder="Click 'Generate feedback template' to pre-fill with selected root causes, then add your notes..." style="min-height:140px;height:140px;resize:vertical;overflow-y:auto" oninput="this.style.height='auto';this.style.height=Math.max(140,this.scrollHeight)+'px'"></textarea>
           </div>
         </div>
 
