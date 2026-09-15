@@ -1430,6 +1430,11 @@ async function submitAudit() {
     loadAuditQueue();
   } catch(e) {
     alertEl.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+    // The submission may have actually gone through server-side even
+    // though the client got an error (e.g. a slow response that timed
+    // out) — refresh the queue so a completed ticket disappears instead
+    // of sitting there until a manual page refresh.
+    loadAuditQueue();
   } finally {
     btn.disabled = false;
     btn.textContent = '✅ Submit audit';
