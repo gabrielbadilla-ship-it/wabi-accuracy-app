@@ -254,7 +254,6 @@ tr:hover td{background:var(--card-bg)}
           <option value="9">September</option><option value="10">October</option>
           <option value="11">November</option><option value="12">December</option>
         </select>
-        <select id="dash-sup" onchange="loadDashboard()"><option value="">All supervisors</option></select>
         <button class="btn btn-secondary btn-sm" onclick="loadDashboard(); loadVolumeOverview(); loadComplianceOverview();">↺ Refresh</button>
       </div>
 
@@ -1016,7 +1015,6 @@ function statusClass(s) {
 async function loadDashboard() {
   const params = {
     month: document.getElementById('dash-month').value,
-    supervisor: document.getElementById('dash-sup').value,
     half: CURRENT_HALF,
   };
   try {
@@ -1622,8 +1620,7 @@ async function populateSupFilter() {
       sups.map(s => `<option value="${s}">${s}</option>`).join('');
     // sups already contains only emails from col AC
     document.getElementById('rec-sup').innerHTML = opts;
-    document.getElementById('dash-sup').innerHTML = opts;
-    // Both filters now show supervisor emails from col AC
+    // rec-sup shows supervisor emails from col AC
   } catch(e) { console.error('populateSupFilter error:', e); }
 }
 
