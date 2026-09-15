@@ -845,7 +845,7 @@ const HISTORICAL_LEAD_SCORES = {
   "djana@cookunity.com": {17:96.67},
   "mariajoseperilla@cookunity.com": {16:94.0,17:81.25}
 };
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwR1McGmuMMCsUNukbx9c8ifl1TGjhaL-8zvZ30Z4Tc1Vl0EmaeBAi2kbtfxDjwQUTM/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqzxA2D3uwLd15TZhzbI1c9vPUA5oCIq2NQeMg7CT2nHxxKsj_T6uPyVKyBsBpbHLX/exec';
 const ALLOWED_DOMAIN = 'cookunity.com';
 const _now = new Date();
 const CURRENT_HALF = (_now.getMonth() < 6 ? 'H1' : 'H2') + ' ' + _now.getFullYear();
@@ -899,15 +899,20 @@ async function initApp() {
   await loadHierarchy();
   await populateSupFilter();
   populateLeadFilter();
+
+  // Priority: load the New Audit pending queue first and alone,
+  // so it isn't competing with the heavier full-sheet reads below.
+  await loadAuditQueue();
+
+  // Dashboard + sidebar badges (Feedback Loop, Disputes) load next,
+  // together in the background — they're needed right away for the UI.
   loadDashboard();
-  loadRecords();
-  loadQueue();
-  loadAnalytics();
-  loadAuditQueue();
-  loadCompliance();
   loadFeedbackLoop();
   loadDisputes();
   if (currentRole === 'admin') loadRoles();
+
+  // Records, Analytics and Compliance are heavier (full sheet reads) and
+  // aren't needed until the user actually opens those tabs — see nav().
 }
 
 function signOut() { sessionStorage.removeItem('wabiUser'); location.reload(); }
@@ -939,6 +944,9 @@ function nav(page) {
   document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  if (page === 'form') loadAuditQueue();
+  if (page === 'records') loadRecords();
+  if (page === 'analytics') loadAnalytics();
   if (page === 'knowledge') initKnowledge();
   if (page === 'compliance') loadCompliance();
 }
@@ -2126,6 +2134,11 @@ function prefillForm(q) {
   document.getElementById('d-ticket').textContent    = q.ticket || '—';
   document.getElementById('d-lead').textContent      = leadName;
   document.getElementById('d-supervisor').textContent= supervisor || '—';
+
+  // Recalculate the score right away — if this review has no root
+  // causes selected yet, it should show 100/100 immediately, not the
+  // leftover "—/100" from the previous form.
+  calcScore();
 
   // Scroll and alert
   document.getElementById('form-alert').innerHTML =
