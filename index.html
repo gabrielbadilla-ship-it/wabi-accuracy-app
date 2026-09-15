@@ -252,13 +252,21 @@ tr:hover td{background:var(--card-bg)}
           <option value="5">May</option><option value="6">June</option>
         </select>
         <select id="dash-sup" onchange="loadDashboard()"><option value="">All supervisors</option></select>
-        <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">↺ Refresh</button>
+        <button class="btn btn-secondary btn-sm" onclick="loadDashboard(); loadComplianceOverview();">↺ Refresh</button>
       </div>
+
+      <!-- ══════════ PART 1: VOLUME & EFFICIENCY (Wabi Weekly Summary / Lead Weekly Volume) ══════════ -->
+      <h3 style="font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:4px 0 12px;padding-top:8px;border-top:1px solid var(--border)">📊 Volume & Efficiency</h3>
+      <div id="vol-section" style="margin-bottom:24px">
+        <div class="empty">Coming next — waiting on the header row of Wabi Weekly Summary / Lead Weekly Volume to wire this up.</div>
+      </div>
+
+      <!-- ══════════ PART 2: AUDIT ACCURACY ══════════ -->
+      <h3 style="font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:4px 0 12px;padding-top:8px;border-top:1px solid var(--border)">🎯 Audit Accuracy</h3>
       <div class="metrics" id="dash-metrics">
         <div class="metric"><div class="label">Total audits</div><div class="value">—</div></div>
         <div class="metric"><div class="label">Avg score</div><div class="value">—</div></div>
-        <div class="metric"><div class="label">Pending coaching</div><div class="value">—</div></div>
-        <div class="metric"><div class="label">Below target (&lt;80)</div><div class="value">—</div></div>
+        <div class="metric"><div class="label">Below target</div><div class="value">—</div></div>
       </div>
       <!-- Category donuts -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px" id="dash-cat-donuts">
@@ -276,9 +284,9 @@ tr:hover td{background:var(--card-bg)}
         </div>
         <div class="card" style="text-align:center;padding:14px">
           <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Process & Escalation</div>
-          <div style="position:relative;width:90px;height:90px;margin:0 auto 8px"><canvas id="d-proc" width="90" height="90"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--cu-black)" id="pct-proc">—</div></div>
-          <div style="font-size:10px;color:var(--text-muted);text-align:left" id="rc-proc-legend"></div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:5px;border-top:1px solid var(--border);text-align:left" id="mom-proc"></div>
+          <div style="position:relative;width:90px;height:90px;margin:0 auto 8px"><canvas id="d-pe" width="90" height="90"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--cu-black)" id="pct-pe">—</div></div>
+          <div style="font-size:10px;color:var(--text-muted);text-align:left" id="rc-pe-legend"></div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:5px;border-top:1px solid var(--border);text-align:left" id="mom-pe"></div>
         </div>
         <div class="card" style="text-align:center;padding:14px">
           <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Coaching & Guidance</div>
@@ -289,10 +297,22 @@ tr:hover td{background:var(--card-bg)}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
         <div class="card"><h3>Avg score by month</h3><div class="chart-wrap"><canvas id="chart-dash-mom"></canvas></div></div>
-        <div class="card"><h3>Score by contact reason</h3><div class="chart-wrap"><canvas id="chart-cr"></canvas></div></div>
+        <div class="card"><h3>By supervisor</h3><div id="dash-sup-table"></div></div>
       </div>
-      <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px"><div id="dash-cr-table" style="overflow-x:auto"></div></div>
-      <div class="card"><h3>By supervisor</h3><div id="dash-sup-table"></div></div>
+      <div class="card" style="margin-bottom:16px"><h3>By lead</h3><div id="dash-lead-table"></div></div>
+
+      <!-- ══════════ PART 3: SUPERVISOR COMPLIANCE ══════════ -->
+      <h3 style="font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:4px 0 12px;padding-top:8px;border-top:1px solid var(--border)">✅ Supervisor Compliance</h3>
+      <div class="metrics" id="comp-overview-metrics">
+        <div class="metric"><div class="label">Reviews completed</div><div class="value">—</div></div>
+        <div class="metric"><div class="label">Reviews pending</div><div class="value">—</div></div>
+        <div class="metric"><div class="label">Feedback delivered</div><div class="value">—</div></div>
+        <div class="metric"><div class="label">Feedback pending</div><div class="value">—</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card"><h3>Reviews pending completion (this week)</h3><div id="comp-reviews-table"></div></div>
+        <div class="card"><h3>Feedback pending to deliver (this month)</h3><div id="comp-feedback-table"></div></div>
+      </div>
     </div>
 
     <!-- FORM -->
@@ -908,6 +928,7 @@ async function initApp() {
   // Dashboard + sidebar badges (Feedback Loop, Disputes) load next,
   // together in the background — they're needed right away for the UI.
   loadDashboard();
+  loadComplianceOverview();
   loadFeedbackLoop();
   loadDisputes();
   if (currentRole === 'admin') loadRoles();
@@ -984,8 +1005,6 @@ function statusClass(s) {
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────
-let chartDonutVal, chartDonutIR, chartDonutProc, chartDonutCG, chartCR;
-
 async function loadDashboard() {
   const params = {
     month: document.getElementById('dash-month').value,
@@ -993,24 +1012,80 @@ async function loadDashboard() {
     half: CURRENT_HALF,
   };
   try {
-    const d = await api('getDashboardV2', params);
-    const belowTarget = (d.byBand['Below 60']||0) + (d.byBand['60-79']||0);
+    const [d, a] = await Promise.all([
+      api('getDashboardV2', params),
+      api('getAnalytics', params),
+    ]);
     document.getElementById('dash-metrics').innerHTML = `
       <div class="metric"><div class="label">Total audits</div><div class="value">${d.total}</div></div>
-      <div class="metric"><div class="label">Avg score</div><div class="value ${d.avgScore>=80?'green':d.avgScore>=60?'amber':'red'}">${d.avgScore||'—'}%</div></div>
-      <div class="metric"><div class="label">Pending coaching</div><div class="value amber">${d.pending||0}</div></div>
-      <div class="metric"><div class="label">Below target</div><div class="value ${belowTarget>0?'red':''}">${belowTarget}</div></div>
+      <div class="metric"><div class="label">Avg score</div><div class="value ${d.avg_score>=90?'green':d.avg_score>=70?'amber':'red'}">${d.avg_score||'—'}%</div></div>
+      <div class="metric"><div class="label">Below target (&lt;${d.target||90})</div><div class="value ${a.below_target>0?'red':''}">${a.below_target||0}</div></div>
     `;
-    renderDashMomChart(d.avgByMonth);
-    renderCategoryDonuts(d.cat, d.prevCat, d.rc, params.month);
-    renderContactReasonChart(d.contactReasons);
-    const rows = Object.entries(d.bySupervisor||{}).map(([sup,data]) => `
-      <tr><td>${sup}</td><td>${data.count}</td>
-      <td><span class="badge ${data.avgScore>=80?'badge-green':data.avgScore>=60?'badge-amber':'badge-red'}">${data.avgScore}%</span></td></tr>`).join('');
-    document.getElementById('dash-sup-table').innerHTML = rows
-      ? `<table><thead><tr><th>Supervisor</th><th>Audits</th><th>Avg score</th></tr></thead><tbody>${rows}</tbody></table>`
+    renderDashMomChart(d.by_month);
+    renderCategoryDonuts(d.categories, d.rc_breakdown);
+
+    const supRows = (d.by_supervisor||[]).map(s => `
+      <tr><td>${s.email}</td><td>${s.count}</td>
+      <td><span class="badge ${scoreClass(s.avg_score)}">${s.avg_score}%</span></td></tr>`).join('');
+    document.getElementById('dash-sup-table').innerHTML = supRows
+      ? `<table><thead><tr><th>Supervisor</th><th>Audits</th><th>Avg score</th></tr></thead><tbody>${supRows}</tbody></table>`
       : '<div class="empty">No data yet</div>';
-  } catch(e) { console.error(e); }
+
+    const leadRows = (d.by_lead||[]).map(l => `
+      <tr><td>${l.email}</td><td>${l.count}</td>
+      <td><span class="badge ${scoreClass(l.avg_score)}">${l.avg_score}%</span></td></tr>`).join('');
+    document.getElementById('dash-lead-table').innerHTML = leadRows
+      ? `<table><thead><tr><th>Lead</th><th>Audits</th><th>Avg score</th></tr></thead><tbody>${leadRows}</tbody></table>`
+      : '<div class="empty">No data yet</div>';
+  } catch(e) { console.error('loadDashboard:', e); }
+}
+
+// ── SUPERVISOR COMPLIANCE (Part 3) ──────────────────────────
+async function loadComplianceOverview() {
+  try {
+    const [compliance, feedback] = await Promise.all([
+      api('getCompliance', {}),
+      api('getFeedbackLoop', {}),
+    ]);
+
+    // Reviews pending completion — only the most recent (active) week
+    const maxWeek = compliance.reduce((max, r) => Math.max(max, r.week||0), 0);
+    const currentWeekRows = compliance.filter(r => r.week === maxWeek);
+    const reviewsCompleted = currentWeekRows.reduce((s,r) => s + (r.completed||0), 0);
+    const reviewsPending   = currentWeekRows.reduce((s,r) => s + (r.pending||0), 0);
+
+    const curMonth = new Date().getMonth() + 1;
+    const feedbackMonthRows = (feedback.monthBreakdown||[]).filter(r => r.month === curMonth);
+    const feedbackDelivered = feedbackMonthRows.reduce((s,r) => s + (r.done||0), 0);
+    const feedbackPending   = feedbackMonthRows.reduce((s,r) => s + (r.pending||0), 0);
+
+    document.getElementById('comp-overview-metrics').innerHTML = `
+      <div class="metric"><div class="label">Reviews completed</div><div class="value green">${reviewsCompleted}</div></div>
+      <div class="metric"><div class="label">Reviews pending</div><div class="value ${reviewsPending>0?'amber':''}">${reviewsPending}</div></div>
+      <div class="metric"><div class="label">Feedback delivered</div><div class="value green">${feedbackDelivered}</div></div>
+      <div class="metric"><div class="label">Feedback pending</div><div class="value ${feedbackPending>0?'amber':''}">${feedbackPending}</div></div>
+    `;
+
+    const reviewRows = currentWeekRows
+      .sort((a,b) => a.compliance - b.compliance)
+      .map(r => `
+        <tr><td>${r.supervisor}</td><td>${r.assigned}</td><td>${r.completed}</td>
+        <td style="color:${r.pending>0?'var(--cu-magenta)':'var(--text-muted)'};font-weight:${r.pending>0?'600':'400'}">${r.pending}</td>
+        <td><span class="badge ${r.compliance>=90?'badge-green':r.compliance>=70?'badge-amber':'badge-red'}">${r.compliance}%</span></td></tr>`).join('');
+    document.getElementById('comp-reviews-table').innerHTML = reviewRows
+      ? `<table><thead><tr><th>Supervisor</th><th>Assigned</th><th>Completed</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${reviewRows}</tbody></table>`
+      : '<div class="empty">No data for the current week yet</div>';
+
+    const fbRows = feedbackMonthRows
+      .sort((a,b) => a.pct - b.pct)
+      .map(r => `
+        <tr><td>${r.supervisor}</td><td style="color:var(--cu-green);font-weight:600">${r.done}</td>
+        <td style="color:${r.pending>0?'var(--cu-magenta)':'var(--text-muted)'};font-weight:${r.pending>0?'600':'400'}">${r.pending}</td>
+        <td><span class="badge ${r.pct>=90?'badge-green':r.pct>=70?'badge-amber':'badge-red'}">${r.pct}%</span></td></tr>`).join('');
+    document.getElementById('comp-feedback-table').innerHTML = fbRows
+      ? `<table><thead><tr><th>Supervisor</th><th>Delivered</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${fbRows}</tbody></table>`
+      : '<div class="empty">No data for the current month yet</div>';
+  } catch(e) { console.error('loadComplianceOverview:', e); }
 }
 
 function renderBandsChart(data) {
@@ -1071,84 +1146,51 @@ function renderDonut(canvasId, pct, color) {
   return chart;
 }
 
-function renderCategoryDonuts(cat, prevCat, rc, monthFilter) {
+function renderCategoryDonuts(categories, rcBreakdown) {
+  if (!categories) return;
   const cats = [
-    { id:'val',  pct:cat.val,  rcs:[['Context Oversight', rc.co, rc.fail_co], ['Evidence Validation', rc.ev, rc.fail_ev]], prev: prevCat?.val },
-    { id:'ir',   pct:cat.ir,   rcs:[['Wrong Adjustment', rc.wa, rc.fail_wa], ['Comp. w/o Resolution', rc.cwr, rc.fail_cwr]], prev: prevCat?.ir },
-    { id:'proc', pct:cat.proc, rcs:[['Lack of Process Align.', rc.lpa, rc.fail_lpa], ['Incorrect Esc. Reason', rc.ier, rc.fail_ier]], prev: prevCat?.proc },
-    { id:'cg',   pct:cat.cg,   rcs:[['Coaching & Guidance', rc.cg, rc.fail_cg]], prev: prevCat?.cg },
+    { id:'val', label:'Validation' },
+    { id:'ir',  label:'Issue Resolution' },
+    { id:'pe',  label:'Process & Escalation' },
+    { id:'cg',  label:'Coaching & Guidance' },
   ];
   cats.forEach(c => {
-    const color = scoreColor(c.pct);
-    renderDonut('d-'+c.id, c.pct, color);
-    document.getElementById('pct-'+c.id).textContent = c.pct+'%';
+    const pct = categories[c.id] || 0;
+    const color = scoreColor(pct);
+    renderDonut('d-'+c.id, pct, color);
+    document.getElementById('pct-'+c.id).textContent = pct+'%';
     document.getElementById('pct-'+c.id).style.color = color;
-    // RC legend
-    document.getElementById('rc-'+c.id+'-legend').innerHTML = c.rcs.map(([label, pct, fails]) =>
-      `<div style="display:flex;justify-content:space-between;padding:2px 0">
-        <span>${label}</span>
-        <span style="font-weight:600;color:${scoreColor(pct)}">${pct}%</span>
-      </div>`).join('');
-    // MoM
-    const momEl = document.getElementById('mom-'+c.id);
-    if (c.prev !== null && c.prev !== undefined && monthFilter) {
-      const diff = c.pct - c.prev;
-      const totalFails = c.rcs.reduce((s,[,, f]) => s+f, 0);
-      momEl.innerHTML = `<span style="color:${diff>=0?'#218848':'#AA0061'}">${diff>=0?'↑':'↓'} ${Math.abs(diff)}% vs prev month</span> · ${totalFails} affected`;
-    } else {
-      const totalFails = c.rcs.reduce((s,[,, f]) => s+f, 0);
-      momEl.textContent = totalFails + ' reviews affected';
-    }
+
+    const rcs = (rcBreakdown && rcBreakdown[c.id]) || {};
+    const entries = Object.entries(rcs).sort((a,b) => b[1]-a[1]);
+    const totalFlagged = entries.reduce((s,[,v]) => s+v, 0);
+
+    document.getElementById('rc-'+c.id+'-legend').innerHTML = entries.length
+      ? entries.slice(0,3).map(([name,count]) =>
+          `<div style="display:flex;justify-content:space-between;padding:2px 0;gap:6px">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${name}">${name}</span>
+            <span style="font-weight:600;flex-shrink:0">${count}</span>
+          </div>`).join('')
+      : '<span style="font-style:italic;color:var(--text-muted)">No fails</span>';
+
+    document.getElementById('mom-'+c.id).textContent = totalFlagged + ' root causes flagged';
   });
 }
 
-function renderContactReasonChart(data) {
-  if (!data || !data.length) return;
-  const ctx = document.getElementById('chart-cr');
-  if (!ctx) return;
-  if (chartCR) chartCR.destroy();
-  const labels = data.map(d => d.reason);
-  const scores = data.map(d => d.avgScore);
-  chartCR = new Chart(ctx.getContext('2d'), {
-    type: 'bar',
-    data: { labels, datasets: [{ data: scores, backgroundColor: scores.map(s => scoreColor(s)), borderRadius: 4, borderSkipped: false }] },
-    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      scales: { x: { min:60, max:100, grid:{color:'#F2F1EC'}, ticks:{callback:v=>v+'%',font:{size:10}} }, y:{grid:{display:false},ticks:{font:{size:10}}} },
-      plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.raw}% avg score`}} } }
-  });
-  // Table
-  const rows = data.map(d => `<tr>
-    <td style="padding:8px 12px">${d.reason}</td>
-    <td style="text-align:center;color:var(--text-muted)">${d.reviewed}</td>
-    <td style="text-align:center"><span class="badge ${scoreClass(d.avgScore)}">${d.avgScore}%</span></td>
-    <td style="text-align:center;color:${d.fails>0?'var(--cu-magenta)':'var(--text-muted)'};font-weight:${d.fails>0?'600':'400'}">${d.fails}</td>
-  </tr>`).join('');
-  document.getElementById('dash-cr-table').innerHTML = `
-    <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <thead><tr style="background:var(--card-bg)">
-        <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Contact reason</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;color:var(--text-muted);text-transform:uppercase">Reviews</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;color:var(--text-muted);text-transform:uppercase">Avg score</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;color:var(--text-muted);text-transform:uppercase">Fails (&lt;80%)</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-}
-
-function renderDashMomChart(avgByMonth) {
-  if (!avgByMonth || !avgByMonth.length) return;
+function renderDashMomChart(byMonth) {
+  if (!byMonth || !byMonth.length) return;
   const ctx = document.getElementById('chart-dash-mom').getContext('2d');
   if (chartDashMom) chartDashMom.destroy();
-  const labels = avgByMonth.map(d => MONTH_NAMES[d.month] || 'M'+d.month);
+  const labels = byMonth.map(d => MONTH_NAMES[d.month] || 'M'+d.month);
   chartDashMom = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [
-        { label: 'Avg score', data: avgByMonth.map(d => d.avg),
+        { label: 'Avg score', data: byMonth.map(d => d.avg_score),
           borderColor: '#FFB81C', backgroundColor: 'rgba(255,184,28,.1)',
           fill: true, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#FFB81C' },
-        { label: 'Target 80%', data: labels.map(() => 80),
+        { label: 'Target 90%', data: labels.map(() => 90),
           borderColor: '#AA0061', borderDash: [5,4], pointRadius: 0, borderWidth: 1.5, fill: false }
       ]
     },
