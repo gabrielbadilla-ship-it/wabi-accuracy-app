@@ -1223,7 +1223,7 @@ function generateFeedbackTemplate() {
 
   const ta = document.getElementById('f-comment-final');
   if (ta) {
-    ta.value = lines.join('\n');
+    ta.value = lines.join('');
     ta.focus();
     ta.setSelectionRange(ta.value.indexOf('\n') + 1, ta.value.indexOf('\n') + 1);
   }
