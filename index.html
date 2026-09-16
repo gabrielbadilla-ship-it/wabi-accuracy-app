@@ -173,8 +173,8 @@ tr:hover td{background:var(--card-bg)}
 /* Sticky table headers */
 .sticky-table-wrap{overflow-y:auto;max-height:calc(100vh - 340px)}
 .sticky-table-wrap table thead th{position:sticky;top:0;background:var(--white);z-index:5;box-shadow:0 1px 0 var(--border)}
-#page-records .filters-bar{position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0;margin-bottom:0}
-#page-records .page-title{position:sticky;top:0;background:var(--bg);z-index:11;padding-top:4px}
+#page-reviews .filters-bar{position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0;margin-bottom:0}
+#page-reviews .page-title{position:sticky;top:0;background:var(--bg);z-index:11;padding-top:4px}
 
 /* ── EVAL CARDS ─────────────────────────────────────────── */
 .rc-cards-list{display:flex;flex-direction:column;gap:8px}
@@ -221,10 +221,8 @@ tr:hover td{background:var(--card-bg)}
     </div>
     <nav>
       <a onclick="nav('dashboard')" class="active" data-page="dashboard">🏠 Dashboard</a>
-      <a onclick="nav('form')" data-page="form">➕ New Audit</a>
-      <a onclick="nav('records')" data-page="records">📋 Records</a>
-      <a onclick="nav('queue')" data-page="queue">💬 Feedback Loop <span class="badge" id="queue-badge">0</span></a>
-      <a onclick="nav('analytics')" data-page="analytics">📈 Analytics</a>
+      <a onclick="nav('form')" data-page="form" id="new-audit-link">➕ New Audit</a>
+      <a onclick="nav('reviews')" data-page="reviews">📋 Reviews <span class="badge" id="queue-badge">0</span></a>
       <a onclick="nav('compliance')" data-page="compliance">✅ Compliance</a>
       <a onclick="nav('disputes')" data-page="disputes">⚖️ Disputes <span class="badge" id="disputes-badge">0</span></a>
       <a onclick="nav('knowledge')" data-page="knowledge">📖 Rubric</a>
@@ -571,145 +569,20 @@ tr:hover td{background:var(--card-bg)}
     </div>
 
     <!-- RECORDS -->
-    <div id="page-records" class="page">
-      <div class="page-title">All Records</div>
-      <div class="page-sub">Full audit history — <span class="current-half-label"></span></div>
-      <div class="filters-bar">
-        <select id="rec-sup" onchange="loadRecords()"><option value="">All supervisors</option></select>
-        <select id="rec-month" onchange="loadRecords()">
-          <option value="">All months</option>
-          <option value="1">January</option><option value="2">February</option>
-          <option value="3">March</option><option value="4">April</option>
-          <option value="5">May</option><option value="6">June</option>
-          <option value="7">July</option><option value="8">August</option>
-          <option value="9">September</option><option value="10">October</option>
-          <option value="11">November</option><option value="12">December</option>
-        </select>
-        <select id="rec-week" onchange="loadRecords()">
-          <option value="">All weeks</option>
-          <option value="1">Week 1</option>
-          <option value="2">Week 2</option>
-          <option value="3">Week 3</option>
-          <option value="4">Week 4</option>
-          <option value="5">Week 5</option>
-          <option value="6">Week 6</option>
-          <option value="7">Week 7</option>
-          <option value="8">Week 8</option>
-          <option value="9">Week 9</option>
-          <option value="10">Week 10</option>
-          <option value="11">Week 11</option>
-          <option value="12">Week 12</option>
-          <option value="13">Week 13</option>
-          <option value="14">Week 14</option>
-          <option value="15">Week 15</option>
-          <option value="16">Week 16</option>
-          <option value="17">Week 17</option>
-          <option value="18">Week 18</option>
-          <option value="19">Week 19</option>
-          <option value="20">Week 20</option>
-          <option value="21">Week 21</option>
-          <option value="22">Week 22</option>
-          <option value="23">Week 23</option>
-          <option value="24">Week 24</option>
-          <option value="25">Week 25</option>
-          <option value="26">Week 26</option>
-          <option value="27">Week 27</option>
-          <option value="28">Week 28</option>
-          <option value="29">Week 29</option>
-          <option value="30">Week 30</option>
-          <option value="31">Week 31</option>
-          <option value="32">Week 32</option>
-          <option value="33">Week 33</option>
-          <option value="34">Week 34</option>
-          <option value="35">Week 35</option>
-          <option value="36">Week 36</option>
-          <option value="37">Week 37</option>
-          <option value="38">Week 38</option>
-          <option value="39">Week 39</option>
-          <option value="40">Week 40</option>
-          <option value="41">Week 41</option>
-          <option value="42">Week 42</option>
-          <option value="43">Week 43</option>
-          <option value="44">Week 44</option>
-          <option value="45">Week 45</option>
-          <option value="46">Week 46</option>
-          <option value="47">Week 47</option>
-          <option value="48">Week 48</option>
-          <option value="49">Week 49</option>
-          <option value="50">Week 50</option>
-          <option value="51">Week 51</option>
-          <option value="52">Week 52</option>
-          <option value="53">Week 53</option>
-        </select>
-        <select id="rec-status" onchange="loadRecords()">
-          <option value="">All statuses</option>
-          <option>Pending</option>
-          <option>Coaching Delivered</option>
-          <option>No feedback needed</option>
-          <option>Disputed</option>
-        </select>
-        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
-      </div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div class="sticky-table-wrap">
-          <div id="records-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- FEEDBACK LOOP -->
-    <div id="page-queue" class="page">
-      <div class="page-title">Feedback Loop</div>
-      <div class="page-sub">Coaching compliance by month</div>
-      <div class="filters-bar" style="position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0">
-        <button class="btn btn-secondary btn-sm" onclick="loadFeedbackLoop()">↺ Refresh</button>
-      </div>
-      <!-- Team metrics -->
-      <div class="metrics" id="fl-metrics">
-        <div class="metric"><div class="label">Feedback needed</div><div class="value">—</div></div>
-        <div class="metric"><div class="label">Coaching delivered</div><div class="value green">—</div></div>
-        <div class="metric"><div class="label">Pending</div><div class="value red">—</div></div>
-        <div class="metric"><div class="label">Feedback compliance</div><div class="value">—</div></div>
-      </div>
-      <!-- Month breakdown -->
-      <div class="card"><div id="fl-month-table"></div></div>
-      <!-- Personal queue — sticky header -->
-      <div class="page-title" style="font-size:16px;margin-bottom:8px">Your pending coaching</div>
-      <div style="position:sticky;top:56px;z-index:9;background:var(--bg);padding-bottom:4px">
-        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px 10px 0 0;overflow:hidden">
-          <table style="width:100%">
-            <thead><tr>
-              <th>Ticket</th><th>Lead</th><th>Week / Month</th>
-              <th>Score</th><th>Notes</th><th>Action</th>
-            </tr></thead>
-          </table>
-        </div>
-      </div>
-      <div class="card" style="padding:0;border-radius:0 0 10px 10px;margin-top:0;border-top:none;overflow:hidden">
-        <div id="queue-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
-      </div>
-    </div>
-
-    <!-- ANALYTICS -->
-    <div id="page-analytics" class="page">
-      <div class="page-title">Analytics</div>
-      <div class="page-sub">Score trends and lead performance — <span class="current-half-label"></span></div>
-      <div class="tabs">
-        <div class="tab active" onclick="analyticsTab('trends',this)">📈 Trends</div>
-        <div class="tab" onclick="analyticsTab('leads',this)">👤 Lead Performance</div>
+    <div id="page-reviews" class="page">
+      <div class="page-title">Reviews</div>
+      <div class="page-sub">Full audit history, trends, and pending feedback — <span class="current-half-label"></span></div>
+      <div class="tabs" id="reviews-tabs">
+        <div class="tab active" onclick="reviewsTab('historial',this)">📋 Historial</div>
+        <div class="tab" onclick="reviewsTab('trends',this)">📈 Tendencias</div>
+        <div class="tab" onclick="reviewsTab('pending',this)">💬 Pendientes de feedback <span class="badge" id="queue-badge">0</span></div>
       </div>
 
-      <div id="analytics-trends">
-        <div class="card"><h3>Avg score by week</h3><div class="chart-wrap" style="height:240px"><canvas id="chart-wow"></canvas></div></div>
-        <div class="card"><h3>Avg score by month</h3><div class="chart-wrap" style="height:200px"><canvas id="chart-mom"></canvas></div></div>
-      </div>
-
-      <div id="analytics-leads" style="display:none">
+      <!-- HISTORIAL -->
+      <div id="reviews-historial">
         <div class="filters-bar">
-          <select id="lead-filter" onchange="loadLeadAnalytics()">
-            <option value="">All leads</option>
-          </select>
-          <select id="lead-month-filter" onchange="loadLeadAnalytics()">
+          <select id="rec-sup" onchange="loadRecords()"><option value="">All supervisors</option></select>
+          <select id="rec-month" onchange="loadRecords()">
             <option value="">All months</option>
             <option value="1">January</option><option value="2">February</option>
             <option value="3">March</option><option value="4">April</option>
@@ -718,19 +591,147 @@ tr:hover td{background:var(--card-bg)}
             <option value="9">September</option><option value="10">October</option>
             <option value="11">November</option><option value="12">December</option>
           </select>
+          <select id="rec-week" onchange="loadRecords()">
+            <option value="">All weeks</option>
+            <option value="1">Week 1</option>
+            <option value="2">Week 2</option>
+            <option value="3">Week 3</option>
+            <option value="4">Week 4</option>
+            <option value="5">Week 5</option>
+            <option value="6">Week 6</option>
+            <option value="7">Week 7</option>
+            <option value="8">Week 8</option>
+            <option value="9">Week 9</option>
+            <option value="10">Week 10</option>
+            <option value="11">Week 11</option>
+            <option value="12">Week 12</option>
+            <option value="13">Week 13</option>
+            <option value="14">Week 14</option>
+            <option value="15">Week 15</option>
+            <option value="16">Week 16</option>
+            <option value="17">Week 17</option>
+            <option value="18">Week 18</option>
+            <option value="19">Week 19</option>
+            <option value="20">Week 20</option>
+            <option value="21">Week 21</option>
+            <option value="22">Week 22</option>
+            <option value="23">Week 23</option>
+            <option value="24">Week 24</option>
+            <option value="25">Week 25</option>
+            <option value="26">Week 26</option>
+            <option value="27">Week 27</option>
+            <option value="28">Week 28</option>
+            <option value="29">Week 29</option>
+            <option value="30">Week 30</option>
+            <option value="31">Week 31</option>
+            <option value="32">Week 32</option>
+            <option value="33">Week 33</option>
+            <option value="34">Week 34</option>
+            <option value="35">Week 35</option>
+            <option value="36">Week 36</option>
+            <option value="37">Week 37</option>
+            <option value="38">Week 38</option>
+            <option value="39">Week 39</option>
+            <option value="40">Week 40</option>
+            <option value="41">Week 41</option>
+            <option value="42">Week 42</option>
+            <option value="43">Week 43</option>
+            <option value="44">Week 44</option>
+            <option value="45">Week 45</option>
+            <option value="46">Week 46</option>
+            <option value="47">Week 47</option>
+            <option value="48">Week 48</option>
+            <option value="49">Week 49</option>
+            <option value="50">Week 50</option>
+            <option value="51">Week 51</option>
+            <option value="52">Week 52</option>
+            <option value="53">Week 53</option>
+          </select>
+          <select id="rec-status" onchange="loadRecords()">
+            <option value="">All statuses</option>
+            <option>Pending</option>
+            <option>Coaching Delivered</option>
+            <option>No feedback needed</option>
+            <option>Disputed</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
         </div>
-        <!-- Summary metrics -->
-        <div class="metrics" id="analytics-metrics" style="margin-bottom:16px"></div>
-        <!-- Main table -->
         <div class="card" style="padding:0;overflow:hidden">
           <div class="sticky-table-wrap">
-            <div id="lead-analytics-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+            <div id="records-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
           </div>
         </div>
-        <!-- Lead trend chart -->
-        <div class="card" id="lead-trend-card" style="display:none">
-          <h3 id="lead-trend-title">Lead trend</h3>
-          <div class="chart-wrap" style="height:260px"><canvas id="chart-lead-trend"></canvas></div>
+      </div>
+
+      <!-- TENDENCIAS -->
+      <div id="reviews-trends" style="display:none">
+        <div class="tabs">
+          <div class="tab active" onclick="analyticsTab('trends',this)">📈 Trends</div>
+          <div class="tab" onclick="analyticsTab('leads',this)">👤 Lead Performance</div>
+        </div>
+
+        <div id="analytics-trends">
+          <div class="card"><h3>Avg score by week</h3><div class="chart-wrap" style="height:240px"><canvas id="chart-wow"></canvas></div></div>
+          <div class="card"><h3>Avg score by month</h3><div class="chart-wrap" style="height:200px"><canvas id="chart-mom"></canvas></div></div>
+        </div>
+
+        <div id="analytics-leads" style="display:none">
+          <div class="filters-bar">
+            <select id="lead-filter" onchange="loadLeadAnalytics()">
+              <option value="">All leads</option>
+            </select>
+            <select id="lead-month-filter" onchange="loadLeadAnalytics()">
+              <option value="">All months</option>
+              <option value="1">January</option><option value="2">February</option>
+              <option value="3">March</option><option value="4">April</option>
+              <option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option>
+              <option value="9">September</option><option value="10">October</option>
+              <option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <!-- Summary metrics -->
+          <div class="metrics" id="analytics-metrics" style="margin-bottom:16px"></div>
+          <!-- Main table -->
+          <div class="card" style="padding:0;overflow:hidden">
+            <div class="sticky-table-wrap">
+              <div id="lead-analytics-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+            </div>
+          </div>
+          <!-- Lead trend chart -->
+          <div class="card" id="lead-trend-card" style="display:none">
+            <h3 id="lead-trend-title">Lead trend</h3>
+            <div class="chart-wrap" style="height:260px"><canvas id="chart-lead-trend"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PENDIENTES DE FEEDBACK -->
+      <div id="reviews-pending" style="display:none">
+        <div class="filters-bar" style="padding:0 0 4px">
+          <button class="btn btn-secondary btn-sm" onclick="loadFeedbackLoop()">↺ Refresh</button>
+        </div>
+        <!-- Team metrics -->
+        <div class="metrics" id="fl-metrics">
+          <div class="metric"><div class="label">Feedback needed</div><div class="value">—</div></div>
+          <div class="metric"><div class="label">Coaching delivered</div><div class="value green">—</div></div>
+          <div class="metric"><div class="label">Pending</div><div class="value red">—</div></div>
+          <div class="metric"><div class="label">Feedback compliance</div><div class="value">—</div></div>
+        </div>
+        <!-- Month breakdown -->
+        <div class="card"><div id="fl-month-table"></div></div>
+        <!-- Personal queue -->
+        <div class="page-title" style="font-size:16px;margin-bottom:8px">Your pending coaching</div>
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px 10px 0 0;overflow:hidden">
+          <table style="width:100%">
+            <thead><tr>
+              <th>Ticket</th><th>Lead</th><th>Week / Month</th>
+              <th>Score</th><th>Notes</th><th>Action</th>
+            </tr></thead>
+          </table>
+        </div>
+        <div class="card" style="padding:0;border-radius:0 0 10px 10px;margin-top:0;border-top:none;overflow:hidden">
+          <div id="queue-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
         </div>
       </div>
     </div>
@@ -925,6 +926,9 @@ async function initApp() {
   if (currentRole === 'admin' || currentRole === 'supervisor') {
     document.getElementById('admin-link').style.display = 'flex';
   }
+  if (currentRole === 'lead' || currentRole === 'viewer') {
+    document.getElementById('new-audit-link').style.display = 'none';
+  }
 
   // Set dashboard default to current month
   const curMonth = new Date().getMonth() + 1;
@@ -981,10 +985,20 @@ function nav(page) {
   document.getElementById('page-' + page).classList.add('active');
   document.querySelector(`[data-page="${page}"]`).classList.add('active');
   if (page === 'form') loadAuditQueue();
-  if (page === 'records') loadRecords();
-  if (page === 'analytics') loadAnalytics();
+  if (page === 'reviews') reviewsTab('historial', document.querySelector('#reviews-tabs .tab'));
   if (page === 'knowledge') initKnowledge();
   if (page === 'compliance') loadCompliance();
+}
+
+function reviewsTab(sub, el) {
+  document.querySelectorAll('#reviews-tabs .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('reviews-historial').style.display = sub === 'historial' ? 'block' : 'none';
+  document.getElementById('reviews-trends').style.display    = sub === 'trends'    ? 'block' : 'none';
+  document.getElementById('reviews-pending').style.display   = sub === 'pending'   ? 'block' : 'none';
+  if (sub === 'historial') loadRecords();
+  if (sub === 'trends')    loadAnalytics();
+  if (sub === 'pending')   loadFeedbackLoop();
 }
 
 // ── SCORE HELPERS ──────────────────────────────────────────
@@ -1679,7 +1693,7 @@ function exportCSV() {
 // ── FEEDBACK LOOP ──────────────────────────────────────────
 async function loadFeedbackLoop() {
   try {
-    const d = await api('getFeedbackLoop', { supervisor: currentUser.email });
+    const d = await api('getFeedbackLoop', currentRole === 'admin' ? {} : { supervisor: currentUser.email });
 
     // Team metrics
     document.getElementById('fl-metrics').innerHTML = `
