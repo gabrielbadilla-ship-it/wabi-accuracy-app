@@ -339,6 +339,7 @@ tr:hover td{background:var(--card-bg)}
         <input type="hidden" id="f-ticket">
         <input type="hidden" id="f-lead">
         <input type="hidden" id="f-supervisor">
+        <input type="hidden" id="f-calibration">
 
         <!-- Read-only display -->
         <div id="f-audit-display" style="background:var(--bg);border-radius:10px;padding:16px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
@@ -1468,7 +1469,7 @@ document.addEventListener('click', () => {
 
 
 function clearForm() {
-  ['f-half','f-month','f-week','f-wabi-date','f-ticket','f-specialist','f-notes','f-lead','f-supervisor'].forEach(id => {
+  ['f-half','f-month','f-week','f-wabi-date','f-ticket','f-specialist','f-notes','f-lead','f-supervisor','f-calibration'].forEach(id => {
     const el=document.getElementById(id); if(el) el.value='';
   });
   ['d-half','d-month','d-week','d-wabi-date','d-ticket','d-lead','d-supervisor'].forEach(id => {
@@ -1557,6 +1558,7 @@ async function submitAudit() {
     rc_coaching:    getSelectedChips('cg').join(', '),
     comment: comment,
     feedback_yn: anyFail ? 'Yes' : 'No',
+    calibration: document.getElementById('f-calibration')?.value || 'No',
   };
 
   const btn = document.getElementById('submit-btn');
@@ -2270,6 +2272,7 @@ function prefillForm(q) {
   document.getElementById('f-ticket').value    = q.ticket;
   document.getElementById('f-lead').value      = q.lead_email || '';
   document.getElementById('f-supervisor').value= supervisor;
+  document.getElementById('f-calibration').value = q.calibration || 'No';
 
   // Update display fields
   document.getElementById('d-half').textContent      = q.half || CURRENT_HALF || '—';
