@@ -254,6 +254,7 @@ tr:hover td{background:var(--card-bg)}
         </select>
         <button class="btn btn-secondary btn-sm" onclick="loadDashboard(); loadVolumeOverview(); loadComplianceOverview();">↺ Refresh</button>
       </div>
+      <div id="dash-cache-status"></div>
 
       <!-- ══════════ PART 1: VOLUME & EFFICIENCY (Wabi Weekly Summary / Lead Weekly Volume) ══════════ -->
       <h3 style="font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:4px 0 12px;padding-top:8px;border-top:1px solid var(--border)">📊 Volume & Efficiency</h3>
@@ -572,6 +573,7 @@ tr:hover td{background:var(--card-bg)}
     <div id="page-reviews" class="page">
       <div class="page-title">Reviews</div>
       <div class="page-sub">Full audit history, lead performance, and pending feedback — <span class="current-half-label"></span></div>
+      <div id="reviews-cache-status"></div>
       <div class="tabs" id="reviews-tabs">
         <div class="tab active" onclick="reviewsTab('historial',this)">📋 History</div>
         <div class="tab" onclick="reviewsTab('leadperf',this)">👤 Lead Performance</div>
@@ -992,6 +994,7 @@ function nav(page) {
 }
 
 function reviewsTab(sub, el) {
+  renderCacheStatusBar('reviews-cache-status');
   document.querySelectorAll('#reviews-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
   document.getElementById('reviews-historial').style.display = sub === 'historial' ? 'block' : 'none';
@@ -1033,11 +1036,54 @@ function statusClass(s) {
   return 'badge-red'; // Pending = needs action
 }
 
+// ── MASTER DATA CACHE (admin-refreshed snapshot) ────────────
+// Dashboard's Audit Accuracy/Compliance and Reviews' History/Lead
+// Performance read from this snapshot instead of the live sheet, so
+// they load fast and reliably. An admin refreshes it on demand —
+// everyone else sees "last refreshed" until the next refresh.
+async function renderCacheStatusBar(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  try {
+    const meta = await api('getCacheMeta', {});
+    const when = meta.updated_at ? new Date(meta.updated_at).toLocaleString() : 'never';
+    const isAdmin = currentRole === 'admin';
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:12px;color:var(--text-muted)">
+        <span>📊 Data last refreshed: <strong>${when}</strong>${meta.updated_by?` by ${meta.updated_by}`:''}</span>
+        ${isAdmin ? `<button class="btn btn-secondary btn-sm" onclick="refreshMasterData(this)">🔄 Refresh master data</button>` : ''}
+      </div>`;
+  } catch(e) { console.error('renderCacheStatusBar:', e); }
+}
+
+async function refreshMasterData(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Refreshing...'; }
+  try {
+    const result = await api('refreshMasterData', {}, { updated_by: currentUser.email });
+    alert(`✓ Refreshed!\n\nRubric Responses: ${result.counts.rubric_responses}\nSamples Assigned: ${result.counts.samples_assigned}\nWeekly Summary: ${result.counts.weekly_summary}`);
+
+    // Reload whatever's currently on screen so the new snapshot shows right away
+    loadDashboard(); loadVolumeOverview(); loadComplianceOverview();
+    if (document.getElementById('reviews-historial')?.style.display !== 'none') {
+      if (historialCalibView === 'calibrations') loadCalibrationsList(); else loadRecords();
+    }
+    if (document.getElementById('reviews-leadperf')?.style.display !== 'none') loadLeadAnalytics();
+    renderCacheStatusBar('dash-cache-status');
+    renderCacheStatusBar('reviews-cache-status');
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Refresh master data'; }
+  }
+}
+
 // ── DASHBOARD ──────────────────────────────────────────────
 async function loadDashboard() {
+  renderCacheStatusBar('dash-cache-status');
   const params = {
     month: document.getElementById('dash-month').value,
     half: CURRENT_HALF,
+    useCache: true,
   };
   try {
     const [d, a] = await Promise.all([
@@ -1083,7 +1129,7 @@ function formatPct(v) {
 
 async function loadVolumeOverview() {
   try {
-    const rows = await api('getWeeklySummary', {});
+    const rows = await api('getWeeklySummary', { useCache: true });
     const el = document.getElementById('vol-section');
     if (!rows.length) {
       el.innerHTML = '<div class="empty">No data yet</div>';
@@ -1164,7 +1210,7 @@ function renderVolumeReasonsChart(row) {
 async function loadComplianceOverview() {
   try {
     const [compliance, feedback] = await Promise.all([
-      api('getCompliance', {}),
+      api('getCompliance', { useCache: true }),
       api('getFeedbackLoop', {}),
     ]);
 
@@ -1641,6 +1687,7 @@ async function loadRecords() {
     status: document.getElementById('rec-status')?.value,
     supervisor: document.getElementById('rec-sup')?.value,
     calibration: 'No',
+    useCache: true,
   };
   try {
     allRecords = await api('getRecords', params);
@@ -1653,7 +1700,7 @@ async function loadCalibrationsList() {
   const el = document.getElementById('calibrations-list');
   try {
     const [records, notes] = await Promise.all([
-      api('getRecords', { half: CURRENT_HALF, calibration: 'Yes' }),
+      api('getRecords', { half: CURRENT_HALF, calibration: 'Yes', useCache: true }),
       api('getCalibrationNotes', {}),
     ]);
 
@@ -1988,7 +2035,7 @@ async function loadLeadAnalytics() {
   const filterMonth = document.getElementById('lead-month-filter')?.value || '';
 
   try {
-    const params = {};
+    const params = { useCache: true };
     if (filterMonth) params.month = filterMonth;
     if (filterLead)  params.lead  = filterLead;
     const d = await api('getLeadAnalytics', params);
@@ -2459,7 +2506,7 @@ async function loadCompliance() {
     const quarterLabels = {'1':'Q1 · Jan–Mar','2':'Q2 · Apr–Jun','3':'Q3 · Jul–Sep','4':'Q4 · Oct–Dec','':"All"};
     document.getElementById('comp-quarter-label').textContent = quarterLabels[quarter] || 'All';
 
-    const data = await api('getCompliance', { half: CURRENT_HALF });
+    const data = await api('getCompliance', { half: CURRENT_HALF, useCache: true });
     let filteredData = data;
     if (quarter && quarterWeeks[quarter]) {
       filteredData = data.filter(d => quarterWeeks[quarter].includes(Number(d.week)));
