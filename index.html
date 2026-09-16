@@ -320,6 +320,7 @@ tr:hover td{background:var(--card-bg)}
       <div class="page-title">New Audit</div>
       <div class="page-sub">Select a pending ticket from your queue or fill in manually</div>
       <div id="form-alert"></div>
+      <div id="dispute-banner"></div>
 
       <!-- PENDING QUEUE -->
       <div class="card" id="audit-queue-card">
@@ -547,9 +548,14 @@ tr:hover td{background:var(--card-bg)}
             <div class="total" id="score-total" style="font-size:18px;font-weight:700;color:var(--cu-green)">Score: 100 / 100</div>
             <div id="score-badge" style="font-size:12px;color:var(--cu-green);margin-top:2px">✓ Above target (90)</div>
           </div>
-          <div style="display:flex;gap:10px;align-items:center">
+          <div id="normal-actions" style="display:flex;gap:10px;align-items:center">
             <button class="btn btn-secondary" onclick="clearForm()">Clear form</button>
             <button class="btn btn-primary" onclick="submitAudit()" id="submit-btn">✅ Submit audit</button>
+          </div>
+          <div id="dispute-actions" style="display:none;gap:10px;align-items:center">
+            <button class="btn btn-secondary" onclick="exitDisputeMode()">Cancel</button>
+            <button class="btn btn-danger" onclick="rejectDisputeFlow()">❌ Reject dispute</button>
+            <button class="btn btn-primary" onclick="acceptDisputeCorrection()">✅ Accept &amp; save correction</button>
           </div>
         </div>
       </div>
@@ -1731,7 +1737,10 @@ async function loadFeedbackLoop() {
         <td>W${r.week} / M${r.month}</td>
         <td><span class="badge ${scoreClass(r.total_score)}">${r.total_score}%</span></td>
         <td style="max-width:200px;font-size:12px;color:var(--text-muted)">${r.improvement_notes?r.improvement_notes.slice(0,80)+'…':'—'}</td>
-        <td><button class="btn btn-primary btn-sm" onclick="openRecord(${r.rowId})">Log coaching</button></td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="openRecord(${r.rowId})">Log coaching</button>
+          <button class="btn btn-danger btn-sm" onclick="openSubmitDisputeModal('${r.ticket}','${r.reviewer||''}')">⚖️ Dispute</button>
+        </td>
       </tr>`).join('');
     document.getElementById('queue-table').innerHTML = `<table><tbody>${rows}</tbody></table>`;
   } catch(e) { console.error('loadFeedbackLoop:', e); }
@@ -1816,16 +1825,14 @@ async function openRecord(rowId) {
         <div class="field"><label>Coaching date</label>
           <input type="date" id="modal-coaching-date" value="${r.coaching_date||''}"></div>
       </div>
-      ${!r.dispute_yn || r.dispute_yn==='' ? `
+      ${r.dispute_status !== 'Open' && r.dispute_status !== 'Resolved' ? `
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Submit dispute</div>
-        <div class="field"><label>Dispute reason</label>
-          <textarea id="modal-dispute-reason" rows="2" placeholder="Explain why you disagree with this review..."></textarea></div>
-        <div style="margin-top:8px"><button class="btn btn-danger btn-sm" onclick="submitDispute(${r.rowId},'${r.ticket}','${r.lead_email}','${r.supervisor}')">Submit dispute</button></div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Dispute this review</div>
+        <button class="btn btn-danger btn-sm" onclick="openSubmitDisputeModal('${r.ticket}','${r.reviewer}')">⚖️ Dispute</button>
       </div>` : `
       <div style="margin-top:14px;padding:10px;background:#FFF8E1;border-radius:8px;font-size:13px">
-        <strong>Dispute submitted</strong>${r.dispute_accepted==='Y'?' — ✅ Accepted':r.dispute_accepted==='N'?' — ❌ Rejected':' — ⏳ Pending review'}
-        ${r.rejection_reason?`<div style="color:var(--text-muted);margin-top:4px">${r.rejection_reason}</div>`:''}
+        <strong>Dispute ${r.dispute_status==='Open'?'submitted':'resolved'}</strong>${r.dispute_accepted==='Y'?' — ✅ Accepted':r.dispute_accepted==='N'?' — ❌ Rejected':' — ⏳ Pending review'}
+        ${r.dispute_resolution_notes?`<div style="color:var(--text-muted);margin-top:4px">${r.dispute_resolution_notes}</div>`:''}
       </div>`}
     </div>`:''}
   `;
@@ -1849,14 +1856,29 @@ async function saveSupAction(rowId) {
   } catch(e) { alert('Error: '+e.message); }
 }
 
-async function submitDispute(rowId, ticket, leadEmail, supervisor) {
-  const reason = document.getElementById('modal-dispute-reason')?.value?.trim();
-  if (!reason) { alert('Please enter a dispute reason.'); return; }
+// Submit a new dispute — opened from the "⚖️ Dispute" button in Feedback Loop
+function openSubmitDisputeModal(ticket, reviewer) {
+  document.getElementById('modal-title').textContent = `Dispute review — Ticket ${ticket}`;
+  document.getElementById('modal-body').innerHTML = `
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Explain why you disagree with this review. An admin will look at it before you deliver this feedback to the Lead.</p>
+    <div class="field"><label>Reason</label><textarea id="dispute-submit-reason" rows="4" placeholder="What's wrong with this review, and why?"></textarea></div>
+  `;
+  document.getElementById('modal-actions').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="confirmSubmitDispute('${ticket}','${reviewer}')">Submit dispute</button>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+async function confirmSubmitDispute(ticket, reviewer) {
+  const reason = document.getElementById('dispute-submit-reason')?.value?.trim();
+  if (!reason) { alert('Please enter a reason.'); return; }
   try {
-    await api('submitDispute', {}, { rowId, ticket, lead_email: leadEmail, supervisor, dispute_reason: reason });
+    await api('submitDispute', {}, { ticket, reviewer_email: reviewer, submitted_by: currentUser.email, reason });
     closeModal();
+    alert('Dispute submitted — an admin will review it.');
+    loadFeedbackLoop();
     loadDisputes();
-    alert('Dispute submitted successfully.');
   } catch(e) { alert('Error: ' + e.message); }
 }
 
@@ -2089,10 +2111,11 @@ async function loadHierarchyAdmin() {
 // ── DISPUTES ───────────────────────────────────────────────
 async function loadDisputes() {
   try {
-    const all    = await api('getDisputes', {});
-    const open   = all.filter(d => !d.dispute_accepted || d.dispute_accepted === '');
-    const accepted = all.filter(d => d.dispute_accepted === 'Y');
-    const rejected = all.filter(d => d.dispute_accepted === 'N');
+    const all      = await api('getDisputes', {});
+    const open     = all.filter(d => d.dispute_status === 'Open');
+    const resolved = all.filter(d => d.dispute_status === 'Resolved');
+    const accepted = resolved.filter(d => d.dispute_accepted === 'Y');
+    const rejected = resolved.filter(d => d.dispute_accepted === 'N');
 
     document.getElementById('disputes-badge').textContent = open.length;
     document.getElementById('disputes-metrics').innerHTML = `
@@ -2101,7 +2124,7 @@ async function loadDisputes() {
       <div class="metric"><div class="label">Accepted</div><div class="value green">${accepted.length}</div></div>
       <div class="metric"><div class="label">Rejected</div><div class="value amber">${rejected.length}</div></div>`;
 
-    window._disputesData = { all, open, resolved: [...accepted, ...rejected] };
+    window._disputesData = { all, open, resolved };
     disputesTab('open', document.querySelector('#disputes-tabs .tab'));
   } catch(e) { console.error('loadDisputes:', e); }
 }
@@ -2121,15 +2144,15 @@ function renderDisputesTable(disputes) {
   }
   const rows = disputes.map(d => {
     const score = normalizeScore(d.total_score);
-    const statusTag = !d.dispute_accepted || d.dispute_accepted === ''
-      ? '<span class="badge badge-amber">Pending</span>'
+    const statusTag = d.dispute_status === 'Open'
+      ? '<span class="badge badge-amber">Open</span>'
       : d.dispute_accepted === 'Y'
         ? '<span class="badge badge-green">Accepted</span>'
         : '<span class="badge badge-red">Rejected</span>';
-    return `<tr onclick="openDisputeDetail(${JSON.stringify(d).replace(/"/g,'&quot;')})" style="cursor:pointer">
+    return `<tr onclick="handleDisputeRowClick(${JSON.stringify(d).replace(/"/g,'&quot;')})" style="cursor:pointer">
       <td>${zdLink(d.ticket)}</td>
       <td>${d.lead_email}</td>
-      <td>${d.supervisor}</td>
+      <td>${d.reviewer}</td>
       <td>W${d.week} / M${d.month}</td>
       <td><span class="badge ${scoreClass(score)}">${score}%</span></td>
       <td style="max-width:200px;font-size:12px;color:var(--text-muted)">${d.dispute_reason?d.dispute_reason.slice(0,80)+'…':'—'}</td>
@@ -2138,77 +2161,167 @@ function renderDisputesTable(disputes) {
   }).join('');
   document.getElementById('disputes-table').innerHTML = `
     <table>
-      <thead><tr><th>Ticket</th><th>Lead</th><th>Supervisor</th><th>Week/Month</th><th>Score</th><th>Reason</th><th>Status</th></tr></thead>
+      <thead><tr><th>Ticket</th><th>Lead</th><th>Reviewer</th><th>Week/Month</th><th>Score</th><th>Reason</th><th>Status</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
 
-function openDisputeDetail(d) {
-  const score = normalizeScore(d.total_score);
-  const isAdmin = currentRole === 'admin' || currentRole === 'supervisor';
-  const isOpen  = !d.dispute_accepted || d.dispute_accepted === '';
+function handleDisputeRowClick(d) {
+  // Only an admin resolves an open dispute — reopens the New Audit rubric
+  // pre-filled with the current root causes so they can correct it.
+  // Everything else (non-admins, already-resolved disputes) gets a
+  // read-only summary instead.
+  if (d.dispute_status === 'Open' && currentRole === 'admin') {
+    openDisputeResolution(d);
+  } else {
+    openDisputeReadOnly(d);
+  }
+}
 
-  const commentsHtml = [
-    ['Context Oversight', d.context_oversight, 10, d.comment_co],
-    ['Evidence Validation', d.evidence_validation, 15, d.comment_ev],
-    ['Wrong Adjustment', d.wrong_adjustment, 10, d.comment_wa],
-    ['Comp. Without Resolution', d.comp_without_res, 20, d.comment_cwr],
-    ['Lack of Process Alignment', d.lack_process, 15, d.comment_lpa],
-    ['Incorrect Escalation Reason', d.incorrect_esc, 15, d.comment_ier],
-    ['Coaching & Guidance', d.coaching, 15, d.comment_cg],
-  ].filter(([,val,,comment]) => Number(val) === 0 && comment)
-   .map(([label,,max,comment]) => `
-    <div style="background:#FFF8E1;border-radius:8px;padding:10px;margin-bottom:8px">
-      <div style="font-size:11px;font-weight:700;color:var(--cu-orange);text-transform:uppercase;margin-bottom:4px">${label} — Fail (0/${max} pts)</div>
-      <div style="font-size:13px;line-height:1.5">${comment}</div>
-    </div>`).join('');
+function openDisputeReadOnly(d) {
+  const score = normalizeScore(d.total_score);
+  const origScore = d.original_total_score !== null ? normalizeScore(d.original_total_score) : null;
+  const scoreChanged = origScore !== null && origScore !== score;
 
   document.getElementById('modal-title').textContent = `Dispute — Ticket ${d.ticket}`;
   document.getElementById('modal-body').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;font-size:13px">
       <div><span style="color:var(--text-muted)">Lead</span><br><strong>${d.lead_email}</strong></div>
-      <div><span style="color:var(--text-muted)">Supervisor</span><br><strong>${d.supervisor}</strong></div>
-      <div><span style="color:var(--text-muted)">Reviewer</span><br><strong>${d.reviewer_email}</strong></div>
-      <div><span style="color:var(--text-muted)">Score</span><br><span class="badge ${scoreClass(score)}">${score}%</span></div>
+      <div><span style="color:var(--text-muted)">Reviewer</span><br><strong>${d.reviewer}</strong></div>
+      <div><span style="color:var(--text-muted)">Disputed by</span><br><strong>${d.dispute_submitted_by||'—'}</strong></div>
+      <div><span style="color:var(--text-muted)">Score</span><br>
+        <span class="badge ${scoreClass(score)}">${score}%</span>
+        ${scoreChanged ? `<span style="font-size:11px;color:var(--text-muted);margin-left:6px">was ${origScore}%</span>` : ''}
+      </div>
     </div>
     <div style="background:#FFF0F5;border-radius:8px;padding:12px;margin-bottom:14px">
       <div style="font-size:11px;font-weight:700;color:var(--cu-magenta);text-transform:uppercase;margin-bottom:6px">Dispute reason</div>
       <div style="font-size:13px;line-height:1.5">${d.dispute_reason||'—'}</div>
     </div>
-    ${commentsHtml ? `<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Reviewer feedback</div>${commentsHtml}</div>` : ''}
-    ${!isOpen ? `<div style="background:${d.dispute_accepted==='Y'?'#D6EFDF':'#FFE5F0'};border-radius:8px;padding:12px">
-      <div style="font-weight:700">${d.dispute_accepted==='Y'?'✅ Accepted':'❌ Rejected'}</div>
-      ${d.rejection_reason?`<div style="font-size:13px;margin-top:4px">${d.rejection_reason}</div>`:''}
-    </div>` : ''}
-    ${isAdmin && isOpen ? `
-    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px">Admin decision</div>
-      <div class="form-grid">
-        <div class="field"><label>Decision</label>
-          <select id="dispute-decision"><option value="">Select</option><option value="Y">Accept dispute</option><option value="N">Reject dispute</option></select></div>
-      </div>
-      <div class="field" style="margin-top:10px"><label>Rejection reason (if rejected)</label>
-        <textarea id="dispute-rejection" rows="2" placeholder="Explain why the dispute is rejected..."></textarea></div>
-    </div>` : ''}
+    ${d.dispute_status === 'Open'
+      ? `<div style="background:#FFF8E1;border-radius:8px;padding:12px;font-size:13px">⏳ Waiting on an admin to review this.</div>`
+      : `<div style="background:${d.dispute_accepted==='Y'?'#D6EFDF':'#FFE5F0'};border-radius:8px;padding:12px">
+          <div style="font-weight:700">${d.dispute_accepted==='Y'?'✅ Accepted — score corrected':'❌ Rejected — original review stands'}</div>
+          ${d.dispute_resolution_notes?`<div style="font-size:13px;margin-top:4px">${d.dispute_resolution_notes}</div>`:''}
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Resolved by ${d.dispute_resolved_by||'—'}</div>
+        </div>`}
   `;
-
-  document.getElementById('modal-actions').innerHTML = isAdmin && isOpen
-    ? `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-       <button class="btn btn-primary" onclick="resolveDispute(${d.rowId})">Save decision</button>`
-    : `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
-
+  document.getElementById('modal-actions').innerHTML = `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
   document.getElementById('modal').classList.add('open');
 }
 
-async function resolveDispute(rowId) {
-  const decision = document.getElementById('dispute-decision')?.value;
-  const rejection = document.getElementById('dispute-rejection')?.value || '';
-  if (!decision) { alert('Please select a decision.'); return; }
+// ── DISPUTE RESOLUTION MODE (admin only) ────────────────────
+// Reopens the New Audit rubric, pre-filled with the audit's current
+// root causes, so the admin corrects them with the same chips/scoring
+// logic used everywhere else instead of a separate custom UI.
+let disputeMode = null;
+
+function openDisputeResolution(d) {
+  nav('form');
+  disputeMode = { ticket: d.ticket, reviewer: d.reviewer };
+
+  document.getElementById('audit-queue-card').style.display = 'none';
+  document.getElementById('normal-actions').style.display = 'none';
+  document.getElementById('dispute-actions').style.display = 'flex';
+
+  document.getElementById('f-half').value      = d.half || '';
+  document.getElementById('f-month').value     = d.month || '';
+  document.getElementById('f-week').value      = d.week || '';
+  document.getElementById('f-wabi-date').value = d.wabi_date || '';
+  document.getElementById('f-ticket').value    = d.ticket || '';
+  document.getElementById('f-lead').value      = d.lead_email || '';
+  document.getElementById('f-supervisor').value= d.supervisor || '';
+  document.getElementById('f-calibration').value = d.calibration || 'No';
+  document.getElementById('f-specialist').value  = d.specialist || '';
+
+  document.getElementById('d-half').textContent      = d.half || '—';
+  document.getElementById('d-month').textContent     = d.month || '—';
+  document.getElementById('d-week').textContent      = d.week || '—';
+  document.getElementById('d-wabi-date').textContent = d.wabi_date || '—';
+  document.getElementById('d-ticket').textContent    = d.ticket || '—';
+  document.getElementById('d-lead').textContent      = d.lead_email || '—';
+  document.getElementById('d-supervisor').textContent= d.supervisor || '—';
+
+  // Reset all chips, then mark active whatever root causes are currently
+  // on this record so the admin sees exactly what was originally flagged.
+  document.querySelectorAll('.rc-card').forEach(c => c.classList.remove('active'));
+  const rcByCat = {
+    val: (d.rc_val||'').split(',').map(s=>s.trim()).filter(Boolean),
+    ir:  (d.rc_ir ||'').split(',').map(s=>s.trim()).filter(Boolean),
+    pe:  (d.rc_pe ||'').split(',').map(s=>s.trim()).filter(Boolean),
+    cg:  (d.rc_cg ||'').split(',').map(s=>s.trim()).filter(Boolean),
+  };
+  document.querySelectorAll('.rc-card').forEach(card => {
+    if ((rcByCat[card.dataset.cat]||[]).includes(card.dataset.rc)) card.classList.add('active');
+  });
+  ['val','ir','pe','cg'].forEach(cat => updateCategory(cat));
+  updateSelectedTags();
+  calcScore();
+
+  const ta = document.getElementById('f-comment-final');
+  if (ta) ta.value = d.comment || '';
+
+  document.getElementById('dispute-banner').innerHTML = `
+    <div class="alert" style="background:#FFF0F5;border:1px solid #f5c4d8;color:var(--cu-magenta)">
+      <strong>⚖️ Resolving dispute</strong> — submitted by ${d.dispute_submitted_by||'—'}: "${d.dispute_reason||''}"
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Toggle the root causes to correct what was wrong, then Accept — or Reject to keep the original review as-is.</div>
+    </div>`;
+
+  document.getElementById('f-audit-display').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function acceptDisputeCorrection() {
+  if (!disputeMode) return;
+  const cats = { val:35, ir:20, pe:35, cg:10 };
+  const scores = {};
+  for (const [cat, pts] of Object.entries(cats)) {
+    scores[cat] = getSelectedChips(cat).length > 0 ? 0 : pts;
+  }
+  const body = {
+    ticket: disputeMode.ticket,
+    reviewer_email: disputeMode.reviewer,
+    accepted: true,
+    resolved_by: currentUser.email,
+    score_validation:  scores.val,
+    score_issue_res:   scores.ir,
+    score_process_esc: scores.pe,
+    score_coaching:    scores.cg,
+    rc_validation:  getSelectedChips('val').join(', '),
+    rc_issue_res:   getSelectedChips('ir').join(', '),
+    rc_process_esc: getSelectedChips('pe').join(', '),
+    rc_coaching:    getSelectedChips('cg').join(', '),
+  };
   try {
-    await api('resolveDispute', {}, { rowId, dispute_accepted: decision, rejection_reason: rejection });
-    closeModal();
+    await api('resolveDispute', {}, body);
+    alert('Dispute accepted — score corrected.');
+    exitDisputeMode();
+    nav('disputes');
     loadDisputes();
   } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function rejectDisputeFlow() {
+  if (!disputeMode) return;
+  const notes = prompt('Optional note on why this dispute is being rejected:') || '';
+  try {
+    await api('resolveDispute', {}, {
+      ticket: disputeMode.ticket, reviewer_email: disputeMode.reviewer,
+      accepted: false, resolved_by: currentUser.email, resolution_notes: notes,
+    });
+    alert('Dispute rejected — original review stands.');
+    exitDisputeMode();
+    nav('disputes');
+    loadDisputes();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function exitDisputeMode() {
+  disputeMode = null;
+  document.getElementById('dispute-banner').innerHTML = '';
+  document.getElementById('audit-queue-card').style.display = '';
+  document.getElementById('normal-actions').style.display = 'flex';
+  document.getElementById('dispute-actions').style.display = 'none';
+  clearForm();
 }
 
 async function saveLead() {
