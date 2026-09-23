@@ -1060,7 +1060,7 @@ async function refreshMasterData(btn) {
   if (btn) { btn.disabled = true; btn.textContent = 'Refreshing...'; }
   try {
     const result = await api('refreshMasterData', {}, { updated_by: currentUser.email });
-    alert(`✓ Refreshed!\n\nRubric Responses: ${result.counts.rubric_responses}\nSamples Assigned: ${result.counts.samples_assigned}\nWeekly Summary: ${result.counts.weekly_summary}`);
+    alert(`✓ Refreshed!\n\nRubric Responses: ${result.counts.rubric_responses}\nSamples Assigned: ${result.counts.samples_assigned}\nWeekly Summary: ${result.counts.weekly_summary}\nSub Contact Reasons: ${result.counts.sub_contact_reasons}`);
 
     // Reload whatever's currently on screen so the new snapshot shows right away
     loadDashboard(); loadVolumeOverview(); loadComplianceOverview();
@@ -1129,7 +1129,10 @@ function formatPct(v) {
 
 async function loadVolumeOverview() {
   try {
-    const rows = await api('getWeeklySummary', { useCache: true });
+    const [rows, subReasons] = await Promise.all([
+      api('getWeeklySummary', { useCache: true }),
+      api('getSubContactReasons', { useCache: true }),
+    ]);
     const el = document.getElementById('vol-section');
     if (!rows.length) {
       el.innerHTML = '<div class="empty">No data yet</div>';
@@ -1146,6 +1149,12 @@ async function loadVolumeOverview() {
     const monthRows = sorted.filter(r => Number(r['Month']) === effectiveMonth);
     const monthTotal = monthRows.reduce((s,r) => s + (Number(r['Total Wabis'])||0), 0);
 
+    const latestSubReasons = subReasons
+      .filter(r => Number(r.week) === Number(latest['Week']))
+      .sort((a,b) => b.count - a.count);
+    const subReasonRows = latestSubReasons.map(r => `
+      <tr><td>${r.contact_reason}</td><td>${r.sub_contact_reason}</td><td style="text-align:right;font-weight:600">${r.count}</td></tr>`).join('');
+
     el.innerHTML = `
       <div class="metrics" style="margin-bottom:16px">
         <div class="metric"><div class="label">Wabis — ${MONTH_NAMES[effectiveMonth]||'M'+effectiveMonth}</div><div class="value">${monthTotal}</div></div>
@@ -1154,9 +1163,17 @@ async function loadVolumeOverview() {
         <div class="metric"><div class="label">Avg FRT (min)</div><div class="value">${latest['Avg FRT (min)']!==''?latest['Avg FRT (min)']:'—'}</div></div>
         <div class="metric"><div class="label">Avg Full Res (min)</div><div class="value">${latest['Avg Full Res (min)']!==''?latest['Avg Full Res (min)']:'—'}</div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
         <div class="card"><h3>Wabis per week</h3><div class="chart-wrap"><canvas id="chart-vol-weekly"></canvas></div></div>
         <div class="card"><h3>By contact reason — W${latest['Week']}</h3><div class="chart-wrap"><canvas id="chart-vol-reasons"></canvas></div></div>
+      </div>
+      <div class="card">
+        <h3>By sub contact reason — W${latest['Week']}</h3>
+        <div style="max-height:320px;overflow-y:auto">
+          ${subReasonRows
+            ? `<table><thead><tr><th>Contact reason</th><th>Sub contact reason</th><th style="text-align:right">Count</th></tr></thead><tbody>${subReasonRows}</tbody></table>`
+            : '<div class="empty">No sub contact reason data for this week yet</div>'}
+        </div>
       </div>`;
 
     renderVolumeWeeklyChart(sorted.slice(-12));
