@@ -1060,7 +1060,7 @@ async function refreshMasterData(btn) {
   if (btn) { btn.disabled = true; btn.textContent = 'Refreshing...'; }
   try {
     const result = await api('refreshMasterData', {}, { updated_by: currentUser.email });
-    alert(`✓ Refreshed!\n\nRubric Responses: ${result.counts.rubric_responses}\nSamples Assigned: ${result.counts.samples_assigned}\nWeekly Summary: ${result.counts.weekly_summary}\nSub Contact Reasons: ${result.counts.sub_contact_reasons}`);
+    alert(`✓ Refreshed!\n\nRubric Responses: ${result.counts.rubric_responses}\nSamples Assigned: ${result.counts.samples_assigned}\nWeekly Summary: ${result.counts.weekly_summary}\nSub Contact Reasons: ${result.counts.sub_contact_reasons}\nLead Volume: ${result.counts.lead_volume}`);
 
     // Reload whatever's currently on screen so the new snapshot shows right away
     loadDashboard(); loadVolumeOverview(); loadComplianceOverview();
@@ -1129,9 +1129,10 @@ function formatPct(v) {
 
 async function loadVolumeOverview() {
   try {
-    const [rows, subReasons] = await Promise.all([
+    const [rows, subReasons, leadVolume] = await Promise.all([
       api('getWeeklySummary', { useCache: true }),
       api('getSubContactReasons', { useCache: true }),
+      api('getLeadVolume', { useCache: true }),
     ]);
     const el = document.getElementById('vol-section');
     if (!rows.length) {
@@ -1141,6 +1142,7 @@ async function loadVolumeOverview() {
 
     const sorted = [...rows].sort((a,b) => Number(a['Week']) - Number(b['Week']));
     const latest = sorted[sorted.length - 1];
+    const latestWeek = Number(latest['Week']);
 
     // "This month" always reflects a real month — the dash-month filter
     // if one is set, otherwise the most recent month recorded.
@@ -1150,10 +1152,28 @@ async function loadVolumeOverview() {
     const monthTotal = monthRows.reduce((s,r) => s + (Number(r['Total Wabis'])||0), 0);
 
     const latestSubReasons = subReasons
-      .filter(r => Number(r.week) === Number(latest['Week']))
+      .filter(r => Number(r.week) === latestWeek)
       .sort((a,b) => b.count - a.count);
-    const subReasonRows = latestSubReasons.map(r => `
-      <tr><td>${r.contact_reason}</td><td>${r.sub_contact_reason}</td><td style="text-align:right;font-weight:600">${r.count}</td></tr>`).join('');
+    const subReasonTotal = latestSubReasons.reduce((s,r) => s + r.count, 0);
+    const subReasonRows = latestSubReasons.map(r => {
+      const pct = subReasonTotal > 0 ? Math.round(r.count / subReasonTotal * 1000) / 10 : 0;
+      return `<tr><td>${r.contact_reason}</td><td>${r.sub_contact_reason}</td>
+        <td style="text-align:right;font-weight:600">${r.count}</td>
+        <td style="text-align:right;color:var(--text-muted)">${pct}%</td></tr>`;
+    }).join('');
+
+    const latestLeadVolume = leadVolume
+      .filter(r => Number(r.week) === latestWeek)
+      .sort((a,b) => (b.total||0) - (a.total||0));
+    const leadVolumeRows = latestLeadVolume.map(r => `
+      <tr>
+        <td>${r.lead_name || r.lead_email}</td>
+        <td style="text-align:right;font-weight:600">${r.total||0}</td>
+        <td style="text-align:right">${formatPct(r.reopen_pct)}</td>
+        <td style="text-align:right">${r.with_reopens||0}</td>
+        <td style="text-align:right">${r.avg_frt!==''&&r.avg_frt!==undefined?r.avg_frt:'—'}</td>
+        <td style="text-align:right">${r.avg_full_res!==''&&r.avg_full_res!==undefined?r.avg_full_res:'—'}</td>
+      </tr>`).join('');
 
     el.innerHTML = `
       <div class="metrics" style="margin-bottom:16px">
@@ -1167,12 +1187,20 @@ async function loadVolumeOverview() {
         <div class="card"><h3>Wabis per week</h3><div class="chart-wrap"><canvas id="chart-vol-weekly"></canvas></div></div>
         <div class="card"><h3>By contact reason — W${latest['Week']}</h3><div class="chart-wrap"><canvas id="chart-vol-reasons"></canvas></div></div>
       </div>
-      <div class="card">
+      <div class="card" style="margin-bottom:16px">
         <h3>By sub contact reason — W${latest['Week']}</h3>
         <div style="max-height:320px;overflow-y:auto">
           ${subReasonRows
-            ? `<table><thead><tr><th>Contact reason</th><th>Sub contact reason</th><th style="text-align:right">Count</th></tr></thead><tbody>${subReasonRows}</tbody></table>`
+            ? `<table><thead><tr><th>Contact reason</th><th>Sub contact reason</th><th style="text-align:right">Count</th><th style="text-align:right">% of total</th></tr></thead><tbody>${subReasonRows}</tbody></table>`
             : '<div class="empty">No sub contact reason data for this week yet</div>'}
+        </div>
+      </div>
+      <div class="card">
+        <h3>Volume by lead — W${latest['Week']}</h3>
+        <div style="max-height:320px;overflow-y:auto">
+          ${leadVolumeRows
+            ? `<table><thead><tr><th>Lead</th><th style="text-align:right">Total</th><th style="text-align:right">Reopen %</th><th style="text-align:right">Reopen count</th><th style="text-align:right">Avg FRT (min)</th><th style="text-align:right">Avg Full Res (min)</th></tr></thead><tbody>${leadVolumeRows}</tbody></table>`
+            : '<div class="empty">No lead volume data for this week yet</div>'}
         </div>
       </div>`;
 
