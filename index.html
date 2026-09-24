@@ -340,6 +340,7 @@ tr:hover td{background:var(--card-bg)}
         <input type="hidden" id="f-lead">
         <input type="hidden" id="f-supervisor">
         <input type="hidden" id="f-calibration">
+        <input type="hidden" id="f-session-id">
 
         <!-- Read-only display -->
         <div id="f-audit-display" style="background:var(--bg);border-radius:10px;padding:16px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
@@ -893,6 +894,7 @@ let currentUser = null;
 let currentRole = 'viewer';
 let allRecords  = [];
 let hierarchy   = [];
+let activeQueueItem = null;
 let chartBands, chartRC, chartFail, chartLeadTrend;
 
 const MONTH_NAMES = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1581,7 +1583,8 @@ document.addEventListener('click', () => {
 
 
 function clearForm() {
-  ['f-half','f-month','f-week','f-wabi-date','f-ticket','f-specialist','f-notes','f-lead','f-supervisor','f-calibration'].forEach(id => {
+  activeQueueItem = null;
+  ['f-half','f-month','f-week','f-wabi-date','f-ticket','f-specialist','f-notes','f-lead','f-supervisor','f-calibration','f-session-id'].forEach(id => {
     const el=document.getElementById(id); if(el) el.value='';
   });
   ['d-half','d-month','d-week','d-wabi-date','d-ticket','d-lead','d-supervisor'].forEach(id => {
@@ -1671,6 +1674,7 @@ async function submitAudit() {
     comment: comment,
     feedback_yn: anyFail ? 'Yes' : 'No',
     calibration: document.getElementById('f-calibration')?.value || 'No',
+    session_id:  document.getElementById('f-session-id')?.value || '',
   };
 
   const btn = document.getElementById('submit-btn');
@@ -1744,61 +1748,32 @@ async function loadRecords() {
 async function loadCalibrationsList() {
   const el = document.getElementById('calibrations-list');
   try {
-    const [records, notes] = await Promise.all([
-      api('getRecords', { half: CURRENT_HALF, calibration: 'Yes', useCache: true }),
-      api('getCalibrationNotes', {}),
-    ]);
-
-    if (!records.length) {
+    const sessions = await api('getCalibrations', {});
+    if (!sessions.length) {
       el.innerHTML = '<div class="empty">No calibration sessions yet</div>';
       return;
     }
-
-    // Group by half|month|week
-    const sessions = {};
-    records.forEach(r => {
-      const key = `${r.half}|${r.month}|${r.week}`;
-      if (!sessions[key]) sessions[key] = { half: r.half, month: r.month, week: r.week, records: [] };
-      sessions[key].records.push(r);
-    });
-
-    const notesByKey = {};
-    notes.forEach(n => { notesByKey[`${n.half}|${n.month}|${n.week}`] = n; });
-
-    const cats = { val: 35, ir: 20, pe: 35, cg: 10 };
-    const sortedSessions = Object.entries(sessions).sort((a,b) => b[1].week - a[1].week);
-
-    el.innerHTML = sortedSessions.map(([key, s]) => {
-      const n = s.records.length;
-      const avgScore = Math.round(s.records.reduce((sum,r) => sum + r.total_score, 0) / n * 10) / 10;
-      const passRate = (field, max) => Math.round(s.records.filter(r => r[field] === max).length / n * 100);
-
-      const note = notesByKey[key];
-      const safeKey = key.replace(/[^a-zA-Z0-9]/g, '_');
-
-      return `
+    const pct = v => v === null || v === undefined ? '—' : `${v}%`;
+    const score = v => v === null || v === undefined ? '—' : `${v}%`;
+    el.innerHTML = sessions.map(s => `
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-            <h3 style="margin:0">🎯 Week ${s.week} — ${MONTH_NAMES[s.month]||'M'+s.month} ${s.half}</h3>
-            <span style="font-size:12px;color:var(--text-muted)">${n} sample${n>1?'s':''} reviewed</span>
+            <h3 style="margin:0">🎯 ${s.session_id}</h3>
+            <span style="font-size:12px;color:var(--text-muted)">${s.tickets.length} ticket${s.tickets.length>1?'s':''} · deadline ${s.deadline || '—'}</span>
           </div>
           <div class="metrics" style="margin-bottom:16px">
-            <div class="metric"><div class="label">Avg score</div><div class="value ${avgScore>=90?'green':avgScore>=70?'amber':'red'}">${avgScore}%</div></div>
-            <div class="metric"><div class="label">Validation</div><div class="value">${passRate('score_val',cats.val)}%</div></div>
-            <div class="metric"><div class="label">Issue Resolution</div><div class="value">${passRate('score_ir',cats.ir)}%</div></div>
-            <div class="metric"><div class="label">Process & Escalation</div><div class="value">${passRate('score_pe',cats.pe)}%</div></div>
-            <div class="metric"><div class="label">Coaching & Guidance</div><div class="value">${passRate('score_cg',cats.cg)}%</div></div>
+            <div class="metric"><div class="label">Avg score</div><div class="value">${score(s.avg_total)}</div></div>
+            <div class="metric"><div class="label">Team alignment</div><div class="value ${s.alignment_total >= 90 ? 'green' : 'amber'}">${pct(s.alignment_total)}</div></div>
+            <div class="metric"><div class="label">Compliance</div><div class="value">${s.compliance}%</div></div>
+            <div class="metric"><div class="label">Completed</div><div class="value">${s.completed}/${s.assigned}</div></div>
           </div>
-          <div class="field">
-            <label>Session summary — purpose &amp; results</label>
-            <textarea id="calib-note-${safeKey}" rows="4" placeholder="What was this calibration for, and what did we learn?">${note?note.summary:''}</textarea>
+          <div class="card" style="padding:0;overflow:hidden">
+            <table><thead><tr><th>Ticket</th><th>Reference</th><th>Avg score</th><th>Alignment</th><th>Completed</th></tr></thead><tbody>
+            ${s.tickets.map(t => `<tr><td>${zdLink(t.ticket)}</td><td>${score(t.reference.total)}</td><td>${score(t.avg_total)}</td><td>${pct(t.alignment_total)}</td><td>${t.completed}/${t.assigned}</td></tr>`).join('')}
+            </tbody></table>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-            <span style="font-size:11px;color:var(--text-muted)">${note&&note.updated_by?`Last updated by ${note.updated_by}`:''}</span>
-            <button class="btn btn-primary btn-sm" onclick="saveCalibrationNote('${s.half}',${s.month},${s.week},'${safeKey}')">Save summary</button>
-          </div>
-        </div>`;
-    }).join('');
+          <div style="font-size:12px;color:var(--text-muted);margin-top:12px">Category alignment — Validation: ${pct(s.alignment_categories.val)} · Issue Resolution: ${pct(s.alignment_categories.ir)} · Process & Escalation: ${pct(s.alignment_categories.pe)} · Coaching & Guidance: ${pct(s.alignment_categories.cg)}</div>
+        </div>`).join('');
   } catch(e) { console.error('loadCalibrationsList:', e); el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
 }
 
@@ -2480,13 +2455,14 @@ async function loadAuditQueue() {
         <td>${q.lead_name || q.lead_email || '—'}</td>
         <td>W${q.week} / M${q.month}</td>
         <td>${q.wabi_date || '—'}</td>
+        <td>${q.calibration === 'Yes' ? `<span class="badge badge-gold">Calibration · due ${q.deadline || '—'}</span>` : '<span class="badge badge-gray">Audit</span>'}</td>
         <td><button class="btn btn-primary btn-sm">Start →</button></td>
       </tr>`).join('');
     el.innerHTML = `
       <div style="overflow-y:auto;max-height:220px;border:1px solid var(--border);border-radius:8px">
         <table style="width:100%">
           <thead style="position:sticky;top:0;background:var(--white);z-index:1">
-            <tr><th>Ticket</th><th>Lead</th><th>Week/Month</th><th>Wabi date</th><th></th></tr>
+            <tr><th>Ticket</th><th>Lead</th><th>Week/Month</th><th>Wabi date</th><th>Type</th><th></th></tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
@@ -2496,6 +2472,7 @@ async function loadAuditQueue() {
 }
 
 function prefillForm(q) {
+  activeQueueItem = q;
   // Normalize wabi_date
   let wabiDate = q.wabi_date || '';
   if (wabiDate && wabiDate.includes('T')) wabiDate = wabiDate.split('T')[0];
@@ -2514,6 +2491,8 @@ function prefillForm(q) {
   document.getElementById('f-lead').value      = q.lead_email || '';
   document.getElementById('f-supervisor').value= supervisor;
   document.getElementById('f-calibration').value = q.calibration || 'No';
+  document.getElementById('f-session-id').value = q.session_id || '';
+  document.getElementById('f-specialist').value = q.specialist_email || '';
 
   // Update display fields
   document.getElementById('d-half').textContent      = q.half || CURRENT_HALF || '—';
