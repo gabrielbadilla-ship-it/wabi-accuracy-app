@@ -337,6 +337,7 @@ tr:hover td{background:var(--card-bg)}
         <input type="hidden" id="f-week">
         <input type="hidden" id="f-wabi-date">
         <input type="hidden" id="f-ticket">
+        <input type="hidden" id="f-specialist">
         <input type="hidden" id="f-lead">
         <input type="hidden" id="f-supervisor">
         <input type="hidden" id="f-calibration">
@@ -349,13 +350,9 @@ tr:hover td{background:var(--card-bg)}
           <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Week</div><div id="d-week" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
           <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Wabi Date</div><div id="d-wabi-date" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
           <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Ticket</div><div id="d-ticket" style="font-size:13px;font-weight:600;color:var(--cu-blue)">—</div></div>
+          <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Specialist email</div><div id="d-specialist" style="font-size:13px;font-weight:600;color:var(--cu-black);overflow-wrap:anywhere">—</div></div>
           <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Lead</div><div id="d-lead" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
-          <div style="grid-column:span 3"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Supervisor</div><div id="d-supervisor" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
-        </div>
-
-        <!-- Only editable field -->
-        <div class="form-grid">
-          <div class="field"><label>Specialist email <span style="color:var(--cu-magenta)">*</span></label><input type="text" id="f-specialist" placeholder="specialist@cookunity.com"></div>
+          <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">Supervisor</div><div id="d-supervisor" style="font-size:13px;font-weight:600;color:var(--cu-black)">—</div></div>
         </div>
       </div>
 
@@ -1587,7 +1584,7 @@ function clearForm() {
   ['f-half','f-month','f-week','f-wabi-date','f-ticket','f-specialist','f-notes','f-lead','f-supervisor','f-calibration','f-session-id'].forEach(id => {
     const el=document.getElementById(id); if(el) el.value='';
   });
-  ['d-half','d-month','d-week','d-wabi-date','d-ticket','d-lead','d-supervisor'].forEach(id => {
+  ['d-half','d-month','d-week','d-wabi-date','d-ticket','d-specialist','d-lead','d-supervisor'].forEach(id => {
     const el=document.getElementById(id); if(el) el.textContent='—';
   });
   // Reset chips
@@ -2342,6 +2339,7 @@ function openDisputeResolution(d) {
   document.getElementById('d-week').textContent      = d.week || '—';
   document.getElementById('d-wabi-date').textContent = d.wabi_date || '—';
   document.getElementById('d-ticket').textContent    = d.ticket || '—';
+  document.getElementById('d-specialist').textContent = d.specialist || '—';
   document.getElementById('d-lead').textContent      = d.lead_email || '—';
   document.getElementById('d-supervisor').textContent= d.supervisor || '—';
 
@@ -2500,6 +2498,7 @@ function prefillForm(q) {
   document.getElementById('d-week').textContent      = q.week || '—';
   document.getElementById('d-wabi-date').textContent = wabiDate || '—';
   document.getElementById('d-ticket').textContent    = q.ticket || '—';
+  document.getElementById('d-specialist').textContent = q.specialist_email || '—';
   document.getElementById('d-lead').textContent      = leadName;
   document.getElementById('d-supervisor').textContent= supervisor || '—';
 
