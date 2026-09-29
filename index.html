@@ -963,15 +963,25 @@ function signOut() { sessionStorage.removeItem('wabiUser'); location.reload(); }
 async function api(action, params = {}, body = null) {
   const url = new URL(SCRIPT_URL);
   url.searchParams.set('action', action);
+  url.searchParams.set('_ts', Date.now());
   Object.entries(params).forEach(([k,v]) => { if(v !== undefined && v !== '') url.searchParams.set(k, v); });
 
   if (body) {
     url.searchParams.set('payload', JSON.stringify({ action, ...body }));
   }
 
-  const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
+  const res = await fetch(url.toString(), {
+    method: 'GET',
+    redirect: 'follow',
+    cache: 'no-store'
+  });
   const text = await res.text();
-  const json = JSON.parse(text);
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch (e) {
+    throw new Error(`The API returned an invalid response (${res.status}). Please try again.`);
+  }
 
   // Handle both {ok, data} wrapper and direct response formats
   if (json.error) throw new Error(json.error);
