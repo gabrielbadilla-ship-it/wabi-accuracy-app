@@ -140,7 +140,7 @@ tr:hover td{background:var(--card-bg)}
 .calib-ref-cats,.calib-align-cats{display:flex;gap:5px;flex-wrap:wrap;min-width:210px}
 .calib-ref-cat,.calib-align-cat{font-size:11px;padding:3px 6px;border-radius:5px;background:var(--card-bg);white-space:nowrap}
 .calib-detail-row{display:none}
-.calib-detail-row>td{padding:0!important;background:#fff!important}
+.calib-detail-row>td{padding:0!important;background:#fff!important;border:0}
 .calib-detail{padding:0 16px 16px;background:#fff;border-bottom:1px solid var(--border)}
 .calib-detail-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:10px}
 .calib-review-wrap{overflow-x:auto}
@@ -155,11 +155,12 @@ tr:hover td{background:var(--card-bg)}
 .calib-score-ref{display:block;font-size:10px;color:var(--text-muted);font-weight:400;margin-top:2px}
 .calib-review-note{max-width:230px;white-space:normal;line-height:1.35}
 .calib-table-wrap{max-height:520px;overflow:auto}
+.calib-table-wrap>table{border-collapse:separate;border-spacing:0}
 .calib-table-wrap>table>thead>tr>th{position:sticky;top:0;background:var(--white);z-index:3;box-shadow:0 1px 0 var(--border)}
 .calib-review-wrap{overflow:visible}
 .calib-review-table{overflow:visible;border-collapse:separate;border-spacing:0}
-.calib-ticket-row-open td{position:sticky;top:var(--calib-main-header-height,38px);background:#fff!important;z-index:5;box-shadow:0 1px 0 var(--border)}
-.calib-review-table thead th{position:sticky;top:calc(var(--calib-main-header-height,38px) + var(--calib-ticket-row-height,38px));background:#fff;z-index:6;box-shadow:0 1px 0 var(--border)}
+.calib-ticket-row-open td{position:sticky;top:var(--calib-main-header-height,38px);background:#fff!important;z-index:5;box-shadow:0 2px 0 #fff,0 -2px 0 #fff,0 1px 0 var(--border)}
+.calib-review-table thead th{position:sticky;top:calc(var(--calib-main-header-height,38px) + var(--calib-ticket-row-height,38px));background:#fff;z-index:6;box-shadow:0 2px 0 #fff,0 -2px 0 #fff,0 1px 0 var(--border)}
 .calib-alignment-value{font-weight:700;white-space:nowrap}
 
 /* FILTERS */
