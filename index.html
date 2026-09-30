@@ -139,24 +139,35 @@ tr:hover td{background:var(--card-bg)}
 .calib-ticket-row:hover td{background:#FFF8E7}
 .calib-chevron{display:inline-block;width:18px;color:var(--cu-blue);font-weight:700}
 .calib-ref-cats,.calib-align-cats{display:flex;gap:5px;flex-wrap:wrap;min-width:210px}
-.calib-ref-cat,.calib-align-cat{font-size:11px;padding:3px 6px;border-radius:5px;background:var(--card-bg);white-space:nowrap}
+.calib-ref-cat,.calib-align-cat{font-size:12px;padding:4px 8px;border-radius:5px;background:var(--card-bg);white-space:nowrap}
 .calib-detail-row{display:none}
 .calib-detail-row>td{padding:0!important;background:#fff!important;border:0}
 .calib-detail{padding:0 16px 16px;background:#fff;border-bottom:1px solid var(--border)}
 .calib-detail-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:10px}
 .calib-review-wrap{overflow-x:auto}
 .calib-review-table{min-width:900px;background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.calib-review-table th{font-size:10px;padding:8px;background:var(--card-bg)}
-.calib-review-table td{font-size:12px;padding:8px;vertical-align:top}
+.calib-review-table th{font-size:11px;padding:10px 12px;background:var(--card-bg)}
+.calib-review-table td{font-size:13.5px;padding:12px;vertical-align:top}
 .calib-reviewer{font-weight:600;white-space:nowrap}
-.calib-reviewer small{display:block;font-size:10px;color:var(--text-muted);font-weight:400;margin-top:2px}
+.calib-reviewer small{display:block;font-size:11px;color:var(--text-muted);font-weight:400;margin-top:2px}
 .calib-score-match{color:#1a6b3a;font-weight:700}
+.calib-score-match,.calib-score-mismatch,.calib-score-ref{white-space:nowrap}
 .calib-score-mismatch{color:var(--cu-magenta);font-weight:700}
 .calib-score-pending{color:var(--text-muted)}
 .calib-score-missed{color:var(--cu-magenta);font-weight:600}
-.calib-score-ref{display:block;font-size:10px;color:var(--text-muted);font-weight:400;margin-top:2px}
-.calib-review-note{max-width:230px;white-space:normal;line-height:1.35}
-.calib-table-wrap{max-height:520px;overflow:auto}
+.calib-score-ref{display:block;font-size:11.5px;color:var(--text-muted);font-weight:400;margin-top:2px}
+.calib-review-note{min-width:260px;max-width:340px;white-space:normal;line-height:1.45}
+.calib-table-wrap{max-height:calc(100vh - 150px);overflow:auto}
+.calib-table-wrap>table>tbody>tr.calib-ticket-row>td{font-size:14px;padding:12px}
+.calib-summary-row td{background:#FFFBF0}
+.calib-summary-row:hover td{background:#FFF4D6!important}
+.calib-summary-meta{font-size:12px;color:var(--text-muted);margin-left:10px;font-weight:400}
+.calib-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;padding-top:4px}
+.calib-summary-block{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:14px}
+.calib-summary-block h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px}
+.calib-summary-block .text{font-size:13.5px;line-height:1.55;white-space:pre-wrap;color:var(--text)}
+.calib-summary-block textarea{width:100%;min-height:150px;padding:10px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:13.5px;line-height:1.5;resize:vertical;background:var(--white)}
+.calib-summary-block textarea:focus{outline:none;border-color:var(--cu-gold);box-shadow:0 0 0 3px rgba(255,184,28,.12)}
 .calib-table-wrap>table{border-collapse:separate;border-spacing:0}
 .calib-table-wrap>table>thead>tr>th{position:sticky;top:0;background:var(--white);z-index:3;box-shadow:0 1px 0 var(--border)}
 .calib-review-wrap{overflow:visible}
@@ -1901,10 +1912,18 @@ async function loadCalibrationsList() {
                   </div></td>
                 </tr>`;
             }).join('')}
+            ${(() => {
+              const sumId = 'calib-summary-' + sIdx;
+              return `<tr class="calib-ticket-row calib-summary-row" data-calib-toggle="${sumId}" onclick="toggleCalibrationTicket('${sumId}')">
+                  <td colspan="7"><span class="calib-chevron" id="${sumId}-chevron">▸</span><strong>📝 Session summary</strong><span class="calib-summary-meta" id="calib-sum-meta-${sIdx}">${calibrationSummaryMeta(s.summary)}</span></td>
+                </tr>
+                <tr id="${sumId}" class="calib-detail-row">
+                  <td colspan="7"><div class="calib-detail">${renderCalibrationSummary(s, sIdx)}</div></td>
+                </tr>`;
+            })()}
             </tbody></table></div>
           </div>
           <div style="font-size:12px;color:var(--text-muted);margin-top:12px">Category alignment (all completed reviews in the session) — Validation: ${pct(s.alignment_categories.val)} · Issue Resolution: ${pct(s.alignment_categories.ir)} · Process & Escalation: ${pct(s.alignment_categories.pe)} · Coaching & Guidance: ${pct(s.alignment_categories.cg)}</div>
-          ${renderCalibrationSummary(s, sIdx)}
         </div>`).join('');
   } catch(e) { console.error('loadCalibrationsList:', e); el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
 }
@@ -1941,41 +1960,38 @@ const CALIB_SUMMARY_FIELDS = [
   ['next_steps',      'Next steps',      'Rubric updates, training, follow-ups and owners'],
 ];
 
+// One-line status shown on the collapsed "Session summary" row
+function calibrationSummaryMeta(summary) {
+  const filled = CALIB_SUMMARY_FIELDS.filter(([key]) => String((summary || {})[key] || '').trim()).length;
+  if (!filled) return 'Not written yet';
+  const who = summary.updated_by ? ` · updated by ${escapeHtml(summary.updated_by)}${summary.updated_at ? ' · ' + escapeHtml(summary.updated_at) : ''}` : '';
+  return `${filled}/3 sections${who}`;
+}
+
 function renderCalibrationSummary(s, sIdx) {
   const summary = s.summary || {};
   const isAdmin = currentRole === 'admin';
   const hasContent = CALIB_SUMMARY_FIELDS.some(([key]) => String(summary[key] || '').trim());
-  const meta = summary.updated_by
-    ? `<div style="font-size:11px;color:var(--text-muted);margin-top:10px">Last updated by ${escapeHtml(summary.updated_by)}${summary.updated_at ? ' · ' + escapeHtml(summary.updated_at) : ''}</div>`
-    : '';
 
-  let body;
-  if (isAdmin) {
-    body = CALIB_SUMMARY_FIELDS.map(([key, label, hint]) => `
-      <div class="field" style="margin-bottom:12px">
-        <label>${label}</label>
-        <textarea id="calib-sum-${sIdx}-${key}" placeholder="${escapeHtml(hint)}" style="min-height:80px">${escapeHtml(summary[key] || '')}</textarea>
-      </div>`).join('') + `
-      <div style="display:flex;align-items:center;gap:10px">
-        <button class="btn btn-primary btn-sm" id="calib-sum-save-${sIdx}" onclick="saveCalibrationSummary(${sIdx})">💾 Save summary</button>
-        <span id="calib-sum-status-${sIdx}" style="font-size:12px;color:var(--cu-green)"></span>
-      </div>`;
-  } else if (hasContent) {
-    body = CALIB_SUMMARY_FIELDS.map(([key, label]) => `
-      <div style="margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">${label}</div>
-        <div style="font-size:13px;line-height:1.5;white-space:pre-wrap">${escapeHtml(summary[key] || '—')}</div>
-      </div>`).join('');
-  } else {
-    body = '<div style="font-size:13px;color:var(--text-muted);font-style:italic">No summary yet for this session.</div>';
+  if (!isAdmin && !hasContent) {
+    return '<div style="font-size:13px;color:var(--text-muted);font-style:italic;padding:6px 0">No summary yet for this session.</div>';
   }
 
-  return `
-    <div class="card" style="margin-top:16px;margin-bottom:0;border-left:4px solid var(--cu-gold)">
-      <h3 style="margin-bottom:12px">📝 Session summary</h3>
-      ${body}
-      ${meta}
-    </div>`;
+  const blocks = CALIB_SUMMARY_FIELDS.map(([key, label, hint]) => `
+    <div class="calib-summary-block">
+      <h4>${label}</h4>
+      ${isAdmin
+        ? `<textarea id="calib-sum-${sIdx}-${key}" placeholder="${escapeHtml(hint)}" onclick="event.stopPropagation()">${escapeHtml(summary[key] || '')}</textarea>`
+        : `<div class="text">${escapeHtml(summary[key] || '—')}</div>`}
+    </div>`).join('');
+
+  const actions = isAdmin ? `
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+      <button class="btn btn-primary btn-sm" id="calib-sum-save-${sIdx}" onclick="event.stopPropagation();saveCalibrationSummary(${sIdx})">💾 Save summary</button>
+      <span id="calib-sum-status-${sIdx}" style="font-size:12px;color:var(--cu-green)"></span>
+    </div>` : '';
+
+  return `<div class="calib-summary-grid">${blocks}</div>${actions}`;
 }
 
 async function saveCalibrationSummary(sIdx) {
@@ -1992,6 +2008,8 @@ async function saveCalibrationSummary(sIdx) {
     await api('saveCalibrationNote', {}, payload);
     s.summary = { ...(s.summary || {}), ...payload, updated_at: 'just now' };
     if (status) status.textContent = '✓ Saved';
+    const meta = document.getElementById(`calib-sum-meta-${sIdx}`);
+    if (meta) meta.innerHTML = calibrationSummaryMeta(s.summary);
   } catch(e) {
     alert('Error: ' + e.message);
   } finally {
