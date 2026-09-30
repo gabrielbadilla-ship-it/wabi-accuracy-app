@@ -158,8 +158,8 @@ tr:hover td{background:var(--card-bg)}
 .calib-table-wrap>table>thead>tr>th{position:sticky;top:0;background:var(--white);z-index:3;box-shadow:0 1px 0 var(--border)}
 .calib-review-wrap{overflow:visible}
 .calib-review-table{overflow:visible;border-collapse:separate;border-spacing:0}
-.calib-ticket-row-open td{position:sticky;top:38px;background:#fff!important;z-index:5;box-shadow:0 1px 0 var(--border)}
-.calib-review-table thead th{position:sticky;top:76px;background:#fff;z-index:6;box-shadow:0 1px 0 var(--border)}
+.calib-ticket-row-open td{position:sticky;top:var(--calib-main-header-height,38px);background:#fff!important;z-index:5;box-shadow:0 1px 0 var(--border)}
+.calib-review-table thead th{position:sticky;top:calc(var(--calib-main-header-height,38px) + var(--calib-ticket-row-height,38px));background:#fff;z-index:6;box-shadow:0 1px 0 var(--border)}
 .calib-alignment-value{font-weight:700;white-space:nowrap}
 
 /* FILTERS */
@@ -1886,6 +1886,19 @@ function toggleCalibrationTicket(detailId) {
   detail.style.display = open ? 'none' : 'table-row';
   if (ticketRow) ticketRow.classList.toggle('calib-ticket-row-open', !open);
   if (chevron) chevron.textContent = open ? '▸' : '▾';
+  if (!open && ticketRow) {
+    requestAnimationFrame(() => updateCalibrationStickyOffsets(ticketRow));
+  }
+}
+
+function updateCalibrationStickyOffsets(ticketRow) {
+  const wrap = ticketRow.closest('.calib-table-wrap');
+  if (!wrap) return;
+  const mainHead = wrap.querySelector(':scope > table > thead');
+  const mainHeaderHeight = mainHead ? mainHead.getBoundingClientRect().height : 38;
+  const ticketRowHeight = ticketRow.getBoundingClientRect().height || 38;
+  wrap.style.setProperty('--calib-main-header-height', `${mainHeaderHeight}px`);
+  wrap.style.setProperty('--calib-ticket-row-height', `${ticketRowHeight}px`);
 }
 
 async function saveCalibrationNote(half, month, week, safeKey) {
