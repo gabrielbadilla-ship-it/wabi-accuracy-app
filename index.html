@@ -153,6 +153,7 @@ tr:hover td{background:var(--card-bg)}
 .calib-score-match{color:#1a6b3a;font-weight:700}
 .calib-score-mismatch{color:var(--cu-magenta);font-weight:700}
 .calib-score-pending{color:var(--text-muted)}
+.calib-score-missed{color:var(--cu-magenta);font-weight:600}
 .calib-score-ref{display:block;font-size:10px;color:var(--text-muted);font-weight:400;margin-top:2px}
 .calib-review-note{max-width:230px;white-space:normal;line-height:1.35}
 .calib-table-wrap{max-height:520px;overflow:auto}
@@ -1841,23 +1842,26 @@ async function loadCalibrationsList() {
       ['V', t.alignment_categories?.val], ['IR', t.alignment_categories?.ir],
       ['P&E', t.alignment_categories?.pe], ['C&G', t.alignment_categories?.cg]
     ].map(([label, value]) => `<span class="calib-align-cat"><strong>${label}</strong> ${pct(value)}</span>`).join('');
-    const matchScore = (value, reference, matches, pending, max) => {
-      if (pending) return '<span class="calib-score-pending">Pending</span>';
+    // status: 'Completed' | 'Pending' (before deadline) | 'Missed' (deadline passed, not submitted)
+    const matchScore = (value, reference, matches, status, max) => {
+      if (status === 'Missed') return '<span class="calib-score-missed">Missed</span>';
+      if (status !== 'Completed') return '<span class="calib-score-pending">Pending</span>';
       const cls = matches === true ? 'calib-score-match' : 'calib-score-mismatch';
       const icon = matches === true ? '✓' : '✗';
       return `<span class="${cls}">${score(value, max)} ${icon}</span><span class="calib-score-ref">Ref: ${score(reference, max)}</span>`;
     };
-    el.innerHTML = sessions.map(s => `
+    window._calibSessions = sessions;
+    el.innerHTML = sessions.map((s, sIdx) => `
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
             <h3 style="margin:0">🎯 ${s.session_id}</h3>
-            <span style="font-size:12px;color:var(--text-muted)">${s.tickets.length} ticket${s.tickets.length>1?'s':''} · deadline ${s.deadline || '—'}</span>
+            <span style="font-size:12px;color:var(--text-muted)">${s.tickets.length} ticket${s.tickets.length>1?'s':''} · deadline ${s.deadline || '—'}${s.deadline_passed ? ' <span class="badge badge-gray" style="margin-left:4px">Closed</span>' : ''}</span>
           </div>
           <div class="metrics" style="margin-bottom:16px">
             <div class="metric"><div class="label">Avg score</div><div class="value">${score(s.avg_total, MAX.total)}</div></div>
             <div class="metric"><div class="label">Team alignment</div><div class="value ${alignmentTone(s.alignment_total)}">${pct(s.alignment_total)}</div></div>
             <div class="metric"><div class="label">Compliance</div><div class="value">${s.compliance}%</div></div>
-            <div class="metric"><div class="label">Completed</div><div class="value">${s.completed}/${s.assigned}</div></div>
+            <div class="metric"><div class="label">Completed</div><div class="value">${s.completed}/${s.assigned}</div>${s.missed ? `<div style="font-size:12px;color:var(--cu-magenta);font-weight:600;margin-top:4px">${s.missed} missed</div>` : ''}</div>
           </div>
           <div class="card" style="padding:0;overflow:hidden">
             <div class="calib-table-wrap"><table><thead><tr><th>Ticket</th><th>Reference total</th><th>Avg score</th><th>Completed</th><th>Aligned reviews</th><th>Category alignment</th><th>Alignment</th></tr></thead><tbody>
@@ -1871,12 +1875,12 @@ async function loadCalibrationsList() {
               const reviewRows = reviews.length
                 ? reviews.map(r => `<tr>
                     <td class="calib-reviewer">${safe(r.supervisor_name)}<small>${safe(r.supervisor_email)}</small></td>
-                    <td><span class="badge ${r.status === 'Completed' ? 'badge-green' : 'badge-gray'}">${safe(r.status)}</span></td>
-                    <td>${matchScore(r.total_score, t.reference?.total, r.matches?.total, r.status !== 'Completed', MAX.total)}</td>
-                    <td>${matchScore(r.score_val, t.reference?.val, r.matches?.val, r.status !== 'Completed', MAX.val)}</td>
-                    <td>${matchScore(r.score_ir, t.reference?.ir, r.matches?.ir, r.status !== 'Completed', MAX.ir)}</td>
-                    <td>${matchScore(r.score_pe, t.reference?.pe, r.matches?.pe, r.status !== 'Completed', MAX.pe)}</td>
-                    <td>${matchScore(r.score_cg, t.reference?.cg, r.matches?.cg, r.status !== 'Completed', MAX.cg)}</td>
+                    <td><span class="badge ${r.status === 'Completed' ? 'badge-green' : r.status === 'Missed' ? 'badge-red' : 'badge-gray'}">${safe(r.status)}</span></td>
+                    <td>${matchScore(r.total_score, t.reference?.total, r.matches?.total, r.status, MAX.total)}</td>
+                    <td>${matchScore(r.score_val, t.reference?.val, r.matches?.val, r.status, MAX.val)}</td>
+                    <td>${matchScore(r.score_ir, t.reference?.ir, r.matches?.ir, r.status, MAX.ir)}</td>
+                    <td>${matchScore(r.score_pe, t.reference?.pe, r.matches?.pe, r.status, MAX.pe)}</td>
+                    <td>${matchScore(r.score_cg, t.reference?.cg, r.matches?.cg, r.status, MAX.cg)}</td>
                     <td class="calib-review-note">${safe([r.root_causes?.val, r.root_causes?.ir, r.root_causes?.pe, r.root_causes?.cg].filter(Boolean).join(' · ')) || '—'}${r.comment ? `<br><span style="color:var(--text-muted)">${safe(r.comment)}</span>` : ''}</td>
                   </tr>`).join('')
                 : '<tr><td colspan="8" class="calib-score-pending">No assigned reviewers found for this ticket.</td></tr>';
@@ -1884,7 +1888,7 @@ async function loadCalibrationsList() {
                   <td><span class="calib-chevron" id="${detailId}-chevron">▸</span><span onclick="event.stopPropagation()">${zdLink(t.ticket)}</span></td>
                   <td><strong>${score(t.reference?.total, MAX.total)}</strong></td>
                   <td>${score(t.avg_total, MAX.total)}</td>
-                  <td>${completedCount}/${t.assigned || reviews.length}</td>
+                  <td>${completedCount}/${t.assigned || reviews.length}${t.missed ? `<div style="font-size:11px;color:var(--cu-magenta);font-weight:600">${t.missed} missed</div>` : ''}</td>
                   <td><strong>${alignedCount}/${completedCount}</strong></td>
                   <td><div class="calib-align-cats">${categoryAlignment(t)}</div></td>
                   <td><span class="calib-alignment-value ${alignmentTone(t.alignment_total)}">${pct(t.alignment_total)}</span></td>
@@ -1899,7 +1903,8 @@ async function loadCalibrationsList() {
             }).join('')}
             </tbody></table></div>
           </div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:12px">Category alignment — Validation: ${pct(s.alignment_categories.val)} · Issue Resolution: ${pct(s.alignment_categories.ir)} · Process & Escalation: ${pct(s.alignment_categories.pe)} · Coaching & Guidance: ${pct(s.alignment_categories.cg)}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:12px">Category alignment (all completed reviews in the session) — Validation: ${pct(s.alignment_categories.val)} · Issue Resolution: ${pct(s.alignment_categories.ir)} · Process & Escalation: ${pct(s.alignment_categories.pe)} · Coaching & Guidance: ${pct(s.alignment_categories.cg)}</div>
+          ${renderCalibrationSummary(s, sIdx)}
         </div>`).join('');
   } catch(e) { console.error('loadCalibrationsList:', e); el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
 }
@@ -1928,12 +1933,70 @@ function updateCalibrationStickyOffsets(ticketRow) {
   wrap.style.setProperty('--calib-ticket-row-height', `${ticketRowHeight}px`);
 }
 
-async function saveCalibrationNote(half, month, week, safeKey) {
-  const summary = document.getElementById(`calib-note-${safeKey}`)?.value || '';
+// ── CALIBRATION SESSION SUMMARY ─────────────────────────────
+// Three structured fields per session. Admins edit; everyone else reads.
+const CALIB_SUMMARY_FIELDS = [
+  ['key_findings',    'Key findings',    'What the session revealed: where reviewers disagreed and why'],
+  ['agreed_criteria', 'Agreed criteria', 'How the team agreed to score these situations from now on'],
+  ['next_steps',      'Next steps',      'Rubric updates, training, follow-ups and owners'],
+];
+
+function renderCalibrationSummary(s, sIdx) {
+  const summary = s.summary || {};
+  const isAdmin = currentRole === 'admin';
+  const hasContent = CALIB_SUMMARY_FIELDS.some(([key]) => String(summary[key] || '').trim());
+  const meta = summary.updated_by
+    ? `<div style="font-size:11px;color:var(--text-muted);margin-top:10px">Last updated by ${escapeHtml(summary.updated_by)}${summary.updated_at ? ' · ' + escapeHtml(summary.updated_at) : ''}</div>`
+    : '';
+
+  let body;
+  if (isAdmin) {
+    body = CALIB_SUMMARY_FIELDS.map(([key, label, hint]) => `
+      <div class="field" style="margin-bottom:12px">
+        <label>${label}</label>
+        <textarea id="calib-sum-${sIdx}-${key}" placeholder="${escapeHtml(hint)}" style="min-height:80px">${escapeHtml(summary[key] || '')}</textarea>
+      </div>`).join('') + `
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-primary btn-sm" id="calib-sum-save-${sIdx}" onclick="saveCalibrationSummary(${sIdx})">💾 Save summary</button>
+        <span id="calib-sum-status-${sIdx}" style="font-size:12px;color:var(--cu-green)"></span>
+      </div>`;
+  } else if (hasContent) {
+    body = CALIB_SUMMARY_FIELDS.map(([key, label]) => `
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">${label}</div>
+        <div style="font-size:13px;line-height:1.5;white-space:pre-wrap">${escapeHtml(summary[key] || '—')}</div>
+      </div>`).join('');
+  } else {
+    body = '<div style="font-size:13px;color:var(--text-muted);font-style:italic">No summary yet for this session.</div>';
+  }
+
+  return `
+    <div class="card" style="margin-top:16px;margin-bottom:0;border-left:4px solid var(--cu-gold)">
+      <h3 style="margin-bottom:12px">📝 Session summary</h3>
+      ${body}
+      ${meta}
+    </div>`;
+}
+
+async function saveCalibrationSummary(sIdx) {
+  const s = (window._calibSessions || [])[sIdx];
+  if (!s) return;
+  const payload = { session_id: s.session_id, updated_by: currentUser.email };
+  CALIB_SUMMARY_FIELDS.forEach(([key]) => {
+    payload[key] = document.getElementById(`calib-sum-${sIdx}-${key}`)?.value || '';
+  });
+  const btn = document.getElementById(`calib-sum-save-${sIdx}`);
+  const status = document.getElementById(`calib-sum-status-${sIdx}`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
   try {
-    await api('saveCalibrationNote', {}, { half, month, week, summary, updated_by: currentUser.email });
-    loadCalibrationsList();
-  } catch(e) { alert('Error: ' + e.message); }
+    await api('saveCalibrationNote', {}, payload);
+    s.summary = { ...(s.summary || {}), ...payload, updated_at: 'just now' };
+    if (status) status.textContent = '✓ Saved';
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save summary'; }
+  }
 }
 
 function populateLeadFilter() {
