@@ -23,6 +23,7 @@
   --text:       #2C2B2B;
   --text-muted: #7A7870;
   --white:      #FFFFFF;
+  --card-bg:    #FAFAF7;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
@@ -251,7 +252,9 @@ tr:hover td{background:var(--card-bg)}
     <nav>
       <a onclick="nav('dashboard')" class="active" data-page="dashboard">🏠 Dashboard</a>
       <a onclick="nav('form')" data-page="form" id="new-audit-link">➕ New Audit</a>
-      <a onclick="nav('reviews')" data-page="reviews">📋 Reviews <span class="badge" id="queue-badge">0</span></a>
+      <a onclick="nav('reviews')" data-page="reviews">📋 Reviews</a>
+      <a onclick="nav('leadperf')" data-page="leadperf">👤 Lead Performance</a>
+      <a onclick="nav('feedback')" data-page="feedback">💬 Pending Feedback <span class="badge" id="feedback-badge">0</span></a>
       <a onclick="nav('compliance')" data-page="compliance">✅ Compliance</a>
       <a onclick="nav('disputes')" data-page="disputes">⚖️ Disputes <span class="badge" id="disputes-badge">0</span></a>
       <a onclick="nav('knowledge')" data-page="knowledge">📖 Rubric</a>
@@ -599,23 +602,15 @@ tr:hover td{background:var(--card-bg)}
     <!-- REVIEWS -->
     <div id="page-reviews" class="page">
       <div class="page-title">Reviews</div>
-      <div class="page-sub">Full audit history, lead performance, and pending feedback — <span class="current-half-label"></span></div>
-      <div id="reviews-cache-status"></div>
+      <div class="page-sub">Regular audits and calibration sessions — <span class="current-half-label"></span></div>
       <div class="tabs" id="reviews-tabs">
-        <div class="tab active" onclick="reviewsTab('historial',this)">📋 History</div>
-        <div class="tab" onclick="reviewsTab('leadperf',this)">👤 Lead Performance</div>
-        <div class="tab" onclick="reviewsTab('pending',this)">💬 Pending Feedback <span class="badge" id="queue-badge">0</span></div>
+        <div class="tab active" onclick="reviewsTab('audits',this)">✅ Audits</div>
+        <div class="tab" onclick="reviewsTab('calibrations',this)">🎯 Calibrations</div>
       </div>
 
-      <!-- HISTORY -->
-      <div id="reviews-historial">
-        <div class="tabs" id="historial-tabs">
-          <div class="tab active" onclick="historialTab('audits',this)">✅ Audits</div>
-          <div class="tab" onclick="historialTab('calibrations',this)">🎯 Calibrations</div>
-        </div>
-
-        <!-- AUDITS sub-view (calibration = No) -->
-        <div id="historial-audits">
+      <div>
+        <!-- AUDITS tab (calibration = No) -->
+        <div id="reviews-audits">
           <div class="filters-bar">
             <select id="rec-sup" onchange="loadRecords()"><option value="">All supervisors</option></select>
             <select id="rec-month" onchange="loadRecords()">
@@ -699,14 +694,18 @@ tr:hover td{background:var(--card-bg)}
           </div>
         </div>
 
-        <!-- CALIBRATIONS sub-view (calibration = Yes), grouped by session (half/month/week) -->
-        <div id="historial-calibrations" style="display:none">
+        <!-- CALIBRATIONS tab (calibration = Yes), grouped by session -->
+        <div id="reviews-calibrations" style="display:none">
           <div id="calibrations-list"><div class="empty"><span class="spinner"></span> Loading...</div></div>
         </div>
       </div>
+    </div>
 
-      <!-- LEAD PERFORMANCE -->
-      <div id="reviews-leadperf" style="display:none">
+    <!-- LEAD PERFORMANCE -->
+    <div id="page-leadperf" class="page">
+      <div class="page-title">Lead Performance</div>
+      <div class="page-sub">Average audit score by Lead and month (regular audits only)</div>
+      <div>
         <div class="filters-bar">
           <select id="lead-filter" onchange="loadLeadAnalytics()">
             <option value="">All leads</option>
@@ -735,9 +734,13 @@ tr:hover td{background:var(--card-bg)}
           <div class="chart-wrap" style="height:260px"><canvas id="chart-lead-trend"></canvas></div>
         </div>
       </div>
+    </div>
 
-      <!-- PENDING FEEDBACK -->
-      <div id="reviews-pending" style="display:none">
+    <!-- PENDING FEEDBACK -->
+    <div id="page-feedback" class="page">
+      <div class="page-title">Pending Feedback</div>
+      <div class="page-sub">Coaching the Lead needs after a failed audit (regular audits only)</div>
+      <div>
         <div class="filters-bar" style="padding:0 0 4px">
           <button class="btn btn-secondary btn-sm" onclick="loadFeedbackLoop()">↺ Refresh</button>
         </div>
@@ -752,15 +755,7 @@ tr:hover td{background:var(--card-bg)}
         <div class="card"><div id="fl-month-table"></div></div>
         <!-- Personal queue -->
         <div class="page-title" style="font-size:16px;margin-bottom:8px">Your pending coaching</div>
-        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px 10px 0 0;overflow:hidden">
-          <table style="width:100%">
-            <thead><tr>
-              <th>Ticket</th><th>Lead</th><th>Week / Month</th>
-              <th>Score</th><th>Notes</th><th>Action</th>
-            </tr></thead>
-          </table>
-        </div>
-        <div class="card" style="padding:0;border-radius:0 0 10px 10px;margin-top:0;border-top:none;overflow:hidden">
+        <div class="card" style="padding:0;overflow:hidden">
           <div id="queue-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
         </div>
       </div>
@@ -778,6 +773,7 @@ tr:hover td{background:var(--card-bg)}
         <div class="card">
           <h3>Add / update role</h3>
           <div class="form-grid">
+            <div class="field"><label>Name</label><input type="text" id="admin-name" placeholder="Full name"></div>
             <div class="field"><label>Email</label><input type="email" id="admin-email" placeholder="user@cookunity.com"></div>
             <div class="field"><label>Role</label>
               <select id="admin-role"><option>viewer</option><option>reviewer</option><option>supervisor</option><option>admin</option></select></div>
@@ -795,6 +791,7 @@ tr:hover td{background:var(--card-bg)}
             <div class="field"><label>Supervisor name</label><input type="text" id="h-sup"></div>
             <div class="field"><label>Supervisor email</label><input type="email" id="h-sup-email"></div>
             <div class="field"><label>Manager</label><input type="text" id="h-manager"></div>
+            <div class="field"><label>Zendesk name (as it appears in the export)</label><input type="text" id="h-zendesk"></div>
           </div>
           <div class="actions-row"><button class="btn btn-primary btn-sm" onclick="saveLead()">Add lead</button></div>
         </div>
@@ -845,7 +842,6 @@ tr:hover td{background:var(--card-bg)}
         <div class="metric"><div class="label">Compliance</div><div class="value" id="comp-pct">—</div></div>
       </div>
       <div id="compliance-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
-      </div>
     </div>
 
 
@@ -954,7 +950,7 @@ async function initApp() {
   const roleData = await api('getRole', { email: currentUser.email });
   currentRole = roleData.role || 'viewer';
   document.getElementById('user-role-badge').textContent = currentRole;
-  if (currentRole === 'admin' || currentRole === 'supervisor') {
+  if (currentRole === 'admin') {
     document.getElementById('admin-link').style.display = 'flex';
   }
   if (currentRole === 'lead' || currentRole === 'viewer') {
@@ -1013,6 +1009,7 @@ async function api(action, params = {}, body = null) {
   }
 
   // Handle both {ok, data} wrapper and direct response formats
+  if (json === null) return null;
   if (json.error) throw new Error(json.error);
   if (json.hasOwnProperty('ok') && !json.ok) throw new Error(json.error || 'API error');
   if (json.hasOwnProperty('data')) return json.data;
@@ -1026,21 +1023,26 @@ function nav(page) {
   document.getElementById('page-' + page).classList.add('active');
   document.querySelector(`[data-page="${page}"]`).classList.add('active');
   if (page === 'form') loadAuditQueue();
-  if (page === 'reviews') reviewsTab('historial', document.querySelector('#reviews-tabs .tab'));
+  if (page === 'reviews') reviewsTab(reviewsView || 'audits');
+  if (page === 'leadperf') loadLeadAnalytics();
+  if (page === 'feedback') loadFeedbackLoop();
   if (page === 'knowledge') initKnowledge();
   if (page === 'compliance') loadCompliance();
 }
 
-function reviewsTab(sub, el) {
-  renderCacheStatusBar('reviews-cache-status');
-  document.querySelectorAll('#reviews-tabs .tab').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
-  document.getElementById('reviews-historial').style.display = sub === 'historial' ? 'block' : 'none';
-  document.getElementById('reviews-leadperf').style.display  = sub === 'leadperf'  ? 'block' : 'none';
-  document.getElementById('reviews-pending').style.display   = sub === 'pending'   ? 'block' : 'none';
-  if (sub === 'historial') historialTab('audits', document.querySelector('#historial-tabs .tab'));
-  if (sub === 'leadperf')  loadLeadAnalytics();
-  if (sub === 'pending')   loadFeedbackLoop();
+// ── REVIEWS: two tabs, Audits (regular) and Calibrations ────
+let reviewsView = 'audits';
+
+function reviewsTab(view, el) {
+  reviewsView = view;
+  const tabs = [...document.querySelectorAll('#reviews-tabs .tab')];
+  tabs.forEach(t => t.classList.remove('active'));
+  const activeTab = el || tabs[view === 'calibrations' ? 1 : 0];
+  if (activeTab) activeTab.classList.add('active');
+  document.getElementById('reviews-audits').style.display       = view === 'audits'       ? 'block' : 'none';
+  document.getElementById('reviews-calibrations').style.display = view === 'calibrations' ? 'block' : 'none';
+  if (view === 'audits') loadRecords();
+  if (view === 'calibrations') loadCalibrationsList();
 }
 
 // ── SCORE HELPERS ──────────────────────────────────────────
@@ -1102,12 +1104,9 @@ async function refreshMasterData(btn) {
 
     // Reload whatever's currently on screen so the new snapshot shows right away
     loadDashboard(); loadVolumeOverview(); loadComplianceOverview();
-    if (document.getElementById('reviews-historial')?.style.display !== 'none') {
-      if (historialCalibView === 'calibrations') loadCalibrationsList(); else loadRecords();
-    }
-    if (document.getElementById('reviews-leadperf')?.style.display !== 'none') loadLeadAnalytics();
+    if (document.getElementById('page-reviews')?.classList.contains('active')) reviewsTab(reviewsView);
+    if (document.getElementById('page-leadperf')?.classList.contains('active')) loadLeadAnalytics();
     renderCacheStatusBar('dash-cache-status');
-    renderCacheStatusBar('reviews-cache-status');
   } catch(e) {
     alert('Error: ' + e.message);
   } finally {
@@ -1730,8 +1729,8 @@ async function submitAudit() {
 
   try {
     await api('submitAudit', {}, body);
-    alertEl.innerHTML = `<div class="alert alert-success">✓ Audit submitted — Score: ${total}/100</div>`;
     clearForm();
+    alertEl.innerHTML = `<div class="alert alert-success">✓ Audit submitted — Score: ${total}/100</div>`;
     loadAuditQueue();
   } catch(e) {
     alertEl.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
@@ -1762,33 +1761,56 @@ async function loadHierarchy() {
   } catch(e) {}
 }
 
-// ── RECORDS ────────────────────────────────────────────────
-let historialCalibView = 'audits';
+// ── RECORDS (Reviews → Audits) ─────────────────────────────
+// Shared helpers for the Reviews, Lead Performance and Pending Feedback pages
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-function historialTab(view, el) {
-  historialCalibView = view;
-  document.querySelectorAll('#historial-tabs .tab').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
-  document.getElementById('historial-audits').style.display      = view === 'audits'       ? 'block' : 'none';
-  document.getElementById('historial-calibrations').style.display= view === 'calibrations' ? 'block' : 'none';
-  if (view === 'audits') loadRecords();
-  if (view === 'calibrations') loadCalibrationsList();
+function fmtDate(value) {
+  if (!value) return '—';
+  const s = String(value);
+  return s.includes('T') ? s.split('T')[0] : s.slice(0, 10);
+}
+
+function leadLabel(email) {
+  const h = hierarchy.find(x => String(x.leadEmail || '').toLowerCase() === String(email || '').toLowerCase());
+  return h && h.leadName ? h.leadName : (email || '—');
+}
+
+// Status of a regular audit, derived from the sheet fields:
+// open dispute → Disputed · feedback delivered → Coaching Delivered ·
+// feedback needed → Pending · otherwise → No feedback needed
+function reviewStatus(r) {
+  if (String(r.dispute_status || '').trim() === 'Open') return 'Disputed';
+  const fb = String(r.feedback_yn || 'No').trim();
+  if (fb === 'Delivered') return 'Coaching Delivered';
+  if (fb === 'Yes') return 'Pending';
+  return 'No feedback needed';
 }
 
 async function loadRecords() {
+  const el = document.getElementById('records-table');
+  el.innerHTML = '<div class="empty"><span class="spinner"></span> Loading...</div>';
   const params = {
-    half: CURRENT_HALF,
     month: document.getElementById('rec-month')?.value,
     week: document.getElementById('rec-week')?.value,
-    status: document.getElementById('rec-status')?.value,
     supervisor: document.getElementById('rec-sup')?.value,
     calibration: 'No',
-    useCache: true,
   };
   try {
-    allRecords = await api('getRecords', params);
+    // Read live (not from the master-data snapshot) so a submitted audit
+    // shows up here right away.
+    const records = await api('getRecords', params);
+    const statusFilter = document.getElementById('rec-status')?.value || '';
+    allRecords = records.filter(r => !statusFilter || reviewStatus(r) === statusFilter);
     renderRecordsTable(allRecords);
-  } catch(e) {}
+  } catch(e) {
+    el.innerHTML = `<div class="empty">Error: ${escapeHtml(e.message)}</div>`;
+  }
 }
 
 // ── CALIBRATIONS (grouped by session: half/month/week) ──────
@@ -1801,7 +1823,11 @@ async function loadCalibrationsList() {
       return;
     }
     const pct = v => v === null || v === undefined ? '—' : `${v}%`;
-    const score = v => v === null || v === undefined ? '—' : `${v}%`;
+    // Scores are points out of each category's maximum, not percentages
+    const MAX = { total: 100, val: 35, ir: 20, pe: 35, cg: 10 };
+    const score = (v, max) => v === null || v === undefined || v === ''
+      ? '—'
+      : (max ? `${v} / ${max}` : `${v}`);
     const alignmentTone = v => v === null || v === undefined ? '' : v >= 60 ? 'green' : v >= 40 ? 'amber' : 'red';
     const safe = value => String(value ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -1810,16 +1836,16 @@ async function loadCalibrationsList() {
     const categoryReference = t => [
       ['V', t.reference?.val], ['IR', t.reference?.ir],
       ['P&E', t.reference?.pe], ['C&G', t.reference?.cg]
-    ].map(([label, value]) => `<span class="calib-ref-cat"><strong>${label}</strong> ${score(value)}</span>`).join('');
+    ].map(([label, value], i) => `<span class="calib-ref-cat"><strong>${label}</strong> ${score(value, [MAX.val, MAX.ir, MAX.pe, MAX.cg][i])}</span>`).join('');
     const categoryAlignment = t => [
       ['V', t.alignment_categories?.val], ['IR', t.alignment_categories?.ir],
       ['P&E', t.alignment_categories?.pe], ['C&G', t.alignment_categories?.cg]
     ].map(([label, value]) => `<span class="calib-align-cat"><strong>${label}</strong> ${pct(value)}</span>`).join('');
-    const matchScore = (value, reference, matches, pending) => {
+    const matchScore = (value, reference, matches, pending, max) => {
       if (pending) return '<span class="calib-score-pending">Pending</span>';
       const cls = matches === true ? 'calib-score-match' : 'calib-score-mismatch';
       const icon = matches === true ? '✓' : '✗';
-      return `<span class="${cls}">${score(value)} ${icon}</span><span class="calib-score-ref">Ref: ${score(reference)}</span>`;
+      return `<span class="${cls}">${score(value, max)} ${icon}</span><span class="calib-score-ref">Ref: ${score(reference, max)}</span>`;
     };
     el.innerHTML = sessions.map(s => `
         <div class="card">
@@ -1828,7 +1854,7 @@ async function loadCalibrationsList() {
             <span style="font-size:12px;color:var(--text-muted)">${s.tickets.length} ticket${s.tickets.length>1?'s':''} · deadline ${s.deadline || '—'}</span>
           </div>
           <div class="metrics" style="margin-bottom:16px">
-            <div class="metric"><div class="label">Avg score</div><div class="value">${score(s.avg_total)}</div></div>
+            <div class="metric"><div class="label">Avg score</div><div class="value">${score(s.avg_total, MAX.total)}</div></div>
             <div class="metric"><div class="label">Team alignment</div><div class="value ${alignmentTone(s.alignment_total)}">${pct(s.alignment_total)}</div></div>
             <div class="metric"><div class="label">Compliance</div><div class="value">${s.compliance}%</div></div>
             <div class="metric"><div class="label">Completed</div><div class="value">${s.completed}/${s.assigned}</div></div>
@@ -1846,18 +1872,18 @@ async function loadCalibrationsList() {
                 ? reviews.map(r => `<tr>
                     <td class="calib-reviewer">${safe(r.supervisor_name)}<small>${safe(r.supervisor_email)}</small></td>
                     <td><span class="badge ${r.status === 'Completed' ? 'badge-green' : 'badge-gray'}">${safe(r.status)}</span></td>
-                    <td>${matchScore(r.total_score, t.reference?.total, r.matches?.total, r.status !== 'Completed')}</td>
-                    <td>${matchScore(r.score_val, t.reference?.val, r.matches?.val, r.status !== 'Completed')}</td>
-                    <td>${matchScore(r.score_ir, t.reference?.ir, r.matches?.ir, r.status !== 'Completed')}</td>
-                    <td>${matchScore(r.score_pe, t.reference?.pe, r.matches?.pe, r.status !== 'Completed')}</td>
-                    <td>${matchScore(r.score_cg, t.reference?.cg, r.matches?.cg, r.status !== 'Completed')}</td>
+                    <td>${matchScore(r.total_score, t.reference?.total, r.matches?.total, r.status !== 'Completed', MAX.total)}</td>
+                    <td>${matchScore(r.score_val, t.reference?.val, r.matches?.val, r.status !== 'Completed', MAX.val)}</td>
+                    <td>${matchScore(r.score_ir, t.reference?.ir, r.matches?.ir, r.status !== 'Completed', MAX.ir)}</td>
+                    <td>${matchScore(r.score_pe, t.reference?.pe, r.matches?.pe, r.status !== 'Completed', MAX.pe)}</td>
+                    <td>${matchScore(r.score_cg, t.reference?.cg, r.matches?.cg, r.status !== 'Completed', MAX.cg)}</td>
                     <td class="calib-review-note">${safe([r.root_causes?.val, r.root_causes?.ir, r.root_causes?.pe, r.root_causes?.cg].filter(Boolean).join(' · ')) || '—'}${r.comment ? `<br><span style="color:var(--text-muted)">${safe(r.comment)}</span>` : ''}</td>
                   </tr>`).join('')
                 : '<tr><td colspan="8" class="calib-score-pending">No assigned reviewers found for this ticket.</td></tr>';
               return `<tr class="calib-ticket-row" data-calib-toggle="${detailId}" onclick="toggleCalibrationTicket('${detailId}')">
                   <td><span class="calib-chevron" id="${detailId}-chevron">▸</span><span onclick="event.stopPropagation()">${zdLink(t.ticket)}</span></td>
-                  <td><strong>${score(t.reference?.total)}</strong></td>
-                  <td>${score(t.avg_total)}</td>
+                  <td><strong>${score(t.reference?.total, MAX.total)}</strong></td>
+                  <td>${score(t.avg_total, MAX.total)}</td>
                   <td>${completedCount}/${t.assigned || reviews.length}</td>
                   <td><strong>${alignedCount}/${completedCount}</strong></td>
                   <td><div class="calib-align-cats">${categoryAlignment(t)}</div></td>
@@ -1915,55 +1941,59 @@ function populateLeadFilter() {
   if (!sel) return;
   // Combine hierarchy leads + historical leads
   const emails = new Set([
-    ...hierarchy.map(h => h.leadEmail),
+    ...hierarchy.map(h => String(h.leadEmail || '').toLowerCase()).filter(Boolean),
     ...Object.keys(HISTORICAL_LEAD_SCORES)
   ]);
   sel.innerHTML = '<option value="">All leads</option>' +
-    [...emails].sort().map(e => `<option value="${e}">${e}</option>`).join('');
+    [...emails].sort((a, b) => leadLabel(a).localeCompare(leadLabel(b)))
+      .map(e => `<option value="${escapeHtml(e)}">${escapeHtml(leadLabel(e))}</option>`).join('');
 }
 
 async function populateSupFilter() {
   try {
-    const all = await api('getRecords', { half: CURRENT_HALF });
+    const all = await api('getRecords', { calibration: 'No' });
     const sups = [...new Set(all.map(r => r.supervisor).filter(Boolean))].sort();
-    const opts = '<option value="">All supervisors</option>' +
-      sups.map(s => `<option value="${s}">${s}</option>`).join('');
-    // sups already contains only emails from col AC
-    document.getElementById('rec-sup').innerHTML = opts;
-    // rec-sup shows supervisor emails from col AC
+    document.getElementById('rec-sup').innerHTML = '<option value="">All supervisors</option>' +
+      sups.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
   } catch(e) { console.error('populateSupFilter error:', e); }
 }
 
 function renderRecordsTable(records) {
+  const el = document.getElementById('records-table');
   if (!records.length) {
-    document.getElementById('records-table').innerHTML='<div class="empty">No records found</div>'; return;
+    el.innerHTML = '<div class="empty">No audits found</div>';
+    return;
   }
-  const rows = records.slice().reverse().map(r => {
-    const score = normalizeScore(r.total_score);
-    return `<tr onclick="openRecord(${r.rowId})" style="cursor:pointer">
-      <td>${zdLink(r.ticket)}</td>
-      <td>${r.wabi_date||'—'}</td>
-      <td>W${r.week}</td>
-      <td>${r.month ? MONTH_NAMES[Number(r.month)] || r.month : '—'}</td>
-      <td>${r.lead_email||'—'}</td>
-      <td>${r.supervisor||'—'}</td>
-      <td><span class="badge ${scoreClass(score)}">${score}%</span></td>
-      <td>${r.reviewer_email||'—'}</td>
-      <td><span class="badge ${statusClass(r.review_status)}">${r.review_status||'Pending'}</span></td>
+  // Newest first
+  const sorted = records.slice().sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')));
+  window._recordRows = sorted;
+  const rows = sorted.map((r, i) => {
+    const score = Number(r.total_score) || 0;
+    const status = reviewStatus(r);
+    return `<tr onclick="openRecordAt(${i})" style="cursor:pointer">
+      <td><span onclick="event.stopPropagation()">${zdLink(r.ticket)}</span></td>
+      <td>${escapeHtml(fmtDate(r.wabi_date))}</td>
+      <td>W${escapeHtml(r.week)}</td>
+      <td>${r.month ? escapeHtml(MONTH_NAMES[Number(r.month)] || r.month) : '—'}</td>
+      <td>${escapeHtml(leadLabel(r.lead_email))}</td>
+      <td>${escapeHtml(r.supervisor || '—')}</td>
+      <td>${escapeHtml(r.reviewer || '—')}</td>
+      <td><span class="badge ${scoreClass(score)}">${score} / 100</span></td>
+      <td><span class="badge ${statusClass(status)}">${status}</span></td>
     </tr>`;
   }).join('');
-  document.getElementById('records-table').innerHTML=`
-    <table><thead><tr><th>Ticket</th><th>Wabi date</th><th>Week</th><th>Month</th><th>Lead</th><th>Supervisor</th><th>Score</th><th>Reviewer</th><th>Status</th></tr></thead>
+  el.innerHTML = `
+    <table><thead><tr><th>Ticket</th><th>Wabi date</th><th>Week</th><th>Month</th><th>Lead</th><th>Lead's supervisor</th><th>Reviewed by</th><th>Score</th><th>Status</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
 
 function exportCSV() {
   if (!allRecords.length) return;
-  const keys=Object.keys(allRecords[0]);
-  const rows=[keys.join(','),...allRecords.map(r=>keys.map(k=>`"${String(r[k]||'').replace(/"/g,'""')}"`).join(','))];
-  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='wabi_'+historialCalibView+'_records.csv'; a.click();
+  const keys = Object.keys(allRecords[0]);
+  const rows = [keys.join(','), ...allRecords.map(r => keys.map(k => `"${String(r[k] ?? '').replace(/"/g,'""')}"`).join(','))];
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'wabi_audits_records.csv'; a.click();
 }
 
 // ── FEEDBACK LOOP ──────────────────────────────────────────
@@ -1978,29 +2008,25 @@ async function loadFeedbackLoop() {
       <div class="metric"><div class="label">Pending</div><div class="value ${d.pending>0?'red':''}">${d.pending}</div></div>
       <div class="metric"><div class="label">Feedback compliance</div><div class="value ${d.compliancePct>=80?'green':d.compliancePct>=50?'amber':'red'}">${d.compliancePct}%</div></div>`;
 
-    // Month breakdown table
-    const MONTH_NAMES_LOCAL = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
-
-    // Group by month
+    // Month breakdown, one small table per month
     const byMonthGroup = {};
-    d.monthBreakdown.forEach(row => {
+    (d.monthBreakdown || []).forEach(row => {
       if (!byMonthGroup[row.month]) byMonthGroup[row.month] = [];
       byMonthGroup[row.month].push(row);
     });
-
     const months = Object.keys(byMonthGroup).map(Number).sort((a,b)=>a-b);
 
     const makeTable = (m, rows) => {
       const tableRows = rows.map(r => `
         <tr>
-          <td style="font-size:12px">${r.supervisor}</td>
+          <td style="font-size:12px">${escapeHtml(r.supervisor)}</td>
           <td style="color:var(--cu-green);font-weight:600;text-align:center">${r.done}</td>
           <td style="text-align:center">${r.pending}</td>
           <td><span class="badge ${r.pct>=80?'badge-green':r.pct>=50?'badge-amber':'badge-red'}">${r.pct}%</span></td>
         </tr>`).join('');
       return `
-        <div class="card" style="flex:1;margin:0">
-          <h3>${MONTH_NAMES_LOCAL[m]||'M'+m}</h3>
+        <div class="card" style="flex:1;margin:0;min-width:280px">
+          <h3>${MONTH_NAMES[m]||'M'+m}</h3>
           <table>
             <thead><tr><th>Supervisor</th><th>Delivered</th><th>Pending</th><th>Compliance</th></tr></thead>
             <tbody>${tableRows}</tbody>
@@ -2009,30 +2035,36 @@ async function loadFeedbackLoop() {
     };
 
     document.getElementById('fl-month-table').innerHTML = months.length
-      ? `<div style="display:flex;gap:16px;align-items:flex-start">${months.map(m => makeTable(m, byMonthGroup[m])).join('')}</div>`
-      : '<div class="empty">No data</div>';
+      ? `<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">${months.map(m => makeTable(m, byMonthGroup[m])).join('')}</div>`
+      : '<div class="empty">No feedback needed yet</div>';
 
-    // Update badge
-    document.getElementById('queue-badge').textContent = d.pending;
+    // Sidebar badge = coaching this user still has to deliver
+    const personal = d.personalPending || [];
+    document.getElementById('feedback-badge').textContent = personal.length;
 
     // Personal pending list
-    if (!d.personalPending.length) {
+    if (!personal.length) {
       document.getElementById('queue-table').innerHTML = '<div class="empty">🎉 No pending coaching for you this period</div>';
       return;
     }
-    const rows = d.personalPending.map(r => `
+    window._pendingRows = personal;
+    const rows = personal.map((r, i) => `
       <tr>
-        <td>${r.ticket}</td>
-        <td>${r.lead_email}</td>
-        <td>W${r.week} / M${r.month}</td>
-        <td><span class="badge ${scoreClass(r.total_score)}">${r.total_score}%</span></td>
-        <td style="max-width:200px;font-size:12px;color:var(--text-muted)">${r.improvement_notes?r.improvement_notes.slice(0,80)+'…':'—'}</td>
-        <td>
-          <button class="btn btn-primary btn-sm" onclick="openRecord(${r.rowId})">Log coaching</button>
-          <button class="btn btn-danger btn-sm" onclick="openSubmitDisputeModal('${r.ticket}','${r.reviewer||''}')">⚖️ Dispute</button>
+        <td>${zdLink(r.ticket)}</td>
+        <td>${escapeHtml(leadLabel(r.lead_email))}</td>
+        <td>W${escapeHtml(r.week)} / ${escapeHtml(MONTH_NAMES[Number(r.month)] || 'M' + r.month)}</td>
+        <td><span class="badge ${scoreClass(r.total_score)}">${Number(r.total_score) || 0} / 100</span></td>
+        <td style="max-width:260px;font-size:12px;color:var(--text-muted)">${r.improvement_notes ? escapeHtml(String(r.improvement_notes).slice(0,80)) + (String(r.improvement_notes).length > 80 ? '…' : '') : '—'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-primary btn-sm" onclick="openPendingAt(${i})">Log coaching</button>
+          <button class="btn btn-danger btn-sm" onclick="openSubmitDisputeModal(window._pendingRows[${i}].ticket, window._pendingRows[${i}].reviewer)">⚖️ Dispute</button>
         </td>
       </tr>`).join('');
-    document.getElementById('queue-table').innerHTML = `<table><tbody>${rows}</tbody></table>`;
+    document.getElementById('queue-table').innerHTML = `
+      <table>
+        <thead><tr><th>Ticket</th><th>Lead</th><th>Week / Month</th><th>Score</th><th>Notes</th><th>Action</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
   } catch(e) { console.error('loadFeedbackLoop:', e); }
 }
 
@@ -2041,109 +2073,125 @@ async function loadQueue() {
 }
 
 // ── RECORD MODAL ───────────────────────────────────────────
-async function openRecord(rowId) {
-  const r = await api('getRecord', { rowId });
-  const score = normalizeScore(r.total_score);
-  document.getElementById('modal-title').innerHTML = `Ticket <a href='https://cookunity7314.zendesk.com/agent/tickets/${r.ticket}' target='_blank' style='color:var(--cu-blue);text-decoration:none'>${r.ticket} ↗</a>`;
+// Opened from Reviews → Audits (full record already loaded) or from
+// Pending Feedback (fetched by ticket + reviewer).
+function openRecordAt(i) {
+  const r = (window._recordRows || [])[i];
+  if (r) showRecordModal(r);
+}
 
-  const rcRow=(label,val,max)=>{
-    const pct=max>0?Math.round((Number(val)/max)*100):0;
-    const color=Number(val)===max?'var(--cu-green)':'var(--cu-magenta)';
-    return `<tr><td style="color:var(--text-muted);padding:5px 8px 5px 0">${label}</td>
-      <td style="font-weight:600;color:${color}">${val}/${max}</td>
-      <td style="width:40%"><div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%;background:${color}"></div><span style="font-size:11px;color:#aaa">${pct}%</span></div></td></tr>`;
-  };
+function openPendingAt(i) {
+  const p = (window._pendingRows || [])[i];
+  if (p) openRecordByKey(p.ticket, p.reviewer);
+}
 
-  const catVal   = normalizeScore(r.cat_validation);
-  const catIR    = normalizeScore(r.cat_issue_res);
-  const catProc  = normalizeScore(r.cat_process);
-  const catCoach = normalizeScore(r.cat_coaching);
+async function openRecordByKey(ticket, reviewer) {
+  try {
+    const r = await api('getRecord', { ticket, reviewer });
+    if (!r) { alert('Audit not found.'); return; }
+    showRecordModal(r);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function showRecordModal(r) {
+  window._modalRecord = r;
+  const total = Number(r.total_score) || 0;
+  const status = reviewStatus(r);
+  const isCalibration = String(r.calibration || 'No') === 'Yes';
+  const canAct = currentRole === 'supervisor' || currentRole === 'admin';
+  const canLogCoaching = canAct && !isCalibration && status === 'Pending';
+  const canDispute = canAct && !isCalibration && !r.dispute_status && String(r.feedback_yn) === 'Yes';
+
+  document.getElementById('modal-title').innerHTML = `Ticket ${zdLink(r.ticket)}`;
+
+  const cats = [
+    ['Validation',           r.score_val, 35, r.rc_val],
+    ['Issue Resolution',     r.score_ir,  20, r.rc_ir],
+    ['Process & Escalation', r.score_pe,  35, r.rc_pe],
+    ['Coaching & Guidance',  r.score_cg,  10, r.rc_cg],
+  ];
+  const catRows = cats.map(([label, val, max, rcs]) => {
+    const v = Number(val) || 0;
+    const pass = v === max;
+    const color = pass ? 'var(--cu-green)' : 'var(--cu-magenta)';
+    const pct = max ? Math.round(v / max * 100) : 0;
+    return `<tr>
+      <td style="padding:6px 8px 6px 0;color:var(--text-muted);white-space:nowrap">${label}</td>
+      <td style="font-weight:700;color:${color};white-space:nowrap">${v} / ${max}</td>
+      <td style="width:35%"><div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%;background:${color}"></div></div></td>
+      <td style="font-size:12px;color:var(--text-muted)">${pass ? '✓ Pass' : escapeHtml(rcs || 'Fail')}</td>
+    </tr>`;
+  }).join('');
 
   document.getElementById('modal-body').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;font-size:13px">
-      <div><span style="color:var(--text-muted)">Lead</span><br><strong>${r.lead_email}</strong></div>
-      <div><span style="color:var(--text-muted)">Supervisor</span><br><strong>${r.supervisor||'—'}</strong></div>
-      <div><span style="color:var(--text-muted)">Week / Month</span><br><strong>W${r.week} / M${r.month}</strong></div>
-      <div><span style="color:var(--text-muted)">Wabi date</span><br><strong>${r.wabi_date}</strong></div>
-      <div><span style="color:var(--text-muted)">Ticket</span><br><strong>${r.ticket}</strong></div>
-      <div><span style="color:var(--text-muted)">Reviewed by</span><br><strong>${r.reviewer_email}</strong></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;font-size:13px">
+      <div><span style="color:var(--text-muted)">Lead</span><br><strong>${escapeHtml(leadLabel(r.lead_email))}</strong></div>
+      <div><span style="color:var(--text-muted)">Lead's supervisor</span><br><strong>${escapeHtml(r.supervisor || '—')}</strong></div>
+      <div><span style="color:var(--text-muted)">Reviewed by</span><br><strong>${escapeHtml(r.reviewer || '—')}</strong></div>
+      <div><span style="color:var(--text-muted)">Specialist</span><br><strong style="overflow-wrap:anywhere">${escapeHtml(r.specialist || '—')}</strong></div>
+      <div><span style="color:var(--text-muted)">Week / Month</span><br><strong>W${escapeHtml(r.week)} / ${escapeHtml(MONTH_NAMES[Number(r.month)] || r.month)}</strong></div>
+      <div><span style="color:var(--text-muted)">Wabi date</span><br><strong>${escapeHtml(fmtDate(r.wabi_date))}</strong></div>
     </div>
     <div style="background:var(--card-bg);border-radius:10px;padding:14px;margin-bottom:16px">
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">RC Scores</div>
-      <table style="width:100%;font-size:13px">
-        ${rcRow('Context Oversight',r.context_oversight,10)}
-        ${rcRow('Evidence Validation',r.evidence_validation,15)}
-        ${rcRow('Wrong Adjustment',r.wrong_adjustment,10)}
-        ${rcRow('Comp. w/o Resolution',r.comp_without_res,20)}
-        ${rcRow('Lack of Process Align.',r.lack_process,15)}
-        ${rcRow('Incorrect Esc. Reason',r.incorrect_esc,15)}
-        ${rcRow('Coaching & Guidance',r.coaching,15)}
-      </table>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;text-align:center">
-        ${[['Validation',catVal],['Issue Res.',catIR],['Process',catProc],['Coaching',catCoach]].map(([n,v])=>`
-          <div style="background:white;border-radius:6px;padding:8px;border:1px solid var(--border)">
-            <div style="font-size:16px;font-weight:700">${v}%</div>
-            <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${n}</div>
-          </div>`).join('')}
-      </div>
-      <div style="text-align:center;font-size:24px;font-weight:700;margin-top:10px;padding:12px;background:${scoreBgColor(score)};color:#fff;border-radius:8px">
-        ${score} / 100
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Rubric</div>
+      <table style="width:100%;font-size:13px">${catRows}</table>
+      <div style="text-align:center;font-size:22px;font-weight:700;margin-top:12px;padding:10px;background:${scoreBgColor(total)};color:#fff;border-radius:8px">
+        ${total} / 100
       </div>
     </div>
-    ${[
-      ['Context Oversight', r.context_oversight, 10, r.comment_co],
-      ['Evidence Validation', r.evidence_validation, 15, r.comment_ev],
-      ['Wrong Adjustment', r.wrong_adjustment, 10, r.comment_wa],
-      ['Comp. Without Resolution', r.comp_without_res, 20, r.comment_cwr],
-      ['Lack of Process Alignment', r.lack_process, 15, r.comment_lpa],
-      ['Incorrect Escalation Reason', r.incorrect_esc, 15, r.comment_ier],
-      ['Coaching & Guidance', r.coaching, 15, r.comment_cg],
-    ].filter(([,val,,comment]) => Number(val) === 0 && comment)
-     .map(([label,,max,comment]) => `
-      <div style="background:#FFF8E1;border-radius:8px;padding:10px;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:700;color:var(--cu-orange);text-transform:uppercase;margin-bottom:4px">${label} — Fail (0/${max} pts)</div>
-        <div style="font-size:13px;line-height:1.5">${comment}</div>
-      </div>`).join('')}
+    ${r.comment ? `
+    <div style="background:#FFF8E1;border-radius:8px;padding:12px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--cu-orange);text-transform:uppercase;margin-bottom:4px">Feedback & coaching notes</div>
+      <div style="font-size:13px;line-height:1.5;white-space:pre-wrap">${escapeHtml(r.comment)}</div>
+    </div>` : ''}
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:700;text-transform:uppercase">Status</div>
-    <span class="badge ${statusClass(r.review_status)}">${r.review_status||'Pending'}</span>
-    ${(currentRole==='supervisor'||currentRole==='admin')?`
-    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px">Supervisor action</div>
-      <div class="form-grid">
-        <div class="field"><label>Status</label>
-          <span class="badge ${statusClass(r.review_status)}">${r.review_status}</span></div>
-        <div class="field"><label>Coaching date</label>
-          <input type="date" id="modal-coaching-date" value="${r.coaching_date||''}"></div>
-      </div>
-      ${r.dispute_status !== 'Open' && r.dispute_status !== 'Resolved' ? `
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Dispute this review</div>
-        <button class="btn btn-danger btn-sm" onclick="openSubmitDisputeModal('${r.ticket}','${r.reviewer}')">⚖️ Dispute</button>
-      </div>` : `
-      <div style="margin-top:14px;padding:10px;background:#FFF8E1;border-radius:8px;font-size:13px">
-        <strong>Dispute ${r.dispute_status==='Open'?'submitted':'resolved'}</strong>${r.dispute_accepted==='Y'?' — ✅ Accepted':r.dispute_accepted==='N'?' — ❌ Rejected':' — ⏳ Pending review'}
-        ${r.dispute_resolution_notes?`<div style="color:var(--text-muted);margin-top:4px">${r.dispute_resolution_notes}</div>`:''}
-      </div>`}
-    </div>`:''}
+    <span class="badge ${statusClass(status)}">${status}</span>
+    ${r.coaching_date ? `<span style="font-size:12px;color:var(--text-muted);margin-left:8px">Coaching delivered on ${escapeHtml(fmtDate(r.coaching_date))}</span>` : ''}
+    ${canLogCoaching ? `
+    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px">Log coaching with the Lead</div>
+      <div class="field" style="max-width:220px"><label>Coaching date</label>
+        <input type="date" id="modal-coaching-date" value="${new Date().toISOString().slice(0,10)}"></div>
+    </div>` : ''}
+    ${canDispute ? `
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Disagree with this review?</div>
+      <button class="btn btn-danger btn-sm" onclick="openSubmitDisputeModal(window._modalRecord.ticket, window._modalRecord.reviewer)">⚖️ Dispute</button>
+    </div>` : ''}
+    ${r.dispute_status ? `
+    <div style="margin-top:14px;padding:10px;background:#FFF8E1;border-radius:8px;font-size:13px">
+      <strong>Dispute ${r.dispute_status==='Open'?'submitted':'resolved'}</strong>${r.dispute_accepted==='Y'?' — ✅ Accepted':r.dispute_accepted==='N'?' — ❌ Rejected':' — ⏳ Pending review'}
+      ${r.dispute_resolution_notes?`<div style="color:var(--text-muted);margin-top:4px">${escapeHtml(r.dispute_resolution_notes)}</div>`:''}
+    </div>` : ''}
   `;
 
-  document.getElementById('modal-actions').innerHTML=(currentRole==='supervisor'||currentRole==='admin')
-    ?`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveSupAction(${r.rowId})">Save coaching date</button>`
-    :`<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
+  document.getElementById('modal-actions').innerHTML = canLogCoaching
+    ? `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+       <button class="btn btn-primary" id="coaching-save-btn" onclick="markCoachingDelivered()">✅ Mark coaching delivered</button>`
+    : `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
 
   document.getElementById('modal').classList.add('open');
 }
 
-async function saveSupAction(rowId) {
-  const body = {
-    rowId,
-    coaching_date: document.getElementById('modal-coaching-date')?.value || '',
-  };
+async function markCoachingDelivered() {
+  const r = window._modalRecord;
+  if (!r) return;
+  const date = document.getElementById('modal-coaching-date')?.value || '';
+  if (!date) { alert('Please choose the coaching date.'); return; }
+  const btn = document.getElementById('coaching-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
   try {
-    await api('supervisorAction',{},body);
-    closeModal(); loadRecords(); loadFeedbackLoop();
-  } catch(e) { alert('Error: '+e.message); }
+    await api('supervisorAction', {}, {
+      ticket: r.ticket, reviewer_email: r.reviewer,
+      coaching_action: 'coaching_delivered', date,
+    });
+    closeModal();
+    loadFeedbackLoop();
+    if (document.getElementById('page-reviews')?.classList.contains('active') && reviewsView === 'audits') loadRecords();
+  } catch(e) {
+    alert('Error: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Mark coaching delivered'; }
+  }
 }
 
 // Submit a new dispute — opened from the "⚖️ Dispute" button in Feedback Loop
@@ -2178,77 +2226,81 @@ function closeModal() { document.getElementById('modal').classList.remove('open'
 async function loadLeadAnalytics() {
   const filterLead  = document.getElementById('lead-filter')?.value  || '';
   const filterMonth = document.getElementById('lead-month-filter')?.value || '';
+  const tableEl = document.getElementById('lead-analytics-table');
+  tableEl.innerHTML = '<div class="empty"><span class="spinner"></span> Loading...</div>';
 
   try {
-    const params = { useCache: true };
+    const params = {};
     if (filterMonth) params.month = filterMonth;
     if (filterLead)  params.lead  = filterLead;
     const d = await api('getLeadAnalytics', params);
+    const target = Number(d.target) || 90;
+    const leads = d.leads || [];
+    const grandTotals = d.grandTotals || [];
 
-    // Summary metrics
-    const leads = d.leads;
-    const totalLeads = [...new Set(leads.map(r => r.lead))].length;
-    const avgScore   = leads.length ? Math.round(leads.reduce((s,r)=>s+(r.avgScore||0),0)/leads.length) : 0;
-    const belowTarget = leads.filter(r => (r.avgScore||0) < 80).length;
-    const totalReviewed = leads.reduce((s,r)=>s+(r.reviewed||0),0);
-    document.getElementById('analytics-metrics').innerHTML = `
-      <div class="metric"><div class="label">Leads tracked</div><div class="value">${totalLeads}</div></div>
-      <div class="metric"><div class="label">Avg score</div><div class="value ${avgScore>=80?'green':'red'}">${avgScore}%</div></div>
-      <div class="metric"><div class="label">Below target</div><div class="value ${belowTarget>0?'red':''}">${belowTarget}</div></div>
-      <div class="metric"><div class="label">Total reviewed</div><div class="value">${totalReviewed}</div></div>`;
-
-    // Group by lead for table
+    // Summary metrics (weighted by number of audits)
     const byLead = {};
     leads.forEach(r => {
       if (!byLead[r.lead]) byLead[r.lead] = [];
       byLead[r.lead].push(r);
     });
+    const leadList = Object.keys(byLead).sort((a, b) => leadLabel(a).localeCompare(leadLabel(b)));
+    const weighted = rows => {
+      const n = rows.reduce((s, r) => s + (r.reviewed || 0), 0);
+      return n ? Math.round(rows.reduce((s, r) => s + (r.avgScore || 0) * (r.reviewed || 0), 0) / n * 10) / 10 : null;
+    };
+    const totalReviewed = leads.reduce((s, r) => s + (r.reviewed || 0), 0);
+    const avgScore = weighted(leads);
+    const belowTarget = leadList.filter(l => (weighted(byLead[l]) ?? 100) < target).length;
+    document.getElementById('analytics-metrics').innerHTML = `
+      <div class="metric"><div class="label">Leads tracked</div><div class="value">${leadList.length}</div></div>
+      <div class="metric"><div class="label">Avg score</div><div class="value ${avgScore === null ? '' : avgScore >= target ? 'green' : 'red'}">${avgScore === null ? '—' : avgScore}</div></div>
+      <div class="metric"><div class="label">Leads below target (${target})</div><div class="value ${belowTarget>0?'red':''}">${belowTarget}</div></div>
+      <div class="metric"><div class="label">Audits reviewed</div><div class="value">${totalReviewed}</div></div>`;
 
-    const leadList = Object.keys(byLead).sort();
-    const months   = filterMonth ? [Number(filterMonth)] : [1,2,3,4,5,6];
+    if (!leads.length) {
+      tableEl.innerHTML = '<div class="empty">No regular audits yet for this selection</div>';
+      document.getElementById('lead-trend-card').style.display = 'none';
+      return;
+    }
 
-    // Build table: rows = leads, cols = months
+    // Months shown = the months that have data (or the selected one)
+    const months = filterMonth
+      ? [Number(filterMonth)]
+      : [...new Set([...leads.map(r => r.month), ...grandTotals.map(g => g.month)])].map(Number).sort((a,b) => a-b);
+
+    const arrow = v => v === null || v === undefined ? '—'
+      : `<span style="color:${v>=0?'var(--cu-green)':'var(--cu-magenta)'}">${v>=0?'↑':'↓'} ${Math.abs(v)}</span>`;
+    const signed = v => v === null || v === undefined ? '—'
+      : `<span style="color:${v>=0?'var(--cu-green)':'var(--cu-magenta)'}">${v>=0?'+':''}${v}</span>`;
+
     const monthHeaders = months.map(m => `<th colspan="3" style="text-align:center;border-left:2px solid var(--border)">${MONTH_NAMES[m]||'M'+m}</th>`).join('');
     const subHeaders   = months.map(() => `<th style="border-left:2px solid var(--border)">Score</th><th>MoM</th><th>vs Target</th>`).join('');
 
     const rows = leadList.map(lead => {
       const monthData = {};
       byLead[lead].forEach(r => { monthData[r.month] = r; });
-
       const cells = months.map(m => {
-        const d = monthData[m];
-        if (!d || d.avgScore === null) return `<td style="border-left:2px solid var(--border);color:#ccc">—</td><td>—</td><td>—</td>`;
-        const scoreColor = d.avgScore >= 80 ? 'var(--cu-green)' : 'var(--cu-magenta)';
-        const wowVal  = d.mom  !== null ? d.mom  : null;
-        const varVal  = d.variance !== null ? d.variance : null;
-        const wowStr  = wowVal  !== null ? `<span style="color:${wowVal>=0?'var(--cu-green)':'var(--cu-magenta)'}">${wowVal>=0?'↑':'↓'} ${Math.abs(wowVal)}%</span>` : '—';
-        const varStr  = varVal  !== null ? `<span style="color:${varVal>=0?'var(--cu-green)':'var(--cu-magenta)'}">${varVal>=0?'+':''}${varVal}%</span>` : '—';
-        return `<td style="border-left:2px solid var(--border);font-weight:600;color:${scoreColor}">${d.avgScore}%</td><td style="font-size:12px">${wowStr}</td><td style="font-size:12px">${varStr}</td>`;
+        const md = monthData[m];
+        if (!md || md.avgScore === null) return `<td style="border-left:2px solid var(--border);color:#ccc">—</td><td>—</td><td>—</td>`;
+        const color = md.avgScore >= target ? 'var(--cu-green)' : 'var(--cu-magenta)';
+        return `<td style="border-left:2px solid var(--border);font-weight:600;color:${color}">${md.avgScore}</td><td style="font-size:12px">${arrow(md.mom)}</td><td style="font-size:12px">${signed(md.variance)}</td>`;
       }).join('');
-
       const reviewed = byLead[lead].reduce((s,r)=>s+(r.reviewed||0),0);
-      return `<tr onclick="selectLead('${lead}')" style="cursor:pointer">
-        <td style="font-weight:600;font-size:12px;white-space:nowrap">${lead}</td>
+      return `<tr onclick="selectLead('${escapeHtml(lead)}')" style="cursor:pointer">
+        <td style="font-weight:600;font-size:12px;white-space:nowrap">${escapeHtml(leadLabel(lead))}</td>
         <td style="text-align:center">${reviewed}</td>
         ${cells}
       </tr>`;
     }).join('');
 
-    // Grand total row
     const totalCells = months.map(m => {
-      const gt = d.grandTotals.find(g => g.month === m);
-      if (!gt) return `<td style="border-left:2px solid var(--border)">—</td><td>—</td><td>—</td>`;
-      const momVal = gt.mom !== null && gt.mom !== undefined ? gt.mom : null;
-      const wowStr = momVal !== null ? `<span style="color:${momVal>=0?'var(--cu-green)':'var(--cu-magenta)'}">${momVal>=0?'↑':'↓'} ${Math.abs(momVal)}%</span>` : '—';
-      const varStr = `<span style="color:${gt.variance>=0?'var(--cu-green)':'var(--cu-magenta)'}">${gt.variance>=0?'+':''}${gt.variance}%</span>`;
-      return `<td style="border-left:2px solid var(--border);font-weight:700;color:${gt.avgScore>=80?'var(--cu-green)':'var(--cu-magenta)'}">${gt.avgScore}%</td><td style="font-size:12px">${wowStr}</td><td style="font-size:12px">${varStr}</td>`;
+      const gt = grandTotals.find(g => Number(g.month) === m);
+      if (!gt || gt.avgScore === null) return `<td style="border-left:2px solid var(--border)">—</td><td>—</td><td>—</td>`;
+      return `<td style="border-left:2px solid var(--border);font-weight:700;color:${gt.avgScore>=target?'var(--cu-green)':'var(--cu-magenta)'}">${gt.avgScore}</td><td style="font-size:12px">${arrow(gt.mom)}</td><td style="font-size:12px">${signed(gt.variance)}</td>`;
     }).join('');
-    const totalReviewedGrand = d.grandTotals.reduce((s,g) => {
-      const liveR = leads.reduce((t,r)=>t+(r.reviewed||0),0);
-      return liveR;
-    }, 0);
 
-    document.getElementById('lead-analytics-table').innerHTML = `
+    tableEl.innerHTML = `
       <table>
         <thead>
           <tr style="background:var(--card-bg)">
@@ -2261,36 +2313,37 @@ async function loadLeadAnalytics() {
         <tbody>
           ${rows}
           <tr style="background:#F2F1EC;font-weight:700">
-            <td>Grand Total</td>
+            <td>${filterLead ? 'Total' : 'Grand Total'}</td>
             <td style="text-align:center">${totalReviewed}</td>
-            ${totalCells}
+            ${filterLead ? months.map(m => {
+              const md = (byLead[filterLead] || []).find(r => r.month === m);
+              return md ? `<td style="border-left:2px solid var(--border)">${md.avgScore}</td><td></td><td></td>` : `<td style="border-left:2px solid var(--border)">—</td><td></td><td></td>`;
+            }).join('') : totalCells}
           </tr>
         </tbody>
       </table>`;
 
-    // Show trend chart if lead selected
-    if (filterLead && byLead[filterLead]) {
-      const leadMonths = byLead[filterLead].sort((a,b)=>a.month-b.month);
-      const mNames = leadMonths.map(d => MONTH_NAMES[d.month]||'M'+d.month);
-      const scores = leadMonths.map(d => d.avgScore);
-      const variances = leadMonths.map(d => d.variance);
-
+    // Trend chart when a single lead is selected
+    const selected = filterLead ? byLead[filterLead.toLowerCase()] : null;
+    if (selected && selected.length) {
+      const leadMonths = selected.slice().sort((a,b)=>a.month-b.month);
+      const mNames = leadMonths.map(x => MONTH_NAMES[x.month]||'M'+x.month);
       const ctx = document.getElementById('chart-lead-trend').getContext('2d');
       if (chartLeadTrend) chartLeadTrend.destroy();
       chartLeadTrend = new Chart(ctx, { type:'line', data:{ labels:mNames, datasets:[
-        { label:'Avg Score', data:scores, borderColor:'#FFB81C', backgroundColor:'rgba(255,184,28,.1)', fill:true, tension:0.3, pointRadius:4 },
-        { label:'Variance to Target (vs 80%)', data:variances, borderColor:'#475CC7', backgroundColor:'rgba(71,92,199,.05)', fill:true, tension:0.3, pointRadius:4 },
-        { label:'Target (80%)', data:mNames.map(()=>80), borderColor:'#AA0061', borderDash:[5,5], pointRadius:0, fill:false },
+        { label:'Avg Score', data:leadMonths.map(x => x.avgScore), borderColor:'#FFB81C', backgroundColor:'rgba(255,184,28,.1)', fill:true, tension:0.3, pointRadius:4 },
+        { label:`Target (${target})`, data:mNames.map(()=>target), borderColor:'#AA0061', borderDash:[5,5], pointRadius:0, fill:false },
       ]}, options:{ responsive:true, maintainAspectRatio:false,
-        scales:{ y:{grid:{color:'#F2F1EC'},ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}} } }});
-
-      document.getElementById('lead-trend-title').textContent = `Lead trend — ${filterLead}`;
+        scales:{ y:{min:0,max:100,grid:{color:'#F2F1EC'}}, x:{grid:{display:false}} } }});
+      document.getElementById('lead-trend-title').textContent = `Lead trend — ${leadLabel(filterLead)}`;
       document.getElementById('lead-trend-card').style.display = 'block';
     } else {
       document.getElementById('lead-trend-card').style.display = 'none';
     }
-
-  } catch(e) { console.error('loadLeadAnalytics:', e); }
+  } catch(e) {
+    console.error('loadLeadAnalytics:', e);
+    tableEl.innerHTML = `<div class="empty">Error: ${escapeHtml(e.message)}</div>`;
+  }
 }
 
 function selectLead(email) {
@@ -2301,7 +2354,7 @@ function selectLead(email) {
 
 // ── ADMIN ──────────────────────────────────────────────────
 function adminTab(tab,el) {
-  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#page-admin .tabs .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('admin-roles').style.display     = tab==='roles'?'block':'none';
   document.getElementById('admin-hierarchy').style.display = tab==='hierarchy'?'block':'none';
@@ -2311,19 +2364,24 @@ function adminTab(tab,el) {
 async function loadRoles() {
   try {
     const roles=await api('getRoles');
-    const rows=roles.map(r=>`<tr><td>${r.email}</td><td><span class="badge badge-blue">${r.role}</span></td><td>${r.assignedBy||'—'}</td></tr>`).join('');
+    const rows=roles.map(r=>`<tr><td>${escapeHtml(r.name||'—')}</td><td>${escapeHtml(r.email)}</td><td><span class="badge badge-blue">${escapeHtml(r.role)}</span></td></tr>`).join('');
     document.getElementById('roles-list').innerHTML=rows
-      ?`<table><thead><tr><th>Email</th><th>Role</th><th>Assigned by</th></tr></thead><tbody>${rows}</tbody></table>`
+      ?`<table><thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead><tbody>${rows}</tbody></table>`
       :'<div class="empty">No roles set</div>';
   } catch(e) {}
 }
 
 async function saveRole() {
-  const email=document.getElementById('admin-email').value;
+  const email=document.getElementById('admin-email').value.trim().toLowerCase();
+  const name=document.getElementById('admin-name').value.trim();
   const role=document.getElementById('admin-role').value;
-  if(!email) return;
-  await api('setRole',{},{email,role,assignedBy:currentUser.email});
-  loadRoles();
+  if(!email) { alert('Please enter an email.'); return; }
+  try {
+    await api('setRole',{},{email,name,role,requested_by:currentUser.email});
+    document.getElementById('admin-email').value='';
+    document.getElementById('admin-name').value='';
+    loadRoles();
+  } catch(e) { alert('Error: '+e.message); }
 }
 
 async function loadHierarchyAdmin() {
@@ -2555,15 +2613,20 @@ function exitDisputeMode() {
 
 async function saveLead() {
   const body={
-    leadName:document.getElementById('h-name').value,
-    leadEmail:document.getElementById('h-email').value,
-    supervisor:document.getElementById('h-sup').value,
-    supervisorEmail:document.getElementById('h-sup-email').value,
-    manager:document.getElementById('h-manager').value,
+    lead_name:document.getElementById('h-name').value.trim(),
+    lead_email:document.getElementById('h-email').value.trim().toLowerCase(),
+    supervisor:document.getElementById('h-sup').value.trim(),
+    supervisor_email:document.getElementById('h-sup-email').value.trim().toLowerCase(),
+    manager:document.getElementById('h-manager').value.trim(),
+    zendesk_name:document.getElementById('h-zendesk').value.trim(),
+    requested_by:currentUser.email,
   };
-  if(!body.leadEmail) return;
-  await api('addLead',{},body);
-  loadHierarchy(); loadHierarchyAdmin();
+  if(!body.lead_email) { alert('Please enter the lead email.'); return; }
+  try {
+    await api('addLead',{},body);
+    ['h-name','h-email','h-sup','h-sup-email','h-manager','h-zendesk'].forEach(id => document.getElementById(id).value='');
+    await loadHierarchy(); populateLeadFilter(); loadHierarchyAdmin();
+  } catch(e) { alert('Error: '+e.message); }
 }
 
 // ── AUDIT QUEUE ────────────────────────────────────────────
