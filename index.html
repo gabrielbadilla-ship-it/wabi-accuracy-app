@@ -133,6 +133,27 @@ tr:hover td{background:var(--card-bg)}
 .badge-blue{background:#E5E9F9;color:var(--cu-blue)}
 .badge-gray{background:#F2F1EC;color:#666}
 .badge-gold{background:#FFF8E1;color:#8a6200}
+.calib-ticket-row{cursor:pointer}
+.calib-ticket-row td{vertical-align:top}
+.calib-ticket-row:hover td{background:#FFF8E7}
+.calib-chevron{display:inline-block;width:18px;color:var(--cu-blue);font-weight:700}
+.calib-ref-cats,.calib-align-cats{display:flex;gap:5px;flex-wrap:wrap;min-width:210px}
+.calib-ref-cat,.calib-align-cat{font-size:11px;padding:3px 6px;border-radius:5px;background:var(--card-bg);white-space:nowrap}
+.calib-detail-row{display:none}
+.calib-detail-row>td{padding:0!important;background:var(--card-bg)!important}
+.calib-detail{padding:14px 16px 16px;border-bottom:1px solid var(--border)}
+.calib-detail-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:10px}
+.calib-review-wrap{overflow-x:auto}
+.calib-review-table{min-width:900px;background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.calib-review-table th{font-size:10px;padding:8px;background:var(--card-bg)}
+.calib-review-table td{font-size:12px;padding:8px;vertical-align:top}
+.calib-reviewer{font-weight:600;white-space:nowrap}
+.calib-reviewer small{display:block;font-size:10px;color:var(--text-muted);font-weight:400;margin-top:2px}
+.calib-score-match{color:#1a6b3a;font-weight:700}
+.calib-score-mismatch{color:var(--cu-magenta);font-weight:700}
+.calib-score-pending{color:var(--text-muted)}
+.calib-score-ref{display:block;font-size:10px;color:var(--text-muted);font-weight:400;margin-top:2px}
+.calib-review-note{max-width:230px;white-space:normal;line-height:1.35}
 
 /* FILTERS */
 .filters-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:center}
@@ -1773,6 +1794,24 @@ async function loadCalibrationsList() {
     }
     const pct = v => v === null || v === undefined ? '—' : `${v}%`;
     const score = v => v === null || v === undefined ? '—' : `${v}%`;
+    const safe = value => String(value ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    const categoryReference = t => [
+      ['V', t.reference?.val], ['IR', t.reference?.ir],
+      ['P&E', t.reference?.pe], ['C&G', t.reference?.cg]
+    ].map(([label, value]) => `<span class="calib-ref-cat"><strong>${label}</strong> ${score(value)}</span>`).join('');
+    const categoryAlignment = t => [
+      ['V', t.alignment_categories?.val], ['IR', t.alignment_categories?.ir],
+      ['P&E', t.alignment_categories?.pe], ['C&G', t.alignment_categories?.cg]
+    ].map(([label, value]) => `<span class="calib-align-cat"><strong>${label}</strong> ${pct(value)}</span>`).join('');
+    const matchScore = (value, reference, matches, pending) => {
+      if (pending) return '<span class="calib-score-pending">Pending</span>';
+      const cls = matches === true ? 'calib-score-match' : 'calib-score-mismatch';
+      const icon = matches === true ? '✓' : '✗';
+      return `<span class="${cls}">${score(value)} ${icon}</span><span class="calib-score-ref">Ref: ${score(reference)}</span>`;
+    };
     el.innerHTML = sessions.map(s => `
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -1786,13 +1825,54 @@ async function loadCalibrationsList() {
             <div class="metric"><div class="label">Completed</div><div class="value">${s.completed}/${s.assigned}</div></div>
           </div>
           <div class="card" style="padding:0;overflow:hidden">
-            <table><thead><tr><th>Ticket</th><th>Reference</th><th>Avg score</th><th>Alignment</th><th>Completed</th></tr></thead><tbody>
-            ${s.tickets.map(t => `<tr><td>${zdLink(t.ticket)}</td><td>${score(t.reference.total)}</td><td>${score(t.avg_total)}</td><td>${pct(t.alignment_total)}</td><td>${t.completed}/${t.assigned}</td></tr>`).join('')}
+            <table><thead><tr><th>Ticket</th><th>Reference total</th><th>Reference by category</th><th>Avg score</th><th>Alignment</th><th>Category alignment</th><th>Completed</th></tr></thead><tbody>
+            ${s.tickets.map(t => {
+              const detailId = 'calib-detail-' + safe(`${s.session_id}-${t.ticket}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+              const reviews = Array.isArray(t.reviews) ? t.reviews : [];
+              const reviewRows = reviews.length
+                ? reviews.map(r => `<tr>
+                    <td class="calib-reviewer">${safe(r.supervisor_name)}<small>${safe(r.supervisor_email)}</small></td>
+                    <td><span class="badge ${r.status === 'Completed' ? 'badge-green' : 'badge-gray'}">${safe(r.status)}</span></td>
+                    <td>${matchScore(r.total_score, t.reference?.total, r.matches?.total, r.status !== 'Completed')}</td>
+                    <td>${matchScore(r.score_val, t.reference?.val, r.matches?.val, r.status !== 'Completed')}</td>
+                    <td>${matchScore(r.score_ir, t.reference?.ir, r.matches?.ir, r.status !== 'Completed')}</td>
+                    <td>${matchScore(r.score_pe, t.reference?.pe, r.matches?.pe, r.status !== 'Completed')}</td>
+                    <td>${matchScore(r.score_cg, t.reference?.cg, r.matches?.cg, r.status !== 'Completed')}</td>
+                    <td class="calib-review-note">${safe([r.root_causes?.val, r.root_causes?.ir, r.root_causes?.pe, r.root_causes?.cg].filter(Boolean).join(' · ')) || '—'}${r.comment ? `<br><span style="color:var(--text-muted)">${safe(r.comment)}</span>` : ''}</td>
+                  </tr>`).join('')
+                : '<tr><td colspan="8" class="calib-score-pending">No assigned reviewers found for this ticket.</td></tr>';
+              return `<tr class="calib-ticket-row" data-calib-toggle="${detailId}" onclick="toggleCalibrationTicket('${detailId}')">
+                  <td><span class="calib-chevron" id="${detailId}-chevron">▸</span><span onclick="event.stopPropagation()">${zdLink(t.ticket)}</span></td>
+                  <td><strong>${score(t.reference?.total)}</strong></td>
+                  <td><div class="calib-ref-cats">${categoryReference(t)}</div></td>
+                  <td>${score(t.avg_total)}</td>
+                  <td><strong>${pct(t.alignment_total)}</strong></td>
+                  <td><div class="calib-align-cats">${categoryAlignment(t)}</div></td>
+                  <td>${t.completed}/${t.assigned}</td>
+                </tr>
+                <tr id="${detailId}" class="calib-detail-row">
+                  <td colspan="7"><div class="calib-detail">
+                    <div class="calib-detail-title">Reviewer detail — reference scores are shown below each reviewer score</div>
+                    <div class="calib-review-wrap"><table class="calib-review-table"><thead><tr>
+                      <th>Supervisor</th><th>Status</th><th>Total</th><th>Validation</th><th>Issue Resolution</th><th>Process &amp; Escalation</th><th>Coaching &amp; Guidance</th><th>Root causes / notes</th>
+                    </tr></thead><tbody>${reviewRows}</tbody></table></div>
+                  </div></td>
+                </tr>`;
+            }).join('')}
             </tbody></table>
           </div>
           <div style="font-size:12px;color:var(--text-muted);margin-top:12px">Category alignment — Validation: ${pct(s.alignment_categories.val)} · Issue Resolution: ${pct(s.alignment_categories.ir)} · Process & Escalation: ${pct(s.alignment_categories.pe)} · Coaching & Guidance: ${pct(s.alignment_categories.cg)}</div>
         </div>`).join('');
   } catch(e) { console.error('loadCalibrationsList:', e); el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+function toggleCalibrationTicket(detailId) {
+  const detail = document.getElementById(detailId);
+  const chevron = document.getElementById(detailId + '-chevron');
+  if (!detail) return;
+  const open = detail.style.display === 'table-row';
+  detail.style.display = open ? 'none' : 'table-row';
+  if (chevron) chevron.textContent = open ? '▸' : '▾';
 }
 
 async function saveCalibrationNote(half, month, week, safeKey) {
