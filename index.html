@@ -158,8 +158,8 @@ tr:hover td{background:var(--card-bg)}
 .calib-table-wrap>table>thead>tr>th{position:sticky;top:0;background:var(--white);z-index:3;box-shadow:0 1px 0 var(--border)}
 .calib-review-wrap{overflow:visible}
 .calib-review-table{overflow:visible;border-collapse:separate;border-spacing:0}
-.calib-detail-title{position:sticky;top:38px;background:#fff;z-index:6;padding:8px 0 10px;box-shadow:0 1px 0 var(--border)}
-.calib-review-table thead th{position:sticky;top:76px;background:#fff;z-index:7;box-shadow:0 1px 0 var(--border)}
+.calib-ticket-row-open td{position:sticky;top:38px;background:#fff!important;z-index:5;box-shadow:0 1px 0 var(--border)}
+.calib-review-table thead th{position:sticky;top:76px;background:#fff;z-index:6;box-shadow:0 1px 0 var(--border)}
 .calib-alignment-value{font-weight:700;white-space:nowrap}
 
 /* FILTERS */
@@ -1864,7 +1864,6 @@ async function loadCalibrationsList() {
                 </tr>
                 <tr id="${detailId}" class="calib-detail-row">
                   <td colspan="7"><div class="calib-detail">
-                    <div class="calib-detail-title">Reviewer detail — reference scores are shown below each reviewer score</div>
                     <div class="calib-review-wrap"><table class="calib-review-table"><thead><tr>
                       <th>Supervisor</th><th>Status</th><th>Total</th><th>Validation</th><th>Issue Resolution</th><th>Process &amp; Escalation</th><th>Coaching &amp; Guidance</th><th>Root causes / notes</th>
                     </tr></thead><tbody>${reviewRows}</tbody></table></div>
@@ -1881,9 +1880,11 @@ async function loadCalibrationsList() {
 function toggleCalibrationTicket(detailId) {
   const detail = document.getElementById(detailId);
   const chevron = document.getElementById(detailId + '-chevron');
+  const ticketRow = document.querySelector(`tr[data-calib-toggle="${detailId}"]`);
   if (!detail) return;
   const open = detail.style.display === 'table-row';
   detail.style.display = open ? 'none' : 'table-row';
+  if (ticketRow) ticketRow.classList.toggle('calib-ticket-row-open', !open);
   if (chevron) chevron.textContent = open ? '▸' : '▾';
 }
 
