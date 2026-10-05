@@ -154,6 +154,24 @@ tr:hover td{background:var(--card-bg)}
 .calib-score-match,.calib-score-mismatch,.calib-score-ref{white-space:nowrap}
 .calib-score-mismatch{color:var(--cu-magenta);font-weight:700}
 .calib-score-pending{color:var(--text-muted)}
+.abs-badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:#E4E8F7;color:#475CC7;white-space:nowrap;margin-left:6px}
+.abs-banner{background:#EEF1FB;border:1px solid #D3DAF3;color:#2C2B2B;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px}
+.fb-note{font-size:12px;color:var(--text-muted);margin-top:-6px;margin-bottom:16px}
+.lr-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.lr-cat{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px}
+.lr-cat-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted)}
+.lr-cat-label span{font-weight:400}
+.lr-cat-value{font-size:26px;font-weight:700;margin:6px 0}
+.lr-cat-sub{font-size:12px;color:var(--text-muted);margin-top:6px}
+.lr-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:16px}
+.lr-list-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.lr-list-row:last-child{border-bottom:none}
+.lr-list-row small{display:block;font-size:11px;color:var(--text-muted)}
+.lr-chip{display:inline-block;font-size:11px;padding:2px 7px;margin:1px 3px 1px 0;border-radius:5px;background:#FCE8F2;color:var(--cu-magenta);white-space:nowrap}
+.dispute-group{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.dispute-group-title{font-size:12px;font-weight:700;margin-bottom:6px}
+.dispute-group-title span{font-weight:400;color:var(--text-muted);margin-left:6px}
+.dispute-option{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer}
 .calib-score-missed{color:var(--cu-magenta);font-weight:600}
 .calib-score-ref{display:block;font-size:11.5px;color:var(--text-muted);font-weight:400;margin-top:2px}
 .calib-review-note{min-width:260px;max-width:340px;white-space:normal;line-height:1.45}
@@ -693,7 +711,7 @@ tr:hover td{background:var(--card-bg)}
             <select id="rec-status" onchange="loadRecords()">
               <option value="">All statuses</option>
               <option>Pending</option>
-              <option>Coaching Delivered</option>
+              <option>Feedback provided</option>
               <option>No feedback needed</option>
               <option>Disputed</option>
             </select>
@@ -751,25 +769,33 @@ tr:hover td{background:var(--card-bg)}
     <!-- PENDING FEEDBACK -->
     <div id="page-feedback" class="page">
       <div class="page-title">Pending Feedback</div>
-      <div class="page-sub">Coaching the Lead needs after a failed audit (regular audits only)</div>
-      <div>
-        <div class="filters-bar" style="padding:0 0 4px">
-          <button class="btn btn-secondary btn-sm" onclick="loadFeedbackLoop()">↺ Refresh</button>
+      <div class="page-sub">Feedback after each regular audit — team overview and each Lead's reviews</div>
+      <div class="tabs" id="feedback-tabs">
+        <div class="tab active" onclick="feedbackTab('overview',this)">👥 Team overview</div>
+        <div class="tab" onclick="feedbackTab('leads',this)">👤 Lead reviews</div>
+      </div>
+
+      <!-- TEAM OVERVIEW: the same for everyone -->
+      <div id="feedback-overview">
+        <div class="filters-bar">
+          <select id="fo-week" onchange="loadFeedbackOverview()"><option value="">All weeks</option></select>
+          <button class="btn btn-secondary btn-sm" onclick="loadFeedbackOverview()">↺ Refresh</button>
         </div>
-        <!-- Team metrics -->
-        <div class="metrics" id="fl-metrics">
-          <div class="metric"><div class="label">Feedback needed</div><div class="value">—</div></div>
-          <div class="metric"><div class="label">Coaching delivered</div><div class="value green">—</div></div>
-          <div class="metric"><div class="label">Pending</div><div class="value red">—</div></div>
-          <div class="metric"><div class="label">Feedback compliance</div><div class="value">—</div></div>
-        </div>
-        <!-- Month breakdown -->
-        <div class="card"><div id="fl-month-table"></div></div>
-        <!-- Personal queue -->
-        <div class="page-title" style="font-size:16px;margin-bottom:8px">Your pending coaching</div>
+        <div class="metrics" id="fo-metrics"></div>
         <div class="card" style="padding:0;overflow:hidden">
-          <div id="queue-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+          <div id="fo-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
         </div>
+        <div class="fb-note">Compliance = (feedback provided + disputed) ÷ feedback needed. A disputed review counts as handled: the supervisor acted on it and it is waiting for the dispute to be resolved.</div>
+      </div>
+
+      <!-- LEAD REVIEWS: supervisor + their Lead -->
+      <div id="feedback-leads" style="display:none">
+        <div class="filters-bar">
+          <select id="lr-lead" onchange="loadLeadReviews()"></select>
+          <select id="lr-week" onchange="renderLeadReviews()"><option value="">All weeks</option></select>
+          <button class="btn btn-secondary btn-sm" onclick="loadLeadReviews(true)">↺ Refresh</button>
+        </div>
+        <div id="lr-content"><div class="empty"><span class="spinner"></span> Loading...</div></div>
       </div>
     </div>
 
@@ -788,7 +814,7 @@ tr:hover td{background:var(--card-bg)}
             <div class="field"><label>Name</label><input type="text" id="admin-name" placeholder="Full name"></div>
             <div class="field"><label>Email</label><input type="email" id="admin-email" placeholder="user@cookunity.com"></div>
             <div class="field"><label>Role</label>
-              <select id="admin-role"><option>viewer</option><option>reviewer</option><option>supervisor</option><option>admin</option></select></div>
+              <select id="admin-role"><option>lead</option><option>supervisor</option><option>admin</option><option>viewer</option></select></div>
           </div>
           <div class="actions-row"><button class="btn btn-primary btn-sm" onclick="saveRole()">Save role</button></div>
         </div>
@@ -968,6 +994,12 @@ async function initApp() {
   if (currentRole === 'lead' || currentRole === 'viewer') {
     document.getElementById('new-audit-link').style.display = 'none';
   }
+  if (currentRole === 'lead') {
+    ['reviews', 'compliance', 'disputes'].forEach(p => {
+      const link = document.querySelector(`#sidebar nav a[data-page="${p}"]`);
+      if (link) link.style.display = 'none';
+    });
+  }
 
   // Set dashboard default to current month
   const curMonth = new Date().getMonth() + 1;
@@ -1037,7 +1069,7 @@ function nav(page) {
   if (page === 'form') loadAuditQueue();
   if (page === 'reviews') reviewsTab(reviewsView || 'audits');
   if (page === 'leadperf') loadLeadAnalytics();
-  if (page === 'feedback') loadFeedbackLoop();
+  if (page === 'feedback') feedbackTab(feedbackView);
   if (page === 'knowledge') initKnowledge();
   if (page === 'compliance') loadCompliance();
 }
@@ -1082,7 +1114,7 @@ function scoreBgColor(s) {
   return s >= 90 ? '#218848' : s >= 80 ? '#475CC7' : s >= 60 ? '#F96F15' : '#AA0061';
 }
 function statusClass(s) {
-  if (s === 'Coaching Delivered') return 'badge-green';
+  if (s === 'Feedback provided')  return 'badge-green';
   if (s === 'No feedback needed')  return 'badge-gray';
   if (s === 'Disputed')            return 'badge-amber';
   return 'badge-red'; // Pending = needs action
@@ -1314,47 +1346,55 @@ function renderVolumeReasonsChart(row) {
 // ── SUPERVISOR COMPLIANCE (Part 3) ──────────────────────────
 async function loadComplianceOverview() {
   try {
-    const [compliance, feedback] = await Promise.all([
-      api('getCompliance', { useCache: true }),
-      api('getFeedbackLoop', {}),
-    ]);
+    const compliance = await api('getCompliance', { useCache: true });
 
     // Reviews pending completion — only the most recent (active) week
     const maxWeek = compliance.reduce((max, r) => Math.max(max, r.week||0), 0);
     const currentWeekRows = compliance.filter(r => r.week === maxWeek);
+
+    // Feedback for the month of the most recent assigned week (W40 belongs to
+    // September even when it's reviewed in October)
+    const feedbackMonth = (currentWeekRows[0] && Number(currentWeekRows[0].month)) || (new Date().getMonth() + 1);
+    const feedback = await api('getFeedbackLoop', { month: feedbackMonth });
     const reviewsCompleted = currentWeekRows.reduce((s,r) => s + (r.completed||0), 0);
     const reviewsPending   = currentWeekRows.reduce((s,r) => s + (r.pending||0), 0);
 
-    const curMonth = new Date().getMonth() + 1;
-    const feedbackMonthRows = (feedback.monthBreakdown||[]).filter(r => r.month === curMonth);
-    const feedbackDelivered = feedbackMonthRows.reduce((s,r) => s + (r.done||0), 0);
-    const feedbackPending   = feedbackMonthRows.reduce((s,r) => s + (r.pending||0), 0);
+    // Feedback for the current month (same numbers as Pending Feedback → Team overview)
+    const feedbackMonthRows = (feedback.bySupervisor || []).filter(r => r.needed > 0);
+    const feedbackDelivered = (feedback.totals || {}).provided || 0;
+    const feedbackPending   = (feedback.totals || {}).pending || 0;
 
     document.getElementById('comp-overview-metrics').innerHTML = `
       <div class="metric"><div class="label">Reviews completed</div><div class="value green">${reviewsCompleted}</div></div>
       <div class="metric"><div class="label">Reviews pending</div><div class="value ${reviewsPending>0?'amber':''}">${reviewsPending}</div></div>
-      <div class="metric"><div class="label">Feedback delivered</div><div class="value green">${feedbackDelivered}</div></div>
+      <div class="metric"><div class="label">Feedback provided</div><div class="value green">${feedbackDelivered}</div></div>
       <div class="metric"><div class="label">Feedback pending</div><div class="value ${feedbackPending>0?'amber':''}">${feedbackPending}</div></div>
     `;
 
+    const absences = await getAbsences();
+    const leadEmails = new Set(hierarchy.map(h => String(h.leadEmail || '').toLowerCase().trim()));
+    const absentRows = absences
+      .filter(a => a.email && Number(a.week) === maxWeek && !leadEmails.has(a.email) && !currentWeekRows.some(r => r.supervisor === a.email))
+      .map(a => `<tr><td>${escapeHtml(a.email)}${absenceBadge(a)}</td><td colspan="4" style="color:var(--text-muted);font-size:12px">Not assigned this week</td></tr>`).join('');
     const reviewRows = currentWeekRows
       .sort((a,b) => a.compliance - b.compliance)
       .map(r => `
-        <tr><td>${r.supervisor}</td><td>${r.assigned}</td><td>${r.completed}</td>
+        <tr><td>${r.supervisor}${absenceBadge(absenceOf(absences, r.supervisor, maxWeek))}</td><td>${r.assigned}</td><td>${r.completed}</td>
         <td style="color:${r.pending>0?'var(--cu-magenta)':'var(--text-muted)'};font-weight:${r.pending>0?'600':'400'}">${r.pending}</td>
         <td><span class="badge ${r.compliance>=90?'badge-green':r.compliance>=70?'badge-amber':'badge-red'}">${r.compliance}%</span></td></tr>`).join('');
-    document.getElementById('comp-reviews-table').innerHTML = reviewRows
-      ? `<table><thead><tr><th>Supervisor</th><th>Assigned</th><th>Completed</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${reviewRows}</tbody></table>`
+    document.getElementById('comp-reviews-table').innerHTML = (reviewRows || absentRows)
+      ? `<table><thead><tr><th>Supervisor</th><th>Assigned</th><th>Completed</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${reviewRows}${absentRows}</tbody></table>`
       : '<div class="empty">No data for the current week yet</div>';
 
     const fbRows = feedbackMonthRows
-      .sort((a,b) => a.pct - b.pct)
+      .sort((a,b) => a.compliance - b.compliance)
       .map(r => `
-        <tr><td>${r.supervisor}</td><td style="color:var(--cu-green);font-weight:600">${r.done}</td>
+        <tr><td>${escapeHtml(r.name || r.supervisor)}</td><td style="color:var(--cu-green);font-weight:600">${r.provided}</td>
+        <td style="color:var(--cu-orange);font-weight:600">${r.disputed}</td>
         <td style="color:${r.pending>0?'var(--cu-magenta)':'var(--text-muted)'};font-weight:${r.pending>0?'600':'400'}">${r.pending}</td>
-        <td><span class="badge ${r.pct>=90?'badge-green':r.pct>=70?'badge-amber':'badge-red'}">${r.pct}%</span></td></tr>`).join('');
+        <td><span class="badge ${r.compliance>=90?'badge-green':r.compliance>=70?'badge-amber':'badge-red'}">${r.compliance}%</span></td></tr>`).join('');
     document.getElementById('comp-feedback-table').innerHTML = fbRows
-      ? `<table><thead><tr><th>Supervisor</th><th>Delivered</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${fbRows}</tbody></table>`
+      ? `<table><thead><tr><th>Supervisor</th><th>Provided</th><th>Disputed</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${fbRows}</tbody></table>`
       : '<div class="empty">No data for the current month yet</div>';
   } catch(e) { console.error('loadComplianceOverview:', e); }
 }
@@ -1788,18 +1828,47 @@ function fmtDate(value) {
   return s.includes('T') ? s.split('T')[0] : s.slice(0, 10);
 }
 
+// ── ABSENCES & INCIDENTS ("Incidents" sheet: Week | Email | Type | Note) ──
+// Email filled = that person was absent (PTO, Sick leave…); blank = the
+// whole team was affected. Display only: marks weeks in the reports.
+let _absencesPromise = null;
+function getAbsences(force) {
+  if (!_absencesPromise || force) _absencesPromise = api('getIncidents').then(x => Array.isArray(x) ? x : []).catch(() => []);
+  return _absencesPromise;
+}
+function absenceOf(list, email, week) {
+  const em = String(email || '').toLowerCase().trim();
+  return (list || []).find(a => a.email && a.email === em && Number(a.week) === Number(week)) || null;
+}
+function absencesOf(list, email) {
+  const em = String(email || '').toLowerCase().trim();
+  return (list || []).filter(a => a.email && a.email === em).sort((a, b) => a.week - b.week);
+}
+function absenceBadge(a, withWeek) {
+  if (!a) return '';
+  const title = escapeHtml(a.type + (a.note ? ' — ' + a.note : ''));
+  return `<span class="abs-badge" title="${title}">🌴 ${escapeHtml(a.type)}${withWeek ? ' · W' + a.week : ''}</span>`;
+}
+// Month a week belongs to (the month of its Wednesday), current year
+function weekMonth(week) {
+  const year = Number(String(CURRENT_HALF).slice(-4)) || new Date().getFullYear();
+  const jan1 = new Date(Date.UTC(year, 0, 1));
+  const wed = new Date(jan1.getTime() + ((Number(week) - 1) * 7 - jan1.getUTCDay() + 3) * 86400000);
+  return wed.getUTCMonth() + 1;
+}
+
 function leadLabel(email) {
   const h = hierarchy.find(x => String(x.leadEmail || '').toLowerCase() === String(email || '').toLowerCase());
   return h && h.leadName ? h.leadName : (email || '—');
 }
 
 // Status of a regular audit, derived from the sheet fields:
-// open dispute → Disputed · feedback delivered → Coaching Delivered ·
+// open dispute → Disputed · feedback delivered → Feedback provided ·
 // feedback needed → Pending · otherwise → No feedback needed
 function reviewStatus(r) {
   if (String(r.dispute_status || '').trim() === 'Open') return 'Disputed';
   const fb = String(r.feedback_yn || 'No').trim();
-  if (fb === 'Delivered') return 'Coaching Delivered';
+  if (fb === 'Delivered') return 'Feedback provided';
   if (fb === 'Yes') return 'Pending';
   return 'No feedback needed';
 }
@@ -2077,93 +2146,334 @@ function exportCSV() {
   a.download = 'wabi_audits_records.csv'; a.click();
 }
 
-// ── FEEDBACK LOOP ──────────────────────────────────────────
-async function loadFeedbackLoop() {
-  try {
-    const d = await api('getFeedbackLoop', currentRole === 'admin' ? {} : { supervisor: currentUser.email });
+// ── PENDING FEEDBACK ───────────────────────────────────────
+// Two tabs: Team overview (same for everyone) and Lead reviews (a
+// supervisor with their Lead; a Lead sees only their own, read-only).
+let feedbackView = 'overview';
+let fbWeeks = new Set();
+const leadReviewsCache = {};
 
-    // Team metrics
-    document.getElementById('fl-metrics').innerHTML = `
-      <div class="metric"><div class="label">Feedback needed</div><div class="value">${d.total}</div></div>
-      <div class="metric"><div class="label">Coaching delivered</div><div class="value green">${d.withCoaching}</div></div>
-      <div class="metric"><div class="label">Pending</div><div class="value ${d.pending>0?'red':''}">${d.pending}</div></div>
-      <div class="metric"><div class="label">Feedback compliance</div><div class="value ${d.compliancePct>=80?'green':d.compliancePct>=50?'amber':'red'}">${d.compliancePct}%</div></div>`;
+const RUBRIC_CATS = [
+  { key: 'val', rc: 'rc_val', label: 'Validation',           max: 35 },
+  { key: 'ir',  rc: 'rc_ir',  label: 'Issue Resolution',     max: 20 },
+  { key: 'pe',  rc: 'rc_pe',  label: 'Process & Escalation', max: 35 },
+  { key: 'cg',  rc: 'rc_cg',  label: 'Coaching & Guidance',  max: 10 },
+];
 
-    // Month breakdown, one small table per month
-    const byMonthGroup = {};
-    (d.monthBreakdown || []).forEach(row => {
-      if (!byMonthGroup[row.month]) byMonthGroup[row.month] = [];
-      byMonthGroup[row.month].push(row);
-    });
-    const months = Object.keys(byMonthGroup).map(Number).sort((a,b)=>a-b);
+const myEmail = () => String(currentUser?.email || '').toLowerCase().trim();
 
-    const makeTable = (m, rows) => {
-      const tableRows = rows.map(r => `
-        <tr>
-          <td style="font-size:12px">${escapeHtml(r.supervisor)}</td>
-          <td style="color:var(--cu-green);font-weight:600;text-align:center">${r.done}</td>
-          <td style="text-align:center">${r.pending}</td>
-          <td><span class="badge ${r.pct>=80?'badge-green':r.pct>=50?'badge-amber':'badge-red'}">${r.pct}%</span></td>
-        </tr>`).join('');
-      return `
-        <div class="card" style="flex:1;margin:0;min-width:280px">
-          <h3>${MONTH_NAMES[m]||'M'+m}</h3>
-          <table>
-            <thead><tr><th>Supervisor</th><th>Delivered</th><th>Pending</th><th>Compliance</th></tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-        </div>`;
-    };
-
-    document.getElementById('fl-month-table').innerHTML = months.length
-      ? `<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">${months.map(m => makeTable(m, byMonthGroup[m])).join('')}</div>`
-      : '<div class="empty">No feedback needed yet</div>';
-
-    // Sidebar badge = coaching this user still has to deliver
-    const personal = d.personalPending || [];
-    document.getElementById('feedback-badge').textContent = personal.length;
-
-    // Personal pending list
-    if (!personal.length) {
-      document.getElementById('queue-table').innerHTML = '<div class="empty">🎉 No pending coaching for you this period</div>';
-      return;
-    }
-    window._pendingRows = personal;
-    const rows = personal.map((r, i) => `
-      <tr>
-        <td>${zdLink(r.ticket)}</td>
-        <td>${escapeHtml(leadLabel(r.lead_email))}</td>
-        <td>W${escapeHtml(r.week)} / ${escapeHtml(MONTH_NAMES[Number(r.month)] || 'M' + r.month)}</td>
-        <td><span class="badge ${scoreClass(r.total_score)}">${Number(r.total_score) || 0} / 100</span></td>
-        <td style="max-width:260px;font-size:12px;color:var(--text-muted)">${r.improvement_notes ? escapeHtml(String(r.improvement_notes).slice(0,80)) + (String(r.improvement_notes).length > 80 ? '…' : '') : '—'}</td>
-        <td style="white-space:nowrap">
-          <button class="btn btn-primary btn-sm" onclick="openPendingAt(${i})">Log coaching</button>
-          <button class="btn btn-danger btn-sm" onclick="openSubmitDisputeModal(window._pendingRows[${i}].ticket, window._pendingRows[${i}].reviewer)">⚖️ Dispute</button>
-        </td>
-      </tr>`).join('');
-    document.getElementById('queue-table').innerHTML = `
-      <table>
-        <thead><tr><th>Ticket</th><th>Lead</th><th>Week / Month</th><th>Score</th><th>Notes</th><th>Action</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>`;
-  } catch(e) { console.error('loadFeedbackLoop:', e); }
+// The Lead's supervisor (from Hierarchy, by email) or an admin can act
+function canActOnLead(leadEmail) {
+  if (currentRole === 'admin') return true;
+  const h = hierarchy.find(x => String(x.leadEmail || '').toLowerCase().trim() === String(leadEmail || '').toLowerCase().trim());
+  return !!h && String(h.supervisorEmail || '').toLowerCase().trim() === myEmail();
 }
 
-async function loadQueue() {
-  loadFeedbackLoop();
+// Competency names contain commas ("Credits, Refunds & Appeasement
+// Authority"), so they are matched by full name instead of split on commas.
+const COMPETENCIES = [
+  'Credits, Refunds & Appeasement Authority',
+  'Product, Policy & Case Knowledge',
+  'Case Handling & Judgment',
+  'Communication & Escalation Management',
+  'Coaching & Team Development',
+];
+function parseCompetencies(value) {
+  const text = String(value || '');
+  return COMPETENCIES.filter(c => text.includes(c));
+}
+
+function splitList(value) {
+  return String(value || '').split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function feedbackTab(view, el) {
+  feedbackView = view;
+  const tabs = [...document.querySelectorAll('#feedback-tabs .tab')];
+  tabs.forEach(t => t.classList.remove('active'));
+  (el || tabs[view === 'leads' ? 1 : 0])?.classList.add('active');
+  document.getElementById('feedback-overview').style.display = view === 'overview' ? 'block' : 'none';
+  document.getElementById('feedback-leads').style.display    = view === 'leads'    ? 'block' : 'none';
+  if (view === 'overview') loadFeedbackOverview(); else loadLeadReviews();
+}
+
+// Called on login (sidebar badge) and when opening the page
+async function loadFeedbackLoop() {
+  if (feedbackView === 'leads' && document.getElementById('page-feedback')?.classList.contains('active')) loadLeadReviews();
+  return loadFeedbackOverview();
+}
+async function loadQueue() { return loadFeedbackLoop(); }
+
+async function loadFeedbackOverview() {
+  const weekSel = document.getElementById('fo-week');
+  const week = weekSel?.value || '';
+  const tableEl = document.getElementById('fo-table');
+  try {
+    const [d, absences] = await Promise.all([api('getFeedbackLoop', { week, supervisor: currentUser.email }), getAbsences()]);
+    (d.weeks || []).forEach(w => fbWeeks.add(Number(w)));
+    if (weekSel) {
+      weekSel.innerHTML = '<option value="">All weeks</option>' +
+        [...fbWeeks].sort((a, b) => b - a).map(w => `<option value="${w}" ${String(w) === week ? 'selected' : ''}>W${w}</option>`).join('');
+    }
+
+    const badge = document.getElementById('feedback-badge');
+    if (badge) badge.textContent = d.myPending || 0;
+
+    const t = d.totals || {};
+    const tone = v => v === null || v === undefined ? '' : v >= 80 ? 'green' : v >= 50 ? 'amber' : 'red';
+    document.getElementById('fo-metrics').innerHTML = `
+      <div class="metric"><div class="label">Feedback needed</div><div class="value">${t.needed || 0}</div></div>
+      <div class="metric"><div class="label">Feedback provided</div><div class="value green">${t.provided || 0}</div></div>
+      <div class="metric"><div class="label">Disputed</div><div class="value amber">${t.disputed || 0}</div></div>
+      <div class="metric"><div class="label">Pending</div><div class="value ${t.pending ? 'red' : ''}">${t.pending || 0}</div></div>
+      <div class="metric"><div class="label">Feedback compliance</div><div class="value ${tone(t.compliance)}">${t.compliance === null || t.compliance === undefined ? '—' : t.compliance + '%'}</div></div>`;
+
+    const rows = (d.bySupervisor || []).map(s => `
+      <tr${s.supervisor === myEmail() ? ' style="background:#FFFBF0"' : ''}>
+        <td><strong>${escapeHtml(s.name)}</strong>${week ? absenceBadge(absenceOf(absences, s.supervisor, week)) : ''}<div style="font-size:11px;color:var(--text-muted)">${escapeHtml(s.supervisor)}</div></td>
+        <td style="text-align:center">${s.leads}</td>
+        <td style="text-align:center">${s.needed}</td>
+        <td style="text-align:center;color:var(--cu-green);font-weight:600">${s.provided}</td>
+        <td style="text-align:center;color:var(--cu-orange);font-weight:600">${s.disputed}</td>
+        <td style="text-align:center;${s.pending ? 'color:var(--cu-magenta);font-weight:700' : ''}">${s.pending}</td>
+        <td>${s.compliance === null ? '<span style="color:var(--text-muted)">—</span>' : `<span class="badge ${s.compliance >= 80 ? 'badge-green' : s.compliance >= 50 ? 'badge-amber' : 'badge-red'}">${s.compliance}%</span>`}</td>
+      </tr>`).join('');
+    tableEl.innerHTML = rows
+      ? `<table><thead><tr><th>Supervisor</th><th style="text-align:center">Leads</th><th style="text-align:center">Needed</th><th style="text-align:center">Provided</th><th style="text-align:center">Disputed</th><th style="text-align:center">Pending</th><th>Compliance</th></tr></thead><tbody>${rows}</tbody></table>`
+      : '<div class="empty">No supervisors found in Hierarchy</div>';
+  } catch(e) {
+    console.error('loadFeedbackOverview:', e);
+    if (tableEl) tableEl.innerHTML = `<div class="empty">Error: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// Leads the current user can look at in "Lead reviews"
+function leadOptionsForUser() {
+  const me = myEmail();
+  const all = hierarchy.filter(h => h.leadEmail).map(h => ({
+    email: String(h.leadEmail).toLowerCase().trim(),
+    name: h.leadName || h.leadEmail,
+    mine: String(h.supervisorEmail || '').toLowerCase().trim() === me,
+  }));
+  if (currentRole === 'lead') return all.filter(l => l.email === me);
+  if (currentRole === 'admin') return all.sort((a, b) => (b.mine - a.mine) || a.name.localeCompare(b.name));
+  return all.filter(l => l.mine).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function loadLeadReviews(forceRefresh) {
+  const sel = document.getElementById('lr-lead');
+  const content = document.getElementById('lr-content');
+  const options = leadOptionsForUser();
+
+  if (!options.length) {
+    sel.style.display = 'none';
+    content.innerHTML = `<div class="empty">${currentRole === 'lead'
+      ? 'Your email was not found in the Lead Hierarchy. Ask an admin to check it.'
+      : 'You have no Leads assigned in the Lead Hierarchy.'}</div>`;
+    return;
+  }
+  sel.style.display = '';
+  const previous = sel.value;
+  sel.innerHTML = options.map(l => `<option value="${escapeHtml(l.email)}">${escapeHtml(l.name)}${currentRole === 'admin' && l.mine ? ' (your Lead)' : ''}</option>`).join('');
+  sel.value = options.some(o => o.email === previous) ? previous : options[0].email;
+  sel.disabled = options.length === 1;
+
+  const lead = sel.value;
+  window._absencesCache = await getAbsences(forceRefresh);
+  if (forceRefresh || !leadReviewsCache[lead]) {
+    content.innerHTML = '<div class="empty"><span class="spinner"></span> Loading...</div>';
+    try {
+      leadReviewsCache[lead] = await api('getRecords', { lead, calibration: 'No' });
+    } catch(e) {
+      content.innerHTML = `<div class="empty">Error: ${escapeHtml(e.message)}</div>`;
+      return;
+    }
+  }
+
+  // Week filter from this Lead's reviews
+  const weekSel = document.getElementById('lr-week');
+  const prevWeek = weekSel.value;
+  const weeks = [...new Set(leadReviewsCache[lead].map(r => Number(r.week)).filter(Boolean))].sort((a, b) => b - a);
+  weekSel.innerHTML = '<option value="">All weeks</option>' + weeks.map(w => `<option value="${w}">W${w}</option>`).join('');
+  weekSel.value = weeks.map(String).includes(prevWeek) ? prevWeek : '';
+  renderLeadReviews();
+}
+
+function renderLeadReviews() {
+  const lead = document.getElementById('lr-lead').value;
+  const week = document.getElementById('lr-week').value;
+  const content = document.getElementById('lr-content');
+  const records = (leadReviewsCache[lead] || []).filter(r => !week || String(r.week) === week);
+
+  // Absences of this Lead (all, or the selected week)
+  const leadAbs = absencesOf(window._absencesCache, lead).filter(a => !week || String(a.week) === week);
+  const absBanner = leadAbs.length
+    ? `<div class="abs-banner">🌴 ${escapeHtml(leadLabel(lead))} was out: ${leadAbs.map(a => `<strong>W${a.week}</strong> ${escapeHtml(a.type)}${a.note ? ' (' + escapeHtml(a.note) + ')' : ''}`).join(' · ')}</div>`
+    : '';
+
+  if (!records.length) {
+    content.innerHTML = absBanner + `<div class="empty">${week ? 'No reviews for this Lead in W' + escapeHtml(week) : 'No reviews for this Lead yet'}</div>`;
+    return;
+  }
+
+  const n = records.length;
+  const avg = Math.round(records.reduce((s, r) => s + (Number(r.total_score) || 0), 0) / n * 10) / 10;
+  const statuses = records.map(reviewStatus);
+  const count = st => statuses.filter(x => x === st).length;
+  const pending = count('Pending'), disputed = count('Disputed'), provided = count('Feedback provided');
+
+  // Category results (pass = full points)
+  const catCards = RUBRIC_CATS.map(c => {
+    const passed = records.filter(r => Number(r['score_' + c.key]) === c.max).length;
+    const pct = Math.round(passed / n * 100);
+    const color = pct >= 80 ? 'var(--cu-green)' : pct >= 50 ? 'var(--cu-orange)' : 'var(--cu-magenta)';
+    return `<div class="lr-cat">
+      <div class="lr-cat-label">${c.label} <span>/${c.max}</span></div>
+      <div class="lr-cat-value" style="color:${color}">${pct}%</div>
+      <div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="lr-cat-sub">${passed}/${n} passed · ${n - passed} fail${n - passed === 1 ? '' : 's'}</div>
+    </div>`;
+  }).join('');
+
+  // Root causes and competencies
+  const rcCounts = {};
+  records.forEach(r => RUBRIC_CATS.forEach(c => splitList(r[c.rc]).forEach(rc => {
+    const k = c.label + '|' + rc; rcCounts[k] = (rcCounts[k] || 0) + 1;
+  })));
+  const compCounts = {};
+  records.forEach(r => parseCompetencies(r.competencies).forEach(cp => { compCounts[cp] = (compCounts[cp] || 0) + 1; }));
+  const listRows = (obj, render) => Object.entries(obj).sort((a, b) => b[1] - a[1]).map(render).join('')
+    || '<div style="font-size:13px;color:var(--text-muted)">None — no fails in this period 🎉</div>';
+  const rcList = listRows(rcCounts, ([k, v]) => {
+    const [cat, rc] = k.split('|');
+    return `<div class="lr-list-row"><span>${escapeHtml(rc)}<small>${escapeHtml(cat)}</small></span><strong>${v}</strong></div>`;
+  });
+  const compList = listRows(compCounts, ([k, v]) => `<div class="lr-list-row"><span>${escapeHtml(k)}</span><strong>${v}</strong></div>`);
+
+  // Samples (newest first)
+  const sorted = records.slice().sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')));
+  window._lrRows = sorted;
+  const canAct = canActOnLead(lead);
+  const rows = sorted.map((r, i) => {
+    const status = reviewStatus(r);
+    const fails = RUBRIC_CATS.flatMap(c => splitList(r[c.rc]).map(rc => `<span class="lr-chip">${escapeHtml(rc)}</span>`)).join('');
+    const actions = canAct && status === 'Pending'
+      ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();markFeedbackProvided(window._lrRows[${i}])">✅ Feedback provided</button>
+         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();openDisputeModal(window._lrRows[${i}])">⚖️ Dispute</button>`
+      : '';
+    return `<tr onclick="showRecordModal(window._lrRows[${i}])" style="cursor:pointer">
+      <td><span onclick="event.stopPropagation()">${zdLink(r.ticket)}</span></td>
+      <td>W${escapeHtml(r.week)}</td>
+      <td>${escapeHtml(fmtDate(r.wabi_date))}</td>
+      <td style="font-size:12px">${escapeHtml(r.reviewer || '—')}</td>
+      <td><span class="badge ${scoreClass(Number(r.total_score) || 0)}">${Number(r.total_score) || 0} / 100</span></td>
+      <td>${fails || '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td><span class="badge ${statusClass(status)}">${status}</span></td>
+      <td style="white-space:nowrap">${actions}</td>
+    </tr>`;
+  }).join('');
+
+  content.innerHTML = absBanner + `
+    <div class="metrics">
+      <div class="metric"><div class="label">Samples reviewed</div><div class="value">${n}</div></div>
+      <div class="metric"><div class="label">Avg score</div><div class="value ${avg >= 90 ? 'green' : 'red'}">${avg} / 100</div></div>
+      <div class="metric"><div class="label">Pending feedback</div><div class="value ${pending ? 'red' : ''}">${pending}</div></div>
+      <div class="metric"><div class="label">Provided · Disputed</div><div class="value">${provided} · ${disputed}</div></div>
+    </div>
+    <div class="lr-cats">${catCards}</div>
+    <div class="lr-two">
+      <div class="card" style="margin:0"><h3>Root causes</h3>${rcList}</div>
+      <div class="card" style="margin:0"><h3>Competencies</h3>${compList}</div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="sticky-table-wrap"><table>
+        <thead><tr><th>Ticket</th><th>Week</th><th>Wabi date</th><th>Reviewed by</th><th>Score</th><th>Root causes</th><th>Status</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+}
+
+// Refresh everything that shows feedback status after an action
+function afterFeedbackAction(leadEmail) {
+  delete leadReviewsCache[String(leadEmail || '').toLowerCase().trim()];
+  loadFeedbackOverview();
+  if (document.getElementById('page-feedback')?.classList.contains('active') && feedbackView === 'leads') loadLeadReviews();
+  if (document.getElementById('page-reviews')?.classList.contains('active') && reviewsView === 'audits') loadRecords();
+  loadDisputes();
+}
+
+async function markFeedbackProvided(r) {
+  if (!r) return;
+  if (!confirm(`Mark feedback as provided for ticket ${r.ticket} (${leadLabel(r.lead_email)})?`)) return;
+  try {
+    await api('supervisorAction', {}, {
+      ticket: r.ticket, reviewer_email: r.reviewer,
+      coaching_action: 'coaching_delivered', requested_by: currentUser.email,
+    });
+    closeModal();
+    afterFeedbackAction(r.lead_email);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// Dispute: pick the root cause(s) being disputed (or Other) + reason
+function openDisputeModal(r) {
+  if (!r) return;
+  window._disputeRecord = r;
+  const groups = RUBRIC_CATS.map(c => {
+    const rcs = splitList(r[c.rc]);
+    if (!rcs.length) return '';
+    return `<div class="dispute-group">
+      <div class="dispute-group-title">${c.label} <span>${Number(r['score_' + c.key]) || 0} / ${c.max}</span></div>
+      ${rcs.map(rc => `<label class="dispute-option"><input type="checkbox" class="dispute-item" value="${escapeHtml(c.label + ': ' + rc)}"> ${escapeHtml(rc)}</label>`).join('')}
+    </div>`;
+  }).join('');
+
+  document.getElementById('modal-title').innerHTML = `Dispute review — Ticket ${zdLink(r.ticket)}`;
+  document.getElementById('modal-body').innerHTML = `
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Select what you are disputing and explain why. An admin will review it; while the dispute is open this review counts as handled for feedback compliance.</p>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">What are you disputing?</div>
+    ${groups}
+    <div class="dispute-group">
+      <label class="dispute-option"><input type="checkbox" class="dispute-item" value="Other"> <strong>Other</strong> — e.g. the score is right but the root cause selected is not</label>
+    </div>
+    <div class="field" style="margin-top:12px"><label>Reason</label><textarea id="dispute-submit-reason" rows="4" placeholder="What is incorrect in this review, and why?"></textarea></div>`;
+  document.getElementById('modal-actions').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" id="dispute-submit-btn" onclick="confirmSubmitDispute()">Submit dispute</button>`;
+  document.getElementById('modal').classList.add('open');
+}
+function openSubmitDisputeModal(ticket, reviewer) {
+  const r = (window._modalRecord && String(window._modalRecord.ticket) === String(ticket)) ? window._modalRecord : null;
+  if (r) openDisputeModal(r);
+}
+
+async function confirmSubmitDispute() {
+  const r = window._disputeRecord;
+  if (!r) return;
+  const items = [...document.querySelectorAll('.dispute-item:checked')].map(x => x.value);
+  const reason = document.getElementById('dispute-submit-reason')?.value?.trim();
+  if (!items.length) { alert('Select at least one root cause (or Other).'); return; }
+  if (!reason) { alert('Please explain the reason.'); return; }
+  const btn = document.getElementById('dispute-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+  try {
+    await api('submitDispute', {}, {
+      ticket: r.ticket, reviewer_email: r.reviewer, submitted_by: currentUser.email,
+      disputed_items: items.join(' | '), reason,
+    });
+    closeModal();
+    alert('Dispute submitted — an admin will review it.');
+    afterFeedbackAction(r.lead_email);
+  } catch(e) {
+    alert('Error: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit dispute'; }
+  }
 }
 
 // ── RECORD MODAL ───────────────────────────────────────────
-// Opened from Reviews → Audits (full record already loaded) or from
-// Pending Feedback (fetched by ticket + reviewer).
 function openRecordAt(i) {
   const r = (window._recordRows || [])[i];
   if (r) showRecordModal(r);
-}
-
-function openPendingAt(i) {
-  const p = (window._pendingRows || [])[i];
-  if (p) openRecordByKey(p.ticket, p.reviewer);
 }
 
 async function openRecordByKey(ticket, reviewer) {
@@ -2175,32 +2485,25 @@ async function openRecordByKey(ticket, reviewer) {
 }
 
 function showRecordModal(r) {
+  if (!r) return;
   window._modalRecord = r;
   const total = Number(r.total_score) || 0;
   const status = reviewStatus(r);
   const isCalibration = String(r.calibration || 'No') === 'Yes';
-  const canAct = currentRole === 'supervisor' || currentRole === 'admin';
-  const canLogCoaching = canAct && !isCalibration && status === 'Pending';
-  const canDispute = canAct && !isCalibration && !r.dispute_status && String(r.feedback_yn) === 'Yes';
+  const canAct = !isCalibration && status === 'Pending' && canActOnLead(r.lead_email);
 
   document.getElementById('modal-title').innerHTML = `Ticket ${zdLink(r.ticket)}`;
 
-  const cats = [
-    ['Validation',           r.score_val, 35, r.rc_val],
-    ['Issue Resolution',     r.score_ir,  20, r.rc_ir],
-    ['Process & Escalation', r.score_pe,  35, r.rc_pe],
-    ['Coaching & Guidance',  r.score_cg,  10, r.rc_cg],
-  ];
-  const catRows = cats.map(([label, val, max, rcs]) => {
-    const v = Number(val) || 0;
-    const pass = v === max;
+  const catRows = RUBRIC_CATS.map(c => {
+    const v = Number(r['score_' + c.key]) || 0;
+    const pass = v === c.max;
     const color = pass ? 'var(--cu-green)' : 'var(--cu-magenta)';
-    const pct = max ? Math.round(v / max * 100) : 0;
+    const pct = Math.round(v / c.max * 100);
     return `<tr>
-      <td style="padding:6px 8px 6px 0;color:var(--text-muted);white-space:nowrap">${label}</td>
-      <td style="font-weight:700;color:${color};white-space:nowrap">${v} / ${max}</td>
+      <td style="padding:6px 8px 6px 0;color:var(--text-muted);white-space:nowrap">${c.label}</td>
+      <td style="font-weight:700;color:${color};white-space:nowrap">${v} / ${c.max}</td>
       <td style="width:35%"><div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%;background:${color}"></div></div></td>
-      <td style="font-size:12px;color:var(--text-muted)">${pass ? '✓ Pass' : escapeHtml(rcs || 'Fail')}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${pass ? '✓ Pass' : escapeHtml(r[c.rc] || 'Fail')}</td>
     </tr>`;
   }).join('');
 
@@ -2216,89 +2519,33 @@ function showRecordModal(r) {
     <div style="background:var(--card-bg);border-radius:10px;padding:14px;margin-bottom:16px">
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Rubric</div>
       <table style="width:100%;font-size:13px">${catRows}</table>
-      <div style="text-align:center;font-size:22px;font-weight:700;margin-top:12px;padding:10px;background:${scoreBgColor(total)};color:#fff;border-radius:8px">
-        ${total} / 100
-      </div>
+      <div style="text-align:center;font-size:22px;font-weight:700;margin-top:12px;padding:10px;background:${scoreBgColor(total)};color:#fff;border-radius:8px">${total} / 100</div>
     </div>
+    ${r.competencies ? `<div style="font-size:12px;margin-bottom:14px"><span style="color:var(--text-muted);font-weight:700;text-transform:uppercase;font-size:11px">Competencies</span><br>${escapeHtml(r.competencies)}</div>` : ''}
     ${r.comment ? `
     <div style="background:#FFF8E1;border-radius:8px;padding:12px;margin-bottom:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--cu-orange);text-transform:uppercase;margin-bottom:4px">Feedback & coaching notes</div>
+      <div style="font-size:11px;font-weight:700;color:var(--cu-orange);text-transform:uppercase;margin-bottom:4px">Reviewer comments</div>
       <div style="font-size:13px;line-height:1.5;white-space:pre-wrap">${escapeHtml(r.comment)}</div>
     </div>` : ''}
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:700;text-transform:uppercase">Status</div>
     <span class="badge ${statusClass(status)}">${status}</span>
-    ${r.coaching_date ? `<span style="font-size:12px;color:var(--text-muted);margin-left:8px">Coaching delivered on ${escapeHtml(fmtDate(r.coaching_date))}</span>` : ''}
-    ${canLogCoaching ? `
-    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px">Log coaching with the Lead</div>
-      <div class="field" style="max-width:220px"><label>Coaching date</label>
-        <input type="date" id="modal-coaching-date" value="${new Date().toISOString().slice(0,10)}"></div>
-    </div>` : ''}
-    ${canDispute ? `
-    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Disagree with this review?</div>
-      <button class="btn btn-danger btn-sm" onclick="openSubmitDisputeModal(window._modalRecord.ticket, window._modalRecord.reviewer)">⚖️ Dispute</button>
-    </div>` : ''}
+    ${r.coaching_date ? `<span style="font-size:12px;color:var(--text-muted);margin-left:8px">Feedback provided on ${escapeHtml(fmtDate(r.coaching_date))}</span>` : ''}
     ${r.dispute_status ? `
-    <div style="margin-top:14px;padding:10px;background:#FFF8E1;border-radius:8px;font-size:13px">
-      <strong>Dispute ${r.dispute_status==='Open'?'submitted':'resolved'}</strong>${r.dispute_accepted==='Y'?' — ✅ Accepted':r.dispute_accepted==='N'?' — ❌ Rejected':' — ⏳ Pending review'}
-      ${r.dispute_resolution_notes?`<div style="color:var(--text-muted);margin-top:4px">${escapeHtml(r.dispute_resolution_notes)}</div>`:''}
+    <div style="margin-top:14px;padding:12px;background:#FFF8E1;border-radius:8px;font-size:13px">
+      <strong>Dispute ${r.dispute_status === 'Open' ? 'open' : 'resolved'}</strong>${r.dispute_accepted === 'Y' ? ' — ✅ Accepted' : r.dispute_accepted === 'N' ? ' — ❌ Rejected' : ' — ⏳ Waiting for admin review'}
+      ${r.disputed_items ? `<div style="margin-top:6px"><span style="color:var(--text-muted)">Disputed:</span> ${escapeHtml(r.disputed_items)}</div>` : ''}
+      ${r.dispute_reason ? `<div style="margin-top:4px;white-space:pre-wrap"><span style="color:var(--text-muted)">Reason:</span> ${escapeHtml(r.dispute_reason)}</div>` : ''}
+      ${r.dispute_resolution_notes ? `<div style="color:var(--text-muted);margin-top:4px">${escapeHtml(r.dispute_resolution_notes)}</div>` : ''}
     </div>` : ''}
   `;
 
-  document.getElementById('modal-actions').innerHTML = canLogCoaching
-    ? `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-       <button class="btn btn-primary" id="coaching-save-btn" onclick="markCoachingDelivered()">✅ Mark coaching delivered</button>`
+  document.getElementById('modal-actions').innerHTML = canAct
+    ? `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
+       <button class="btn btn-danger" onclick="openDisputeModal(window._modalRecord)">⚖️ Dispute</button>
+       <button class="btn btn-primary" onclick="markFeedbackProvided(window._modalRecord)">✅ Feedback provided</button>`
     : `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
 
   document.getElementById('modal').classList.add('open');
-}
-
-async function markCoachingDelivered() {
-  const r = window._modalRecord;
-  if (!r) return;
-  const date = document.getElementById('modal-coaching-date')?.value || '';
-  if (!date) { alert('Please choose the coaching date.'); return; }
-  const btn = document.getElementById('coaching-save-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
-  try {
-    await api('supervisorAction', {}, {
-      ticket: r.ticket, reviewer_email: r.reviewer,
-      coaching_action: 'coaching_delivered', date,
-    });
-    closeModal();
-    loadFeedbackLoop();
-    if (document.getElementById('page-reviews')?.classList.contains('active') && reviewsView === 'audits') loadRecords();
-  } catch(e) {
-    alert('Error: ' + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = '✅ Mark coaching delivered'; }
-  }
-}
-
-// Submit a new dispute — opened from the "⚖️ Dispute" button in Feedback Loop
-function openSubmitDisputeModal(ticket, reviewer) {
-  document.getElementById('modal-title').textContent = `Dispute review — Ticket ${ticket}`;
-  document.getElementById('modal-body').innerHTML = `
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Explain why you disagree with this review. An admin will look at it before you deliver this feedback to the Lead.</p>
-    <div class="field"><label>Reason</label><textarea id="dispute-submit-reason" rows="4" placeholder="What's wrong with this review, and why?"></textarea></div>
-  `;
-  document.getElementById('modal-actions').innerHTML = `
-    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-primary" onclick="confirmSubmitDispute('${ticket}','${reviewer}')">Submit dispute</button>
-  `;
-  document.getElementById('modal').classList.add('open');
-}
-
-async function confirmSubmitDispute(ticket, reviewer) {
-  const reason = document.getElementById('dispute-submit-reason')?.value?.trim();
-  if (!reason) { alert('Please enter a reason.'); return; }
-  try {
-    await api('submitDispute', {}, { ticket, reviewer_email: reviewer, submitted_by: currentUser.email, reason });
-    closeModal();
-    alert('Dispute submitted — an admin will review it.');
-    loadFeedbackLoop();
-    loadDisputes();
-  } catch(e) { alert('Error: ' + e.message); }
 }
 
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
@@ -2358,7 +2605,9 @@ async function loadLeadAnalytics() {
     const monthHeaders = months.map(m => `<th colspan="3" style="text-align:center;border-left:2px solid var(--border)">${MONTH_NAMES[m]||'M'+m}</th>`).join('');
     const subHeaders   = months.map(() => `<th style="border-left:2px solid var(--border)">Score</th><th>MoM</th><th>vs Target</th>`).join('');
 
+    const absences = await getAbsences();
     const rows = leadList.map(lead => {
+      const leadAbs = absencesOf(absences, lead).filter(a => months.includes(weekMonth(a.week)));
       const monthData = {};
       byLead[lead].forEach(r => { monthData[r.month] = r; });
       const cells = months.map(m => {
@@ -2369,7 +2618,7 @@ async function loadLeadAnalytics() {
       }).join('');
       const reviewed = byLead[lead].reduce((s,r)=>s+(r.reviewed||0),0);
       return `<tr onclick="selectLead('${escapeHtml(lead)}')" style="cursor:pointer">
-        <td style="font-weight:600;font-size:12px;white-space:nowrap">${escapeHtml(leadLabel(lead))}</td>
+        <td style="font-weight:600;font-size:12px;white-space:nowrap">${escapeHtml(leadLabel(lead))}${leadAbs.map(a => absenceBadge(a, true)).join('')}</td>
         <td style="text-align:center">${reviewed}</td>
         ${cells}
       </tr>`;
@@ -2748,8 +2997,8 @@ function prefillForm(q) {
   if (wabiDate && wabiDate.includes('T')) wabiDate = wabiDate.split('T')[0];
 
   // Find supervisor from hierarchy
-  const leadInfo = hierarchy.find(h => h.leadEmail === q.lead_email) || {};
-  const supervisor = leadInfo.supervisorEmail || q.supervisor_email || '';
+  const leadInfo = hierarchy.find(h => String(h.leadEmail || '').toLowerCase().trim() === String(q.lead_email || '').toLowerCase().trim()) || {};
+  const supervisor = String(leadInfo.supervisorEmail || '').toLowerCase().trim();
   const leadName = leadInfo.leadName || q.lead_name || q.lead_email || '';
 
   // Set hidden inputs for form submission
@@ -2788,8 +3037,9 @@ function prefillForm(q) {
 // ── COMPLIANCE ─────────────────────────────────────────────
 async function loadCompliance() {
   try {
-    let incidents = {};
-    try { const inc = await api('getIncidents'); inc.forEach(i => { incidents[i.week] = i.note; }); } catch(e) {}
+    let incidents = {};   // team-wide incidents: week → note
+    const absences = await getAbsences(true);
+    absences.filter(i => !i.email).forEach(i => { incidents[i.week] = i.note || i.type; });
 
     const quarter = document.getElementById('comp-quarter')?.value || '';
     const quarterWeeks = {
@@ -2834,7 +3084,9 @@ async function loadCompliance() {
     const rows = Object.entries(supMap).sort((a,b) => a[0].localeCompare(b[0])).map(([sup, weekData]) => {
       const cells = weeks.map(w => {
         const incNote = incidents[w];
-        if (incNote) return `<td style="text-align:center;font-size:16px" title="${incNote}">⚠️</td>`;
+        if (incNote) return `<td style="text-align:center;font-size:16px" title="${escapeHtml(incNote)}">⚠️</td>`;
+        const abs = absenceOf(absences, sup, w);
+        if (abs) return `<td style="text-align:center">${absenceBadge(abs).replace('class="abs-badge"', 'class="abs-badge" style="margin-left:0"')}</td>`;
         const d = weekData[w];
         if (!d) return `<td style="text-align:center;color:var(--text-muted);font-size:12px">—</td>`;
         const pct = d.compliance;
@@ -2843,7 +3095,8 @@ async function loadCompliance() {
         return `<td style="text-align:center"><span style="background:${bg};color:${col};font-weight:700;font-size:11px;padding:2px 7px;border-radius:10px">${pct}%</span></td>`;
       }).join('');
 
-      const allD = Object.values(weekData);
+      // Weeks with an absence don't count toward the supervisor's overall %
+      const allD = Object.values(weekData).filter(d => !absenceOf(absences, sup, d.week));
       const totalAssigned  = allD.reduce((s,d) => s+d.assigned, 0);
       const totalCompleted = allD.reduce((s,d) => s+d.completed, 0);
       const overallPct = totalAssigned > 0 ? Math.round((totalCompleted/totalAssigned)*100) : 0;
@@ -2861,7 +3114,7 @@ async function loadCompliance() {
             <span style="margin-right:6px;font-size:10px;color:var(--text-muted)" id="${rowId}-arrow">▶</span>
             ${sup}
           </td>
-          <td style="text-align:center;padding:9px 6px"><span style="background:${overallBg};color:${overallCol};font-weight:700;font-size:12px;padding:2px 9px;border-radius:10px">${overallPct}%</span></td>
+          <td style="text-align:center;padding:9px 6px">${totalAssigned > 0 ? `<span style="background:${overallBg};color:${overallCol};font-weight:700;font-size:12px;padding:2px 9px;border-radius:10px">${overallPct}%</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
           ${cells}
         </tr>
         <tr id="${rowId}-detail" style="display:none"></tr>`;
