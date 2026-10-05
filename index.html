@@ -154,6 +154,8 @@ tr:hover td{background:var(--card-bg)}
 .calib-score-match,.calib-score-mismatch,.calib-score-ref{white-space:nowrap}
 .calib-score-mismatch{color:var(--cu-magenta);font-weight:700}
 .calib-score-pending{color:var(--text-muted)}
+.comp-pend-chip{display:inline-flex;flex-direction:column;gap:1px;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:5px 10px;margin:0 6px 6px 0;font-size:13px}
+.comp-pend-chip small{font-size:11px;color:var(--text-muted)}
 .abs-badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:#E4E8F7;color:#475CC7;white-space:nowrap;margin-left:6px}
 .abs-banner{background:#EEF1FB;border:1px solid #D3DAF3;color:#2C2B2B;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px}
 .fb-note{font-size:12px;color:var(--text-muted);margin-top:-6px;margin-bottom:16px}
@@ -862,22 +864,28 @@ tr:hover td{background:var(--card-bg)}
     <!-- COMPLIANCE -->
     <div id="page-compliance" class="page">
       <div class="page-title">Compliance</div>
-      <div class="page-sub">Samples assigned vs audited — <span class="current-half-label"></span></div>
+      <div class="page-sub">Samples assigned vs reviews completed, per supervisor — <span class="current-half-label"></span></div>
       <div class="filters-bar" style="position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0">
-        <select id="comp-quarter" onchange="loadCompliance()">
+        <select id="comp-week" onchange="renderComplianceWeek()"></select>
+        <button class="btn btn-secondary btn-sm" onclick="loadCompliance()">↺ Refresh</button>
+      </div>
+      <div class="metrics" id="comp-week-metrics"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="comp-week-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+      </div>
+
+      <div class="page-title" style="font-size:18px;margin:24px 0 4px">Weekly history</div>
+      <div class="filters-bar" style="padding:6px 0 10px">
+        <select id="comp-quarter" onchange="renderComplianceHistory()">
           <option value="">All quarters</option>
           <option value="1">Q1 — Jan to Mar</option>
           <option value="2">Q2 — Apr to Jun</option>
           <option value="3">Q3 — Jul to Sep</option>
           <option value="4">Q4 — Oct to Dec</option>
         </select>
-        <button class="btn btn-secondary btn-sm" onclick="loadCompliance()">↺ Refresh</button>
-      </div>
-      <div class="metrics">
-        <div class="metric"><div class="label">Quarter</div><div class="value" id="comp-quarter-label">All</div></div>
-        <div class="metric"><div class="label">Total assigned</div><div class="value" id="comp-total">—</div></div>
-        <div class="metric"><div class="label">Completed</div><div class="value green" id="comp-done">—</div></div>
-        <div class="metric"><div class="label">Compliance</div><div class="value" id="comp-pct">—</div></div>
+        <span style="font-size:13px;color:var(--text-muted)">
+          <span id="comp-quarter-label">All</span> · Assigned <strong id="comp-total">—</strong> · Completed <strong id="comp-done">—</strong> · Compliance <strong id="comp-pct">—</strong>
+        </span>
       </div>
       <div id="compliance-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
     </div>
@@ -1346,7 +1354,7 @@ function renderVolumeReasonsChart(row) {
 // ── SUPERVISOR COMPLIANCE (Part 3) ──────────────────────────
 async function loadComplianceOverview() {
   try {
-    const compliance = await api('getCompliance', { useCache: true });
+    const compliance = await api('getCompliance', { half: CURRENT_HALF });
 
     // Reviews pending completion — only the most recent (active) week
     const maxWeek = compliance.reduce((max, r) => Math.max(max, r.week||0), 0);
@@ -1379,7 +1387,7 @@ async function loadComplianceOverview() {
     const reviewRows = currentWeekRows
       .sort((a,b) => a.compliance - b.compliance)
       .map(r => `
-        <tr><td>${r.supervisor}${absenceBadge(absenceOf(absences, r.supervisor, maxWeek))}</td><td>${r.assigned}</td><td>${r.completed}</td>
+        <tr><td>${escapeHtml(r.name || r.supervisor)}${absenceBadge(absenceOf(absences, r.supervisor, maxWeek))}</td><td>${r.assigned}</td><td>${r.completed}</td>
         <td style="color:${r.pending>0?'var(--cu-magenta)':'var(--text-muted)'};font-weight:${r.pending>0?'600':'400'}">${r.pending}</td>
         <td><span class="badge ${r.compliance>=90?'badge-green':r.compliance>=70?'badge-amber':'badge-red'}">${r.compliance}%</span></td></tr>`).join('');
     document.getElementById('comp-reviews-table').innerHTML = (reviewRows || absentRows)
@@ -3035,10 +3043,101 @@ function prefillForm(q) {
 }
 
 // ── COMPLIANCE ─────────────────────────────────────────────
+// ── COMPLIANCE ─────────────────────────────────────────────
+// Live data (not the master-data snapshot): a review shows up right
+// after it's submitted.
+let complianceData = [];
+let complianceAbsences = [];
+
 async function loadCompliance() {
+  document.getElementById('comp-week-table').innerHTML = '<div class="empty"><span class="spinner"></span> Loading...</div>';
+  try {
+    const [data, absences] = await Promise.all([
+      api('getCompliance', { half: CURRENT_HALF }),
+      getAbsences(true),
+    ]);
+    complianceData = Array.isArray(data) ? data : [];
+    complianceAbsences = absences;
+
+    const weekSel = document.getElementById('comp-week');
+    const prev = weekSel.value;
+    const weeks = [...new Set(complianceData.map(d => Number(d.week)))].filter(Boolean).sort((a, b) => b - a);
+    weekSel.innerHTML = weeks.length
+      ? weeks.map(w => `<option value="${w}">W${w}</option>`).join('')
+      : '<option value="">No assignments yet</option>';
+    weekSel.value = weeks.map(String).includes(prev) ? prev : String(weeks[0] || '');
+    renderComplianceWeek();
+    renderComplianceHistory();
+  } catch(e) {
+    console.error('loadCompliance:', e);
+    document.getElementById('comp-week-table').innerHTML = `<div class="empty">Error: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderComplianceWeek() {
+  const week = Number(document.getElementById('comp-week').value);
+  const rows = complianceData.filter(d => Number(d.week) === week);
+  const tableEl = document.getElementById('comp-week-table');
+  if (!rows.length) {
+    document.getElementById('comp-week-metrics').innerHTML = '';
+    tableEl.innerHTML = '<div class="empty">No samples assigned yet</div>';
+    return;
+  }
+  const assigned  = rows.reduce((s, r) => s + r.assigned, 0);
+  const completed = rows.reduce((s, r) => s + r.completed, 0);
+  const pending   = assigned - completed;
+  const pct = assigned ? Math.round(completed / assigned * 100) : 0;
+  const tone = v => v >= 90 ? 'green' : v >= 50 ? 'amber' : 'red';
+  document.getElementById('comp-week-metrics').innerHTML = `
+    <div class="metric"><div class="label">Assigned · W${week}</div><div class="value">${assigned}</div></div>
+    <div class="metric"><div class="label">Completed</div><div class="value green">${completed}</div></div>
+    <div class="metric"><div class="label">Pending</div><div class="value ${pending ? 'red' : ''}">${pending}</div></div>
+    <div class="metric"><div class="label">Compliance</div><div class="value ${tone(pct)}">${pct}%</div></div>`;
+
+  const badgeCls = v => v >= 90 ? 'badge-green' : v >= 50 ? 'badge-amber' : 'badge-red';
+  const barColor = v => v >= 90 ? 'var(--cu-green)' : v >= 50 ? 'var(--cu-orange)' : 'var(--cu-magenta)';
+  window._compWeekRows = rows.slice().sort((a, b) => a.compliance - b.compliance || String(a.name).localeCompare(String(b.name)));
+  const body = window._compWeekRows.map((r, i) => `
+    <tr onclick="toggleCompPending(${i})" style="cursor:pointer">
+      <td><span class="calib-chevron" id="comp-chev-${i}">${r.pending ? '▸' : ''}</span><strong>${escapeHtml(r.name)}</strong>${absenceBadge(absenceOf(complianceAbsences, r.supervisor, week))}<div style="font-size:11px;color:var(--text-muted);margin-left:16px">${escapeHtml(r.supervisor)}</div></td>
+      <td style="text-align:center">${r.assigned}</td>
+      <td style="text-align:center;color:var(--cu-green);font-weight:600">${r.completed}</td>
+      <td style="text-align:center;${r.pending ? 'color:var(--cu-magenta);font-weight:700' : 'color:var(--text-muted)'}">${r.pending}</td>
+      <td style="min-width:200px"><div style="display:flex;align-items:center;gap:10px">
+        <div class="cat-bar" style="flex:1"><div class="cat-bar-fill" style="width:${r.compliance}%;background:${barColor(r.compliance)}"></div></div>
+        <span class="badge ${badgeCls(r.compliance)}">${r.compliance}%</span></div></td>
+    </tr>
+    <tr id="comp-pend-${i}" style="display:none"><td colspan="5" style="background:var(--card-bg)">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px">Pending reviews</div>
+      ${(r.pending_list || []).map(p => `<span class="comp-pend-chip">${zdLink(p.ticket)}<small>${escapeHtml(p.lead || '')}</small></span>`).join('')}
+    </td></tr>`).join('');
+
+  // Supervisors marked absent that week with no assignment
+  const leadEmails = new Set(hierarchy.map(h => String(h.leadEmail || '').toLowerCase().trim()));
+  const absent = complianceAbsences
+    .filter(a => a.email && Number(a.week) === week && !leadEmails.has(a.email) && !rows.some(r => r.supervisor === a.email))
+    .map(a => `<tr><td>${escapeHtml(a.email)}${absenceBadge(a)}</td><td colspan="4" style="color:var(--text-muted);font-size:12px">Not assigned this week</td></tr>`).join('');
+
+  tableEl.innerHTML = `<table>
+    <thead><tr><th>Supervisor</th><th style="text-align:center">Assigned</th><th style="text-align:center">Completed</th><th style="text-align:center">Pending</th><th>Compliance</th></tr></thead>
+    <tbody>${body}${absent}</tbody></table>`;
+}
+
+function toggleCompPending(i) {
+  const r = (window._compWeekRows || [])[i];
+  if (!r || !r.pending) return;
+  const row = document.getElementById('comp-pend-' + i);
+  const open = row.style.display !== 'none';
+  row.style.display = open ? 'none' : 'table-row';
+  document.getElementById('comp-chev-' + i).textContent = open ? '▸' : '▾';
+}
+
+function renderComplianceHistory() {
   try {
     let incidents = {};   // team-wide incidents: week → note
-    const absences = await getAbsences(true);
+    const absences = complianceAbsences;
+    const compNames = {};
+    complianceData.forEach(d => { compNames[d.supervisor] = d.name || d.supervisor; });
     absences.filter(i => !i.email).forEach(i => { incidents[i.week] = i.note || i.type; });
 
     const quarter = document.getElementById('comp-quarter')?.value || '';
@@ -3051,7 +3150,7 @@ async function loadCompliance() {
     const quarterLabels = {'1':'Q1 · Jan–Mar','2':'Q2 · Apr–Jun','3':'Q3 · Jul–Sep','4':'Q4 · Oct–Dec','':"All"};
     document.getElementById('comp-quarter-label').textContent = quarterLabels[quarter] || 'All';
 
-    const data = await api('getCompliance', { half: CURRENT_HALF, useCache: true });
+    const data = complianceData;
     let filteredData = data;
     if (quarter && quarterWeeks[quarter]) {
       filteredData = data.filter(d => quarterWeeks[quarter].includes(Number(d.week)));
@@ -3112,7 +3211,7 @@ async function loadCompliance() {
         <tr style="cursor:pointer;border-bottom:0.5px solid var(--border)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''" onclick="toggleComplianceDetail('${rowId}', ${weekDataStr}, ${weeksStr}, ${incStr})">
           <td style="font-size:12px;white-space:nowrap;padding:9px 12px;position:sticky;left:0;background:#fff;z-index:1">
             <span style="margin-right:6px;font-size:10px;color:var(--text-muted)" id="${rowId}-arrow">▶</span>
-            ${sup}
+            ${escapeHtml(compNames[sup] || sup)}
           </td>
           <td style="text-align:center;padding:9px 6px">${totalAssigned > 0 ? `<span style="background:${overallBg};color:${overallCol};font-weight:700;font-size:12px;padding:2px 9px;border-radius:10px">${overallPct}%</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
           ${cells}
