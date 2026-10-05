@@ -585,7 +585,9 @@ tr:hover td{background:var(--card-bg)}
         </div>
 
         <!-- SELECTED TAGS + FEEDBACK -->
-        <div id="comment-section" style="display:none;margin-bottom:20px">
+        <div id="comment-section" style="margin-bottom:20px">
+          <!-- Only when a category fails: selected root causes + template -->
+          <div id="comment-fail-tools" style="display:none">
           <!-- Selected root causes as tags -->
           <div style="margin-bottom:12px">
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">Selected root causes</div>
@@ -595,11 +597,12 @@ tr:hover td{background:var(--card-bg)}
           <button type="button" onclick="generateFeedbackTemplate()" style="margin-bottom:14px;padding:7px 16px;border-radius:8px;border:1.5px solid var(--cu-gold);background:var(--white);color:var(--cu-black);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--cu-gold)'" onmouseout="this.style.background='var(--white)'">
             ✍️ Generate feedback template
           </button>
+          </div>
           <!-- Feedback textarea -->
           <div class="field">
-            <label style="font-weight:600">Feedback & Coaching Notes <span style="color:var(--cu-magenta)">*</span></label>
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Required when any category fails. Be specific — what was missing, why it matters, and what good looks like.</p>
-            <textarea id="f-comment-final" placeholder="Click 'Generate feedback template' to pre-fill with selected root causes, then add your notes..." style="min-height:140px;height:140px;resize:vertical;overflow-y:auto" oninput="this.style.height='auto';this.style.height=Math.max(140,this.scrollHeight)+'px'"></textarea>
+            <label style="font-weight:600">Feedback & Coaching Notes <span id="comment-required" style="color:var(--cu-magenta);display:none">*</span><span id="comment-optional" style="font-weight:400;color:var(--text-muted)"> (optional)</span></label>
+            <p id="comment-help" style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Optional when the review has no fails — e.g. good practices worth recognizing or a tip for the Lead.</p>
+            <textarea id="f-comment-final" placeholder="Optional — leave a comment for the Lead..." style="min-height:140px;height:140px;resize:vertical;overflow-y:auto" oninput="this.style.height='auto';this.style.height=Math.max(140,this.scrollHeight)+'px'"></textarea>
           </div>
         </div>
 
@@ -1640,12 +1643,22 @@ function calcScore() {
     badgeEl.style.color = total >= 90 ? 'var(--cu-green)' : 'var(--cu-magenta)';
   }
 
-  const commentSection = document.getElementById('comment-section');
-  if (commentSection) commentSection.style.display = anyFail ? 'block' : 'none';
-  if (!anyFail) {
-    const ta = document.getElementById('f-comment-final');
-    if (ta) ta.value = '';
-  }
+  // The comment box is always available: required when a category fails,
+  // optional (e.g. recognition) when the review scores 100.
+  const failTools = document.getElementById('comment-fail-tools');
+  if (failTools) failTools.style.display = anyFail ? 'block' : 'none';
+  const req = document.getElementById('comment-required');
+  const opt = document.getElementById('comment-optional');
+  const help = document.getElementById('comment-help');
+  const ta = document.getElementById('f-comment-final');
+  if (req) req.style.display = anyFail ? 'inline' : 'none';
+  if (opt) opt.style.display = anyFail ? 'none' : 'inline';
+  if (help) help.textContent = anyFail
+    ? 'Required when any category fails. Be specific — what was missing, why it matters, and what good looks like.'
+    : 'Optional when the review has no fails — e.g. good practices worth recognizing or a tip for the Lead.';
+  if (ta) ta.placeholder = anyFail
+    ? "Click 'Generate feedback template' to pre-fill with selected root causes, then add your notes..."
+    : 'Optional — leave a comment for the Lead...';
 }
 
 const RC_QUESTIONS = {
@@ -1700,8 +1713,8 @@ function clearForm() {
   document.querySelectorAll('.rc-card').forEach(c => c.classList.remove('active'));
   ['val','ir','pe','cg'].forEach(cat => updateCategory(cat));
   updateSelectedTags();
-  // Hide comment section
-  const cs = document.getElementById('comment-section');
+  // Hide the fail-only tools (the comment box itself stays available)
+  const cs = document.getElementById('comment-fail-tools');
   if (cs) cs.style.display='none';
   const ta = document.getElementById('f-comment-final');
   if (ta) ta.value='';
