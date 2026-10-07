@@ -154,6 +154,91 @@ tr:hover td{background:var(--card-bg)}
 .calib-score-match,.calib-score-mismatch,.calib-score-ref{white-space:nowrap}
 .calib-score-mismatch{color:var(--cu-magenta);font-weight:700}
 .calib-score-pending{color:var(--text-muted)}
+.guide-view{padding-top:4px}
+.guide-hero{background:linear-gradient(135deg,#2C2B2B 0%,#3d3a39 100%);color:#fff;border-radius:16px;padding:28px 32px;margin-bottom:18px}
+.guide-hero h2{font-size:24px;line-height:1.25;margin:6px 0 12px;color:#fff;max-width:760px}
+.guide-hero p{font-size:14px;line-height:1.65;color:#E8E6E1;max-width:820px}
+.guide-hero strong{color:#FFB81C}
+.guide-eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#FFB81C}
+.guide-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.guide-stat{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.guide-stat .n{font-size:28px;font-weight:800;color:var(--cu-black);line-height:1}
+.guide-stat .l{font-size:12px;color:var(--text-muted);margin-top:6px}
+.guide-h3{font-size:15px;font-weight:700;margin:22px 0 12px;color:var(--cu-black)}
+.guide-roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.guide-role{background:var(--white);border:1px solid var(--border);border-top:4px solid var(--role);border-radius:12px;padding:16px 18px}
+.guide-role-head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:10px}
+.guide-role-dot{width:10px;height:10px;border-radius:50%;background:var(--role)}
+.guide-role ul,.guide-list{margin:0;padding-left:18px}
+.guide-role li,.guide-list li{font-size:13px;line-height:1.55;margin-bottom:6px}
+.guide-where{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.guide-where div{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px}
+.guide-where span{display:block;color:var(--text-muted);font-size:12px;margin-top:3px}
+.guide-legend{display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:12px;margin-bottom:12px}
+.guide-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.guide-legend-hint{margin-left:auto;color:var(--text-muted);font-style:italic}
+.guide-flow-wrap{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(260px,1fr);gap:16px;align-items:start}
+@media (max-width:1100px){.guide-flow-wrap{grid-template-columns:1fr}}
+.guide-flow-svg{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px}
+.guide-flow-svg svg{width:100%;height:auto;display:block}
+.gf-node{cursor:pointer}
+.gf-node rect,.gf-node polygon{transition:filter .15s}
+.gf-node:hover rect:first-child,.gf-node:hover polygon,.gf-node.active rect:first-child,.gf-node.active polygon{filter:drop-shadow(0 3px 8px rgba(0,0,0,.18))}
+.gf-node.active rect:first-child,.gf-node.active polygon{stroke-width:3.5}
+.gf-title{font-family:inherit;font-size:18px;font-weight:700;fill:#2C2B2B}
+.gf-sub{font-family:inherit;font-size:14px;fill:#6B6963}
+.gf-label{font-family:inherit;font-size:14px;font-weight:600;fill:#6B6963}
+.gf-edge{fill:none;stroke:#8A8780;stroke-width:2}
+.gf-edge.dashed{stroke-dasharray:6 5}
+.guide-step-panel{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:sticky;top:12px}
+.guide-step-panel h3{font-size:17px;margin:10px 0 6px}
+.gsp-role{display:inline-block;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.gsp-where{font-size:12px;color:var(--text-muted);margin-bottom:10px}
+.guide-step-panel ul{margin:0;padding-left:18px}
+.guide-step-panel li{font-size:13px;line-height:1.55;margin-bottom:7px}
+.guide-chain{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.guide-chain-step{flex:1;min-width:150px;background:var(--white);border:1px solid var(--border);border-top:4px solid var(--role);border-radius:12px;padding:12px 14px}
+.guide-chain-step b{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--role);color:#fff;font-size:12px;align-items:center;justify-content:center;margin-bottom:6px}
+.guide-chain-step strong{display:block;font-size:13px}
+.guide-chain-step span{display:block;font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.45}
+.guide-chain-arrow{display:flex;align-items:center;color:#8A8780;font-size:18px}
+.guide-scorebar{display:flex;height:64px;border-radius:12px;overflow:hidden;margin-bottom:16px}
+.guide-scorebar div{display:flex;flex-direction:column;justify-content:center;padding:0 14px;color:#fff;min-width:0}
+.guide-scorebar strong{font-size:20px;line-height:1}
+.guide-scorebar span{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.95}
+.guide-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:16px}
+.guide-cat{background:var(--white);border:1px solid var(--border);border-top:4px solid var(--cat);border-radius:12px;padding:16px 18px}
+.guide-cat-pts{font-size:30px;font-weight:800;color:var(--cat);line-height:1}
+.guide-cat-pts small{font-size:12px;font-weight:600;margin-left:4px;color:var(--text-muted)}
+.guide-cat-name{font-weight:700;font-size:15px;margin:6px 0}
+.guide-cat p{font-size:12.5px;color:var(--text-muted);line-height:1.5;margin-bottom:10px}
+.guide-chips{display:flex;flex-wrap:wrap;gap:6px}
+.guide-chips span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:3px 9px;border-radius:14px;border:1px solid var(--border);background:var(--card-bg);cursor:pointer}
+.guide-chips span:hover{border-color:var(--cu-black)}
+.guide-chips i{width:8px;height:8px;border-radius:50%}
+.guide-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin:16px 0}
+.guide-example div{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border)}
+.guide-example .ok{color:var(--cu-green)} .guide-example .ko{color:var(--cu-magenta)}
+.guide-example .total{border-bottom:none;font-weight:700;font-size:15px}
+.guide-intro{font-size:13.5px;line-height:1.6;color:var(--text);margin-bottom:16px;max-width:900px}
+.guide-comps{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.guide-comp{background:var(--white);border:1px solid var(--border);border-left:5px solid var(--comp);border-radius:12px;padding:16px 18px;cursor:pointer;transition:box-shadow .15s}
+.guide-comp:hover{box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.guide-comp-head{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+.guide-comp-icon{font-size:22px;width:42px;height:42px;border-radius:12px;background:var(--card-bg);display:flex;align-items:center;justify-content:center}
+.guide-comp-head strong{display:block;font-size:14px}
+.guide-comp-head small{font-size:11px;color:var(--text-muted)}
+.guide-comp p{font-size:12.5px;color:var(--text-muted);line-height:1.5;margin-bottom:10px}
+.guide-principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.guide-principle{display:flex;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.guide-principle b{flex:none;width:28px;height:28px;border-radius:50%;background:#FFB81C;color:#2C2B2B;display:flex;align-items:center;justify-content:center;font-size:13px}
+.guide-principle strong{font-size:13.5px}
+.guide-principle p{font-size:12.5px;color:var(--text-muted);line-height:1.5;margin-top:3px}
+.guide-cat-pill{display:inline-block;color:#fff;font-size:11px;font-weight:600;padding:2px 9px;border-radius:12px;white-space:nowrap}
+#guide-decisions td{font-size:13px;vertical-align:middle}
+#guide-decisions a{color:var(--cu-blue);cursor:pointer;font-weight:600}
+.kb-comp-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:14px;background:#F1EEF8;color:#4A3F7A;cursor:pointer;white-space:nowrap}
+.kb-comp-badge:hover{background:#E4DFF3}
 .comp-pend-chip{display:inline-flex;flex-direction:column;gap:1px;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:5px 10px;margin:0 6px 6px 0;font-size:13px}
 .comp-pend-chip small{font-size:11px;color:var(--text-muted)}
 .abs-badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:#E4E8F7;color:#475CC7;white-space:nowrap;margin-left:6px}
@@ -289,7 +374,7 @@ tr:hover td{background:var(--card-bg)}
       <a onclick="nav('feedback')" data-page="feedback">💬 Pending Feedback <span class="badge" id="feedback-badge">0</span></a>
       <a onclick="nav('compliance')" data-page="compliance">✅ Compliance</a>
       <a onclick="nav('disputes')" data-page="disputes">⚖️ Disputes <span class="badge" id="disputes-badge">0</span></a>
-      <a onclick="nav('knowledge')" data-page="knowledge">📖 Rubric</a>
+      <a onclick="nav('knowledge')" data-page="knowledge">📖 Guide</a>
       <a onclick="nav('admin')" data-page="admin" id="admin-link" style="display:none">⚙️ Admin</a>
     </nav>
     <div class="user-bar">
@@ -505,7 +590,7 @@ tr:hover td{background:var(--card-bg)}
                 <span class="rc-card-name">Compensation omission</span>
                 <button type="button" class="rc-help" onclick="showHelp(event,'Compensation omission')" title="What should I ask myself?">?</button>
               </div>
-              <div class="rc-card-desc">Lead denied or omitted compensation when the case clearly warranted one — either by rejecting the request or responding without indicating any compensation.</div>
+              <div class="rc-card-desc">No compensation was approved at all when the case clearly warranted one — either by rejecting the request or responding without indicating any compensation. If a compensation was approved but an extra request (discount, promo, retention) went unanswered, use Incomplete Lead response.</div>
             </div>
           </div>
         </div>
@@ -572,7 +657,7 @@ tr:hover td{background:var(--card-bg)}
                 <span class="rc-card-name">Incomplete Lead response</span>
                 <button type="button" class="rc-help" onclick="showHelp(event,'Incomplete Lead response')" title="What should I ask myself?">?</button>
               </div>
-              <div class="rc-card-desc">Lead only addressed the compensation without responding to an additional question or concern the Specialist raised beyond the immediate case.</div>
+              <div class="rc-card-desc">The Specialist asked a question or made a request beyond the main compensation (e.g. discount, promo restoration, retention offer, process question) and the Lead didn't answer it.</div>
             </div>
             <div class="rc-card" data-cat="cg" data-rc="Specialist knowledge gap" onclick="toggleChip(this)">
               <div class="rc-card-header">
@@ -894,24 +979,183 @@ tr:hover td{background:var(--card-bg)}
     </div>
 
 
-    <!-- KNOWLEDGE HUB -->
+    <!-- GUIDE (project knowledge hub) -->
     <div id="page-knowledge" class="page">
-      <div class="page-title">Rubric</div>
-      <div class="page-sub">Evaluation guide — root causes, definitions and coaching actions</div>
+      <div class="page-title">Wabi Accuracy Guide</div>
+      <div class="page-sub">How the program works, how reviews are scored, and the criteria we use — for everyone on the team</div>
 
-      <div class="filters-bar" style="position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0;margin-bottom:8px">
-        <input type="text" id="kb-search" placeholder="🔍  Search root cause or category..." oninput="filterKB()" style="width:320px">
-        <select id="kb-cat-filter" onchange="filterKB()">
-          <option value="">All categories</option>
-          <option value="VALIDATION">Validation</option>
-          <option value="ISSUE RESOLUTION">Issue Resolution</option>
-          <option value="PROCESS & ESCALATION">Process & Escalation</option>
-          <option value="COACHING AND GUIDANCE">Coaching & Guidance</option>
-        </select>
-        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('kb-search').value='';document.getElementById('kb-cat-filter').value='';filterKB()">✕ Clear</button>
+      <div class="tabs" id="guide-tabs">
+        <div class="tab active" onclick="guideTab('overview',this)">🧭 Overview</div>
+        <div class="tab" onclick="guideTab('process',this)">🔄 How it works</div>
+        <div class="tab" onclick="guideTab('scoring',this)">🎯 Scoring</div>
+        <div class="tab" onclick="guideTab('rootcauses',this)">📖 Root causes</div>
+        <div class="tab" onclick="guideTab('competencies',this)">🧩 Competencies</div>
+        <div class="tab" onclick="guideTab('criteria',this)">✅ Criteria</div>
       </div>
 
-      <div id="kb-content" style="overflow-y:auto;max-height:calc(100vh - 200px)"></div>
+      <!-- OVERVIEW -->
+      <div id="guide-overview" class="guide-view">
+        <div class="guide-hero">
+          <div>
+            <div class="guide-eyebrow">What is Wabi Accuracy?</div>
+            <h2>We review how Leads resolve Wabis — and use it to coach.</h2>
+            <p>A <strong>Wabi</strong> is an escalation where a CX Specialist asks a Lead to approve, deny or give guidance on a compensation. Every week, supervisors review a sample of Wabis with a shared rubric to check that the Lead's decision was <strong>validated</strong>, <strong>correctly resolved</strong>, followed the <strong>right process</strong>, and <strong>coached</strong> the Specialist.</p>
+            <p style="margin-top:8px">We evaluate the <strong>Lead's resolution</strong>, not the Specialist's work. A Specialist mistake only counts when the Lead should have caught or corrected it.</p>
+          </div>
+        </div>
+
+        <div class="guide-stats">
+          <div class="guide-stat"><div class="n">4</div><div class="l">rubric categories</div></div>
+          <div class="guide-stat"><div class="n">100</div><div class="l">points per review</div></div>
+          <div class="guide-stat"><div class="n" style="color:var(--cu-green)">90</div><div class="l">target score</div></div>
+          <div class="guide-stat"><div class="n">Sun–Sat</div><div class="l">weekly review cycle</div></div>
+        </div>
+
+        <h3 class="guide-h3">Who does what</h3>
+        <div class="guide-roles">
+          <div class="guide-role" style="--role:#AA0061">
+            <div class="guide-role-head"><span class="guide-role-dot"></span>Admins</div>
+            <ul>
+              <li>Assign the weekly samples</li>
+              <li>Run calibration sessions and keep the criteria up to date</li>
+              <li>Resolve disputes</li>
+              <li>Manage roles, hierarchy and absences</li>
+            </ul>
+          </div>
+          <div class="guide-role" style="--role:#E0A100">
+            <div class="guide-role-head"><span class="guide-role-dot"></span>Supervisors</div>
+            <ul>
+              <li>Review their assigned samples in <strong>New Audit</strong> before the deadline</li>
+              <li>Go over their Lead's reviews in the 1:1</li>
+              <li>Mark <strong>Feedback provided</strong> — or open a <strong>Dispute</strong></li>
+            </ul>
+          </div>
+          <div class="guide-role" style="--role:#475CC7">
+            <div class="guide-role-head"><span class="guide-role-dot"></span>Leads</div>
+            <ul>
+              <li>See their reviews as soon as they're submitted</li>
+              <li>Discuss them with their supervisor in the 1:1</li>
+              <li>Track their performance in <strong>Lead Performance</strong> and <strong>Pending Feedback</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 class="guide-h3">Where to find things in the app</h3>
+        <div class="guide-where">
+          <div><strong>➕ New Audit</strong><span>Your assigned samples and the review form</span></div>
+          <div><strong>📋 Reviews</strong><span>All submitted audits and calibration results</span></div>
+          <div><strong>👤 Lead Performance</strong><span>Average score per Lead and month vs the 90 target</span></div>
+          <div><strong>💬 Pending Feedback</strong><span>Team feedback overview and each Lead's reviews</span></div>
+          <div><strong>✅ Compliance</strong><span>Assigned vs completed reviews per supervisor</span></div>
+          <div><strong>⚖️ Disputes</strong><span>Open and resolved disputes</span></div>
+        </div>
+      </div>
+
+      <!-- HOW IT WORKS -->
+      <div id="guide-process" class="guide-view" style="display:none">
+        <div class="guide-legend">
+          <span><i style="background:#AA0061"></i>Admins</span>
+          <span><i style="background:#E0A100"></i>Supervisor</span>
+          <span><i style="background:#475CC7"></i>Lead</span>
+          <span><i style="background:#218848"></i>Outcome</span>
+          <span class="guide-legend-hint">Click any step to see the details</span>
+        </div>
+        <div class="guide-flow-wrap">
+          <div class="guide-flow-svg" id="guide-flow"></div>
+          <div class="guide-step-panel" id="guide-step-panel"></div>
+        </div>
+
+        <h3 class="guide-h3">Calibration — keeping everyone aligned</h3>
+        <div class="guide-chain">
+          <div class="guide-chain-step" style="--role:#AA0061"><b>1</b><strong>Pick tickets</strong><span>Admins choose tickets and set the agreed reference score</span></div>
+          <div class="guide-chain-arrow">→</div>
+          <div class="guide-chain-step" style="--role:#E0A100"><b>2</b><strong>Everyone reviews</strong><span>All reviewers evaluate the same tickets in New Audit before the deadline</span></div>
+          <div class="guide-chain-arrow">→</div>
+          <div class="guide-chain-step" style="--role:#218848"><b>3</b><strong>Alignment</strong><span>Reviews → Calibrations shows who matched the reference, by category</span></div>
+          <div class="guide-chain-arrow">→</div>
+          <div class="guide-chain-step" style="--role:#AA0061"><b>4</b><strong>Discuss & agree</strong><span>The session summary records key findings, agreed criteria and next steps</span></div>
+          <div class="guide-chain-arrow">→</div>
+          <div class="guide-chain-step" style="--role:#218848"><b>5</b><strong>Update the guide</strong><span>New criteria are added to the Criteria tab</span></div>
+        </div>
+      </div>
+
+      <!-- SCORING -->
+      <div id="guide-scoring" class="guide-view" style="display:none">
+        <div class="guide-scorebar" id="guide-scorebar"></div>
+        <div class="guide-cats" id="guide-cats"></div>
+        <div class="guide-two">
+          <div class="card" style="margin:0">
+            <h3>Rules</h3>
+            <ul class="guide-list">
+              <li>Each category is <strong>Pass or Fail</strong>: full points with no root cause marked, <strong>0</strong> with at least one.</li>
+              <li>The total is the sum of the four categories. <strong>Target: 90.</strong></li>
+              <li>Mark a fail only when there is a <strong>real error</strong> in the resolution.</li>
+              <li><strong>Feedback & Coaching Notes</strong> are required when a category fails, optional on a 100.</li>
+              <li>Any fail generates feedback for the Lead's supervisor.</li>
+              <li>Calibration reviews are scored the same way but never generate feedback.</li>
+            </ul>
+          </div>
+          <div class="card" style="margin:0">
+            <h3>Example</h3>
+            <p style="font-size:13px;line-height:1.6;margin-bottom:10px">The Lead approved full credits but didn't answer the Specialist's question about a retention offer.</p>
+            <div class="guide-example">
+              <div><span>Validation</span><b class="ok">35 / 35</b></div>
+              <div><span>Issue Resolution</span><b class="ok">20 / 20</b></div>
+              <div><span>Process & Escalation</span><b class="ok">35 / 35</b></div>
+              <div><span>Coaching & Guidance · <em>Incomplete Lead response</em></span><b class="ko">0 / 10</b></div>
+              <div class="total"><span>Total</span><b>90 / 100</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROOT CAUSES -->
+      <div id="guide-rootcauses" class="guide-view" style="display:none">
+        <div class="filters-bar" style="position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0;margin-bottom:8px">
+          <input type="text" id="kb-search" placeholder="🔍  Search root cause, definition or competency..." oninput="filterKB()" style="width:320px">
+          <select id="kb-cat-filter" onchange="filterKB()">
+            <option value="">All categories</option>
+            <option value="VALIDATION">Validation</option>
+            <option value="ISSUE RESOLUTION">Issue Resolution</option>
+            <option value="PROCESS & ESCALATION">Process & Escalation</option>
+            <option value="COACHING AND GUIDANCE">Coaching & Guidance</option>
+          </select>
+          <select id="kb-comp-filter" onchange="filterKB()"><option value="">All competencies</option></select>
+          <button class="btn btn-secondary btn-sm" onclick="clearKBFilters()">✕ Clear</button>
+        </div>
+        <div id="kb-content"></div>
+      </div>
+
+      <!-- COMPETENCIES -->
+      <div id="guide-competencies" class="guide-view" style="display:none">
+        <p class="guide-intro">Each root cause is linked to a Lead competency from the Career Path. Every review is tagged with the competencies of the root causes marked, so performance can be followed per competency in <strong>Pending Feedback → Lead reviews</strong>. Click a competency to see its root causes in detail.</p>
+        <div class="guide-comps" id="guide-comps"></div>
+      </div>
+
+      <!-- CRITERIA -->
+      <div id="guide-criteria" class="guide-view" style="display:none">
+        <h3 class="guide-h3" style="margin-top:0">Agreed criteria</h3>
+        <div class="guide-principles" id="guide-principles"></div>
+        <h3 class="guide-h3">Quick decision guide</h3>
+        <div class="card" style="padding:0;overflow:hidden"><div id="guide-decisions"></div></div>
+        <div class="guide-two">
+          <div class="card" style="margin:0">
+            <h3>Writing the feedback comment</h3>
+            <ol class="guide-list">
+              <li><strong>What</strong> was incorrect or incomplete — the specific action or omission.</li>
+              <li><strong>Why</strong> it matters — impact on the customer, the Specialist or reporting.</li>
+              <li><strong>What good looks like</strong> — the correct resolution for next time.</li>
+            </ol>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:8px">Avoid conditional reasoning ("if this was…"), unverified assumptions, and repeating the rubric definition instead of describing the case.</p>
+          </div>
+          <div class="card" style="margin:0;background:#FFF8E1;border-color:#F5E2A8">
+            <h3>Pending definitions</h3>
+            <ul class="guide-list">
+              <li><strong>Escalation reason level:</strong> whether the ER must be specified up to L3 or L4. Until it's defined, a correct ER up to L3 is not a fail.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1670,13 +1914,13 @@ const RC_QUESTIONS = {
   "Customer Evidence": ["Did the case involve a physical issue (damaged packaging, foreign object, wrong item)?","Did the Specialist include customer photos or screenshots in the Wabi?","Did the Lead approve a claim that required proof without asking for it?"],
   "Compensation type": ["Did the case qualify for a refund, credit, or discount per the applicable policy?","Did the Lead approve a different type than what was warranted?","Is the compensation type aligned with the escalation level and root cause?"],
   "Compensation amount": ["Was the approved amount within the correct tier for this customer profile?","Did the Lead overcompensate without a clear justification?","Did the Lead undercompensate given ARPU or escalation risk?"],
-  "Compensation omission": ["Did the case involve a legitimate issue that typically warrants compensation?","Did the Lead reject the request without a clear policy-based justification?","Did the Lead respond to a Wabi Question with guidance only, when compensation was also needed?"],
+  "Compensation omission": ["Was no compensation approved at all?","Did the case involve a legitimate issue that typically warrants compensation?","Did the Lead reject the request without a clear policy-based justification?","Did the Lead respond to a Wabi Question with guidance only, when compensation was also needed?"],
   "Sup/Management escalation": ["Did the compensation amount or type require manager approval per policy?","Did the Lead approve a custom amount or exception without escalating?","Was the resolution within the Lead's approval authority?"],
   "Incorrect Process": ["Did the Lead use the correct standing process for this type of case?","Was there an active incident or temporary SOP override in effect?","If the Lead wasn't sure which process applied, did they escalate to confirm before deciding?"],
   "Missing next steps": ["Did the case involve a food safety concern requiring FSQA?","Was there a delivery issue requiring Logistics coordination?","Did the case reveal a system issue requiring a Jira ticket?","Did the case involve an account setting that needs correcting to prevent recurrence?"],
   "Escalation reason": ["Did the escalation reason in the Wabi match what actually happened?","Was there evidence that contradicted the reason selected, and did the Lead catch it?","Did the Lead's response include a clear, specific escalation reason when one was required?"],
   "Validation source": ["Did the Lead verify information that was missing from the Wabi?","Did the Lead tell the Specialist where they found that information?","Would the Specialist know how to find this information next time based on the Lead's response?"],
-  "Incomplete Lead response": ["Did the Specialist ask a question beyond the compensation request?","Was that question answered in the Lead's response?","Would leaving it unanswered affect the Specialist's ability to act correctly next time?"],
+  "Incomplete Lead response": ["Did the Specialist ask a question or make a request beyond the main compensation (discount, promo, retention, process)?","Was it answered in the Lead's first response?","Did the Specialist have to follow up or reopen the Wabi to get an answer?"],
   "Specialist knowledge gap": ["Did the Specialist's Wabi reveal a misunderstanding of a policy or process?","Is this a gap in the Specialist's understanding — not an error in the Lead's own decision?","Was there a teachable moment that the Lead passed on?"],
 };
 
@@ -3464,8 +3708,9 @@ const KB_DATA = [
     subcategory: "Wrong Adjustment",
     rootCause: "Compensation omission",
     catColor: "#AA0061",
-    definition: "Lead denied a compensation request or provided a resolution with no compensation when the case clearly warranted one — either by explicitly rejecting the Specialist's request, or by responding to a Wabi Question without indicating a compensation that should have been applied given the circumstances.",
+    definition: "Lead denied or omitted compensation when the case clearly warranted one, and no other compensation was approved — either by explicitly rejecting the Specialist's request without a policy-based justification, or by responding to a Wabi Question with guidance only when the situation also required a compensation. If a compensation was approved but an additional request (discount, promo, retention offer) was left unanswered, use Incomplete Lead response instead.",
     questions: [
+      "Was no compensation approved at all?",
       "Did the case involve a legitimate customer issue that typically warrants compensation?",
       "Did the Lead reject the Specialist's request without a clear policy-based justification?",
       "Did the Lead respond to a Wabi Question with guidance only, when the situation also required a compensation to be approved?"
@@ -3558,14 +3803,14 @@ const KB_DATA = [
     subcategory: "",
     rootCause: "Incomplete Lead response",
     catColor: "#475CC7",
-    definition: "The Specialist raised a question or concern beyond the compensation request — not directly related to closing the case — and the Lead only addressed the compensation without responding to the additional inquiry.",
+    definition: "The Specialist raised a question, concern or additional request beyond the main compensation — e.g. a discount, promo restoration, retention offer, or a process question — and the Lead only addressed the compensation without responding to it.",
     questions: [
-      "Did the Specialist ask a question or raise a concern beyond the compensation request?",
-      "Was that question answered in the Lead's response?",
-      "Was the question relevant to how the Specialist handles similar cases in the future?",
-      "Would leaving it unanswered affect the Specialist's ability to act correctly next time?"
+      "Did the Specialist ask a question or make a request beyond the main compensation?",
+      "Was it answered in the Lead's first response?",
+      "Did the Specialist have to follow up or reopen the Wabi to get an answer?",
+      "Would leaving it unanswered affect the Specialist's ability to act correctly now or next time?"
     ],
-    coaching: "Coach the Lead that Wabis are a two-way communication tool. When a Specialist asks something beyond the immediate case, ignoring it leaves a knowledge gap that may surface in future escalations or customer interactions.",
+    coaching: "Coach the Lead that Wabis are a two-way communication tool. Answer every question in the Wabi before sending the decision — even when the answer is no, and especially in Wabi Live, where the Specialist is with the customer in real time.",
     skill: "Specialist Development"
   },
   {
@@ -3628,7 +3873,7 @@ function renderKB(items) {
         <div class="card" style="border-left:4px solid ${cfg.color};margin-bottom:12px;padding:16px 20px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
             <div style="font-size:14px;font-weight:700;color:var(--cu-black)">${item.rootCause}</div>
-            
+            ${COMPETENCY_BY_RC[item.rootCause] ? `<span class="kb-comp-badge" onclick="openCompetency('${escapeHtml(COMPETENCY_BY_RC[item.rootCause])}')" title="Career Path competency">🧩 ${escapeHtml(COMPETENCY_BY_RC[item.rootCause])}</span>` : ''}
           </div>
           <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">${item.definition}</p>
 
@@ -3656,9 +3901,12 @@ function renderKB(items) {
 function filterKB() {
   const search = document.getElementById('kb-search').value.toLowerCase();
   const catFilter = document.getElementById('kb-cat-filter').value;
+  const compFilter = document.getElementById('kb-comp-filter')?.value || '';
   const filtered = KB_DATA.filter(item => {
-    const matchCat = !catFilter || item.category === catFilter;
+    const comp = COMPETENCY_BY_RC[item.rootCause] || '';
+    const matchCat = (!catFilter || item.category === catFilter) && (!compFilter || comp === compFilter);
     const matchSearch = !search ||
+      comp.toLowerCase().includes(search) ||
       item.rootCause.toLowerCase().includes(search) ||
       item.definition.toLowerCase().includes(search) ||
       item.coaching.toLowerCase().includes(search) ||
@@ -3668,9 +3916,305 @@ function filterKB() {
   renderKB(filtered);
 }
 
+// ── GUIDE ──────────────────────────────────────────────────
+// Root cause → Career Path competency (same mapping Api.gs uses to tag
+// every submitted review)
+const COMPETENCY_BY_RC = {
+  "Customer sentiment":         "Credits, Refunds & Appeasement Authority",
+  "Prior escalations":          "Product, Policy & Case Knowledge",
+  "Customer profile":           "Credits, Refunds & Appeasement Authority",
+  "Account & Platform Records": "Product, Policy & Case Knowledge",
+  "Delivery Evidence":          "Product, Policy & Case Knowledge",
+  "Customer Evidence":          "Product, Policy & Case Knowledge",
+  "Compensation type":          "Product, Policy & Case Knowledge",
+  "Compensation amount":        "Credits, Refunds & Appeasement Authority",
+  "Compensation omission":      "Case Handling & Judgment",
+  "Sup/Management escalation":  "Communication & Escalation Management",
+  "Incorrect Process":          "Product, Policy & Case Knowledge",
+  "Missing next steps":         "Case Handling & Judgment",
+  "Escalation reason":          "Communication & Escalation Management",
+  "Validation source":          "Coaching & Team Development",
+  "Incomplete Lead response":   "Communication & Escalation Management",
+  "Specialist knowledge gap":   "Coaching & Team Development",
+};
+
+const COMPETENCY_INFO = [
+  { name: "Credits, Refunds & Appeasement Authority", icon: "💳", color: "#FFB81C",
+    text: "Calibrating the resolution to the customer: their sentiment, their value and the right compensation amount." },
+  { name: "Product, Policy & Case Knowledge", icon: "📚", color: "#475CC7",
+    text: "Knowing which evidence, tools, policies and processes apply to each type of case." },
+  { name: "Case Handling & Judgment", icon: "🧠", color: "#218848",
+    text: "Making the call when compensation is warranted and closing the case end to end." },
+  { name: "Communication & Escalation Management", icon: "📣", color: "#AA0061",
+    text: "Escalating when required, classifying the case correctly and answering everything the Specialist asked." },
+  { name: "Coaching & Team Development", icon: "🌱", color: "#F96F15",
+    text: "Using each Wabi to develop the Specialist, not just to approve." },
+];
+
+const GUIDE_CATS = [
+  { key: "VALIDATION",            label: "Validation",           pts: 35, color: "#FFB81C", q: "Did the Lead check the context and evidence needed to make the decision?" },
+  { key: "ISSUE RESOLUTION",      label: "Issue Resolution",     pts: 20, color: "#AA0061", q: "Was the compensation correct in type and amount, and given when warranted?" },
+  { key: "PROCESS & ESCALATION",  label: "Process & Escalation", pts: 35, color: "#218848", q: "Did the Lead apply the right process, escalation path, next steps and escalation reason?" },
+  { key: "COACHING AND GUIDANCE", label: "Coaching & Guidance",  pts: 10, color: "#475CC7", q: "Did the Lead answer the Specialist and help them handle similar cases next time?" },
+];
+
+const GUIDE_PRINCIPLES = [
+  ["Only real errors", "Mark a fail only when the Lead's resolution was incorrect or incomplete — and pick the category where the error happened."],
+  ["Facts, not hypotheticals", "No \"ifs\". If something is unclear, verify it (Onfleet, Slack thread, Admin). If you can't confirm it, don't mark it."],
+  ["Compensation omission", "Applies only when no compensation was approved at all. Approved compensation + unanswered extra request (discount, promo, retention) → Incomplete Lead response."],
+  ["Extra discount not requested", "If compensation was given and you think an extra discount was warranted but nobody asked for it, leave it as feedback in the comment — not a fail."],
+  ["Credits first", "Credits with a refund as fallback follows company practice. On its own it's not a Validation or Issue Resolution fail."],
+  ["Multiple root causes", "More than one root cause can apply (e.g. Specialist knowledge gap + Incomplete Lead response). Don't log the same observation in two categories."],
+];
+
+const GUIDE_DECISIONS = [
+  ["No compensation approved when the case clearly warranted one", "Issue Resolution", "Compensation omission"],
+  ["Compensation approved, but the Specialist's extra request went unanswered", "Coaching & Guidance", "Incomplete Lead response"],
+  ["Compensation approved; an extra discount seems warranted but nobody asked", "—", "Not a fail · leave feedback"],
+  ["Credit approved with refund as fallback", "—", "Not a fail on its own"],
+  ["Credit approved when policy required a refund", "Issue Resolution", "Compensation type"],
+  ["Right type, wrong amount, % or tier", "Issue Resolution", "Compensation amount"],
+  ["Delivery claim approved without checking POD / Onfleet / carrier", "Validation", "Delivery Evidence"],
+  ["Physical product claim approved without photos", "Validation", "Customer Evidence"],
+  ["Recurring issue treated as the first time", "Validation", "Prior escalations"],
+  ["Escalation reason wrong, missing or outdated", "Process & Escalation", "Escalation reason"],
+  ["Approved outside the Lead's authority without escalating", "Process & Escalation", "Sup/Management escalation"],
+  ["FSQA, Logistics, Jira or account fix not indicated", "Process & Escalation", "Missing next steps"],
+  ["Wrong SOP / matrix, or an active override was missed", "Process & Escalation", "Incorrect Process"],
+  ["Specialist showed a process misunderstanding and the Lead didn't correct it", "Coaching & Guidance", "Specialist knowledge gap"],
+  ["Lead found missing info but didn't tell the Specialist where", "Coaching & Guidance", "Validation source"],
+];
+
+// ── Process flowchart ──
+const ROLE_COLORS = { admin: '#AA0061', sup: '#E0A100', lead: '#475CC7', done: '#218848', both: '#475CC7' };
+
+const FLOW_STEPS = {
+  assign: {
+    title: '1 · Assign samples', role: 'admin', who: 'Admins only',
+    where: 'Google Sheet → 🎯 Wabi Tools → Assign samples for this week',
+    what: [
+      'The Zendesk export of the week (Sunday–Saturday) is pasted into "Zendesk Import".',
+      'In Assignment Config: the week number, which supervisors review this week and how many samples each, and which Leads are evaluated.',
+      'Samples are split evenly across Leads (the busiest Leads get the extra ones) and every supervisor receives the same amount.',
+      'If a Lead doesn\'t have enough Wabis, the script asks before taking the missing samples from the other Leads.',
+    ],
+  },
+  review: {
+    title: '2 · Review the samples', role: 'sup', who: 'Supervisors (reviewers)',
+    where: 'App → ➕ New Audit',
+    what: [
+      'Each reviewer sees their assigned tickets. Open one, read the Wabi and the ticket, and mark the root causes that apply.',
+      'Each category with a root cause scores 0; the score is calculated automatically.',
+      'A comment is required when any category fails, optional on a 100.',
+      'Complete every sample before the deadline — progress is tracked in ✅ Compliance.',
+    ],
+  },
+  anyfail: {
+    title: 'Any fail?', role: 'done', who: 'Automatic',
+    where: 'Calculated when the review is submitted',
+    what: [
+      'No root cause marked → 100/100, no feedback needed.',
+      'At least one root cause → the review needs feedback from the Lead\'s supervisor.',
+    ],
+  },
+  nofeedback: {
+    title: '100 · No feedback needed', role: 'done', who: 'Automatic',
+    where: 'Lead and supervisor can see it in 💬 Pending Feedback → Lead reviews',
+    what: [
+      'The review counts for the Lead\'s performance with a perfect score.',
+      'The reviewer can leave an optional comment to recognize good work.',
+    ],
+  },
+  visible: {
+    title: '3 · Review reaches the Lead and their supervisor', role: 'lead', who: 'Lead · Lead\'s supervisor (from Hierarchy)',
+    where: 'App → 💬 Pending Feedback → Lead reviews',
+    what: [
+      'The Lead sees the review as soon as it\'s submitted: score, root causes, competencies and the reviewer\'s comment.',
+      'The Lead\'s supervisor sees it as Pending, together with the Lead\'s results for the week.',
+    ],
+  },
+  oneonone: {
+    title: '4 · Go over it in the 1:1', role: 'sup', who: 'Lead\'s supervisor with the Lead',
+    where: 'Weekly 1:1',
+    what: [
+      'Walk through each review with a fail: what happened, why it matters and what good looks like.',
+      'Coaching notes go in the 1:1 document — the app only tracks that feedback was provided.',
+    ],
+  },
+  agree: {
+    title: 'Is the review correct?', role: 'sup', who: 'Lead\'s supervisor',
+    where: 'Decided during or after the 1:1',
+    what: [
+      'Yes → mark Feedback provided.',
+      'No (e.g. the Lead showed it was resolved correctly) → open a Dispute instead.',
+      'A review can only be disputed before Feedback provided is marked.',
+    ],
+  },
+  provided: {
+    title: '5 · Feedback provided ✅', role: 'sup', who: 'Lead\'s supervisor (or an admin)',
+    where: '💬 Pending Feedback → Lead reviews → ✅ Feedback provided',
+    what: [
+      'One click; the date is saved automatically.',
+      'Counts toward the supervisor\'s feedback compliance.',
+    ],
+  },
+  dispute: {
+    title: '5 · Dispute ⚖️', role: 'sup', who: 'Lead\'s supervisor (or an admin)',
+    where: '💬 Pending Feedback → Lead reviews → ⚖️ Dispute',
+    what: [
+      'Select the root cause(s) you disagree with — or Other — and explain why.',
+      'Only reviews with a fail can be disputed, once per review.',
+      'While open, the dispute counts as handled for feedback compliance.',
+    ],
+  },
+  resolve: {
+    title: '6 · Resolve the dispute', role: 'admin', who: 'Admins only',
+    where: 'App → ⚖️ Disputes',
+    what: [
+      'An admin reviews the case and the disputed root causes.',
+      'Accepted → the categories are corrected and the score is recalculated, so it doesn\'t affect the Lead\'s performance. If it still has a fail, it goes back to Pending Feedback.',
+      'Rejected → the review stays as it was and goes back to Pending Feedback.',
+    ],
+  },
+};
+
+function guideFlowSVG() {
+  const node = (id, x, y, w, h, title, sub) => {
+    const s = FLOW_STEPS[id]; const c = ROLE_COLORS[s.role];
+    return `<g class="gf-node" data-step="${id}" onclick="showGuideStep('${id}')" tabindex="0">
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" fill="#fff" stroke="${c}" stroke-width="2"/>
+      <rect x="${x}" y="${y}" width="8" height="${h}" rx="4" fill="${c}"/>
+      <text x="${x + 22}" y="${y + 28}" class="gf-title">${title}</text>
+      <text x="${x + 22}" y="${y + 50}" class="gf-sub">${sub}</text>
+    </g>`;
+  };
+  const diamond = (id, cx, cy, label) => {
+    const c = ROLE_COLORS[FLOW_STEPS[id].role];
+    return `<g class="gf-node" data-step="${id}" onclick="showGuideStep('${id}')" tabindex="0">
+      <polygon points="${cx},${cy - 38} ${cx + 92},${cy} ${cx},${cy + 38} ${cx - 92},${cy}" fill="#fff" stroke="${c}" stroke-width="2"/>
+      <text x="${cx}" y="${cy + 5}" text-anchor="middle" class="gf-title">${label}</text>
+    </g>`;
+  };
+  const line = (d, label, lx, ly, dashed) => `<path d="${d}" class="gf-edge${dashed ? ' dashed' : ''}" marker-end="url(#gf-arrow)"/>` +
+    (label ? `<text x="${lx}" y="${ly}" class="gf-label">${label}</text>` : '');
+
+  return `<svg viewBox="0 0 1000 720" role="img" aria-label="Wabi Accuracy process flowchart">
+    <defs><marker id="gf-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8A8780"/></marker></defs>
+    ${line('M500,74 L500,104')}
+    ${line('M500,168 L500,186')}
+    ${line('M408,224 L282,224', 'No · 100', 318, 214)}
+    ${line('M500,262 L500,294', 'Yes', 510, 284)}
+    ${line('M500,358 L500,388')}
+    ${line('M500,452 L500,480')}
+    ${line('M408,518 L190,518 L190,584', 'Yes', 300, 508)}
+    ${line('M592,518 L676,518', 'No', 620, 508)}
+    ${line('M810,550 L810,598')}
+    ${line('M940,630 L975,630 L975,326 L646,326', 'Rejected or still fails', 790, 316, true)}
+    ${node('assign', 360, 10, 280, 64, '1 · Assign samples', 'Admins · weekly, Sun–Sat')}
+    ${node('review', 360, 104, 280, 64, '2 · Review the samples', 'Supervisors · New Audit')}
+    ${diamond('anyfail', 500, 224, 'Any fail?')}
+    ${node('nofeedback', 30, 192, 250, 64, 'No feedback needed', 'Score 100 · optional comment')}
+    ${node('visible', 354, 294, 292, 64, '3 · Lead sees the review', 'Pending Feedback for the supervisor')}
+    ${node('oneonone', 360, 388, 280, 64, '4 · 1:1 with the Lead', 'Supervisor + Lead')}
+    ${diamond('agree', 500, 518, 'Review correct?')}
+    ${node('provided', 60, 584, 260, 64, '5 · Feedback provided ✅', 'Supervisor marks it')}
+    ${node('dispute', 676, 486, 264, 64, '5 · Dispute ⚖️', 'Supervisor · root cause + reason')}
+    ${node('resolve', 676, 598, 264, 64, '6 · Resolve the dispute', 'Admins only · accept or reject')}
+    <text x="808" y="690" text-anchor="middle" class="gf-label">Accepted → score corrected</text>
+  </svg>`;
+}
+
+function showGuideStep(id) {
+  const s = FLOW_STEPS[id];
+  if (!s) return;
+  document.querySelectorAll('#guide-flow .gf-node').forEach(n => n.classList.toggle('active', n.dataset.step === id));
+  const c = ROLE_COLORS[s.role];
+  document.getElementById('guide-step-panel').innerHTML = `
+    <div class="gsp-role" style="background:${c}">${escapeHtml(s.who)}</div>
+    <h3>${escapeHtml(s.title)}</h3>
+    <div class="gsp-where">📍 ${escapeHtml(s.where)}</div>
+    <ul>${s.what.map(w => `<li>${escapeHtml(w)}</li>`).join('')}</ul>`;
+}
+
+function guideTab(view, el) {
+  const views = ['overview', 'process', 'scoring', 'rootcauses', 'competencies', 'criteria'];
+  const tabs = [...document.querySelectorAll('#guide-tabs .tab')];
+  tabs.forEach(t => t.classList.remove('active'));
+  (el || tabs[views.indexOf(view)])?.classList.add('active');
+  views.forEach(v => { document.getElementById('guide-' + v).style.display = v === view ? 'block' : 'none'; });
+}
+
 function initKnowledge() {
+  if (window._guideReady) return;
+  window._guideReady = true;
+
+  // Flowchart
+  document.getElementById('guide-flow').innerHTML = guideFlowSVG();
+  showGuideStep('assign');
+
+  // Scoring
+  document.getElementById('guide-scorebar').innerHTML = GUIDE_CATS.map(c =>
+    `<div style="flex:${c.pts};background:${c.color}"><strong>${c.pts}</strong><span>${c.label}</span></div>`).join('');
+  document.getElementById('guide-cats').innerHTML = GUIDE_CATS.map(c => {
+    const rcs = KB_DATA.filter(k => k.category === c.key).map(k => k.rootCause);
+    return `<div class="guide-cat" style="--cat:${c.color}">
+      <div class="guide-cat-pts">${c.pts}<small>pts</small></div>
+      <div class="guide-cat-name">${c.label}</div>
+      <p>${c.q}</p>
+      <div class="guide-chips">${rcs.map(r => `<span onclick="openRootCause('${escapeHtml(r)}')">${escapeHtml(r)}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+
+  // Competencies
+  document.getElementById('guide-comps').innerHTML = COMPETENCY_INFO.map(cp => {
+    const rcs = Object.keys(COMPETENCY_BY_RC).filter(r => COMPETENCY_BY_RC[r] === cp.name);
+    return `<div class="guide-comp" style="--comp:${cp.color}" onclick="openCompetency('${escapeHtml(cp.name)}')">
+      <div class="guide-comp-head"><span class="guide-comp-icon">${cp.icon}</span><div><strong>${escapeHtml(cp.name)}</strong><small>${rcs.length} root cause${rcs.length === 1 ? '' : 's'}</small></div></div>
+      <p>${escapeHtml(cp.text)}</p>
+      <div class="guide-chips">${rcs.map(r => {
+        const cat = GUIDE_CATS.find(c => c.key === (KB_DATA.find(k => k.rootCause === r) || {}).category) || {};
+        return `<span style="border-color:${cat.color || '#ccc'}"><i style="background:${cat.color || '#ccc'}"></i>${escapeHtml(r)}</span>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('kb-comp-filter').innerHTML = '<option value="">All competencies</option>' +
+    COMPETENCY_INFO.map(cp => `<option value="${escapeHtml(cp.name)}">${escapeHtml(cp.name)}</option>`).join('');
+
+  // Criteria
+  document.getElementById('guide-principles').innerHTML = GUIDE_PRINCIPLES.map(([t, d], i) =>
+    `<div class="guide-principle"><b>${i + 1}</b><div><strong>${escapeHtml(t)}</strong><p>${escapeHtml(d)}</p></div></div>`).join('');
+  document.getElementById('guide-decisions').innerHTML = `<table>
+    <thead><tr><th>Situation</th><th>Category</th><th>Root cause</th></tr></thead>
+    <tbody>${GUIDE_DECISIONS.map(([sit, cat, rc]) => {
+      const c = GUIDE_CATS.find(x => x.label === cat);
+      return `<tr><td>${escapeHtml(sit)}</td>
+        <td>${c ? `<span class="guide-cat-pill" style="background:${c.color}">${escapeHtml(cat)}</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td>${COMPETENCY_BY_RC[rc] ? `<a onclick="openRootCause('${escapeHtml(rc)}')">${escapeHtml(rc)}</a>` : `<em style="color:var(--text-muted)">${escapeHtml(rc)}</em>`}</td></tr>`;
+    }).join('')}</tbody></table>`;
+
   renderKB(KB_DATA);
 }
+
+function openRootCause(name) {
+  guideTab('rootcauses');
+  document.getElementById('kb-search').value = name;
+  document.getElementById('kb-cat-filter').value = '';
+  document.getElementById('kb-comp-filter').value = '';
+  filterKB();
+}
+function openCompetency(name) {
+  guideTab('rootcauses');
+  document.getElementById('kb-search').value = '';
+  document.getElementById('kb-cat-filter').value = '';
+  document.getElementById('kb-comp-filter').value = name;
+  filterKB();
+}
+function clearKBFilters() {
+  ['kb-search', 'kb-cat-filter', 'kb-comp-filter'].forEach(id => { document.getElementById(id).value = ''; });
+  filterKB();
+}
+
+
 
 </script>
 </body>
