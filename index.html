@@ -3069,7 +3069,10 @@ async function loadDisputes() {
       <div class="metric"><div class="label">Rejected</div><div class="value amber">${rejected.length}</div></div>`;
 
     window._disputesData = { all, open, resolved };
-    disputesTab('open', document.querySelector('#disputes-tabs .tab'));
+    // Stay on the tab the user is looking at (Open on first load)
+    const tabs = [...document.querySelectorAll('#disputes-tabs .tab')];
+    const idx = Math.max(0, tabs.findIndex(t => t.classList.contains('active')));
+    disputesTab(['open', 'resolved', 'all'][idx], tabs[idx]);
   } catch(e) { console.error('loadDisputes:', e); }
 }
 
@@ -3123,7 +3126,7 @@ function disputeRCList(src) {
 }
 function disputeRCCell(d, which) {
   const isOpen = d.dispute_status === 'Open';
-  const orig = d.original_review || null;
+  const orig = fullOriginalReview(d);
   // While the dispute is open, the review hasn't been touched yet: current = original
   const original = orig ? disputeRCList(orig) : (isOpen ? disputeRCList(d) : null);
   const final = isOpen ? null : disputeRCList(d);
@@ -3144,8 +3147,13 @@ function splitDisputeItems(items) {
   return String(items || '').split('|').map(x => x.trim()).filter(Boolean)
     .map(x => x.replace(/^(Validation|Issue Resolution|Process & Escalation|Coaching & Guidance):\s*/, ''));
 }
+// The review as it was before the dispute. Older disputes may only have
+// the original comment saved (partial), without scores or root causes.
+function fullOriginalReview(d) {
+  return d.original_review && !d.original_review.partial ? d.original_review : null;
+}
 function disputeOriginalTotal(d) {
-  if (d.original_review && d.original_review.total_score !== undefined) return Number(d.original_review.total_score);
+  if (fullOriginalReview(d) && d.original_review.total_score !== undefined) return Number(d.original_review.total_score);
   if (d.original_total_score !== null && d.original_total_score !== undefined && d.original_total_score !== '') return Number(d.original_total_score);
   return null;
 }
@@ -3173,8 +3181,39 @@ function disputedChip(item) {
   return `<span class="dsp-chip">⚖️ ${escapeHtml(item.name)}</span>`;
 }
 
+function startEditDisputeComment() {
+  document.getElementById('dsp-final-text').style.display = 'none';
+  document.getElementById('dsp-final-edit').style.display = 'block';
+  const ta = document.getElementById('dsp-final-input');
+  ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+}
+function cancelEditDisputeComment() {
+  document.getElementById('dsp-final-edit').style.display = 'none';
+  document.getElementById('dsp-final-text').style.display = '';
+}
+async function saveDisputeComment() {
+  const d = window._dspEdit;
+  const comment = document.getElementById('dsp-final-input').value.trim();
+  if (!comment) { alert('The comment cannot be empty.'); return; }
+  const btn = document.getElementById('dsp-final-save');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    await api('editDisputeComment', {}, {
+      ticket: d.ticket, reviewer_email: d.reviewer, edited_by: currentUser.email, comment,
+    });
+    if (!d.original_review) d.original_review = { partial: true, comment: d.comment || '' };
+    d.comment = comment;
+    openDisputeReadOnly(d);
+    loadDisputes();
+  } catch (e) {
+    alert('Error: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Save comment';
+  }
+}
+
 function openDisputeReadOnly(d) {
-  const orig = d.original_review || null;
+  const orig = fullOriginalReview(d);
+  const snap = d.original_review || null;   // may hold only the original comment
   const current = Number(d.total_score) || 0;
   const originalTotal = disputeOriginalTotal(d);
   const isOpen = d.dispute_status === 'Open';
@@ -3211,8 +3250,10 @@ function openDisputeReadOnly(d) {
 
   const when = v => v ? escapeHtml(fmtDate(v)) : '—';
   const finalComment = String(d.comment || '').trim();
-  const originalComment = orig ? String(orig.comment || '').trim() : finalComment;
-  const commentChanged = !!orig && finalComment !== originalComment;
+  const originalComment = snap ? String(snap.comment || '').trim() : finalComment;
+  const commentChanged = !!snap && finalComment !== originalComment;
+  const canEditComment = !isOpen && currentRole === 'admin';
+  window._dspEdit = d;
   const items = disputedOutcomes(d);
 
   document.getElementById('modal-title').innerHTML = `Dispute — Ticket ${zdLink(d.ticket)}`;
@@ -3251,9 +3292,16 @@ function openDisputeReadOnly(d) {
 
     ${isOpen
       ? `<div class="dsp-block" style="--c:#E0A100"><h4>3 · Resolution</h4><div class="dsp-text">⏳ Waiting for an admin to review it.</div></div>`
-      : `<div class="dsp-block" style="--c:#2C2B2B">
-          <h4>3 · Final review comment ${commentChanged ? '<small>edited by the admin</small>' : '<small>unchanged</small>'}</h4>
-          <div class="dsp-text">${escapeHtml(finalComment || '—')}</div>
+      : `<div class="dsp-block" style="--c:#2C2B2B" id="dsp-final-block">
+          <h4>3 · Final review comment ${commentChanged ? '<small>edited by the admin</small>' : '<small>unchanged</small>'}
+            ${canEditComment ? '<button class="btn btn-secondary btn-sm" style="float:right;margin-top:-4px" onclick="startEditDisputeComment()">✏️ Edit final comment</button>' : ''}</h4>
+          <div class="dsp-text" id="dsp-final-text">${escapeHtml(finalComment || '—')}</div>
+          <div id="dsp-final-edit" style="display:none">
+            <textarea id="dsp-final-input" rows="8" style="width:100%;font:inherit;font-size:13px;padding:10px;border:1px solid var(--border);border-radius:8px">${escapeHtml(finalComment)}</textarea>
+            <div style="font-size:11px;color:var(--text-muted);margin:4px 0 8px">This replaces the review comment that the supervisor and the Lead see. The original comment stays in block 1.</div>
+            <button class="btn btn-primary btn-sm" id="dsp-final-save" onclick="saveDisputeComment()">Save comment</button>
+            <button class="btn btn-secondary btn-sm" onclick="cancelEditDisputeComment()">Cancel</button>
+          </div>
         </div>
         <div class="dsp-block" style="--c:${accepted ? '#218848' : '#AA0061'}">
           <h4>4 · Feedback on the dispute <small>${escapeHtml(d.dispute_resolved_by || '')} · ${when(d.dispute_resolved_at)}</small></h4>
