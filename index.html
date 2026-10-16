@@ -252,6 +252,17 @@ tr:hover td{background:var(--card-bg)}
 .dsp-table td{vertical-align:top}
 .dsp-table tr.dsp-changed td{background:#FFF8E1}
 .dsp-rc{font-size:11px;color:var(--text-muted);margin-top:2px}
+.dsp-pts{font-weight:700;display:block;margin-bottom:3px}
+.dsp-rcline{font-size:12px;line-height:1.5}
+.dsp-none{color:var(--text-muted);font-style:italic}
+.dsp-gone{color:var(--text-muted);text-decoration:line-through}
+.dsp-flag,.dsp-new,.dsp-del{display:inline-block;font-size:10px;font-weight:700;padding:0 6px;border-radius:8px;margin-right:6px;text-decoration:none}
+.dsp-flag{background:#FCE8F2;color:var(--cu-magenta)}
+.dsp-new{background:#D6EFDF;color:var(--cu-green)}
+.dsp-del{background:#EEE;color:#6B6963}
+.dsp-chip{display:inline-block;font-size:11px;padding:2px 8px;margin:1px 4px 1px 0;border-radius:6px;background:#FCE8F2;color:var(--cu-magenta);white-space:nowrap}
+.dsp-chip.dsp-removed{background:#D6EFDF;color:#1a6b3a}
+.dsp-chip.dsp-kept{background:#F1EFE9;color:#6B6963}
 .dsp-block{border:1px solid var(--border);border-left:4px solid var(--c);border-radius:10px;padding:12px 14px;margin-bottom:10px}
 .dsp-block h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--c);margin-bottom:6px}
 .dsp-block h4 small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);margin-left:6px}
@@ -713,9 +724,9 @@ tr:hover td{background:var(--card-bg)}
         <!-- DISPUTE RESOLUTION NOTE (admins, dispute mode only) -->
         <div id="dispute-note-box" style="display:none;margin-bottom:20px">
           <div class="field">
-            <label style="font-weight:600">Resolution note <span style="color:var(--cu-magenta)">*</span></label>
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Explain the decision — why the dispute is accepted (and what changed) or rejected. Accepting saves the comment above as the review's final feedback; the original comment is kept for reference.</p>
-            <textarea id="dispute-resolution-note" style="min-height:90px" placeholder="e.g. Accepted: the Lead did verify the POD in Onfleet; Delivery Evidence removed."></textarea>
+            <label style="font-weight:600">Feedback on the dispute <span style="color:var(--cu-magenta)">*</span></label>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Explain why the dispute applies or not, and what had to be corrected in the original review. The supervisor who opened the dispute and the reviewer will see it. (The comment box above is the review's final feedback for the Lead — edit it to match the corrected root causes.)</p>
+            <textarea id="dispute-resolution-note" style="min-height:90px" placeholder="e.g. Applies: the POD was verified in Onfleet before approving, so Delivery Evidence doesn't apply. Incomplete Lead response stays — the promo question was never answered."></textarea>
           </div>
         </div>
 
@@ -2847,7 +2858,7 @@ function showRecordModal(r) {
       ${disputeOriginalTotal(r) !== null && disputeOriginalTotal(r) !== total ? `<div style="margin-top:4px">Score: <strong>${disputeOriginalTotal(r)}</strong> → <strong>${total}</strong> / 100</div>` : ''}
       ${r.disputed_items ? `<div style="margin-top:6px"><span style="color:var(--text-muted)">Disputed:</span> ${escapeHtml(r.disputed_items)}</div>` : ''}
       ${r.dispute_reason ? `<div style="margin-top:4px;white-space:pre-wrap"><span style="color:var(--text-muted)">Reason:</span> ${escapeHtml(r.dispute_reason)}</div>` : ''}
-      ${r.dispute_resolution_notes ? `<div style="color:var(--text-muted);margin-top:4px">${escapeHtml(r.dispute_resolution_notes)}</div>` : ''}
+      ${r.dispute_resolution_notes ? `<div style="margin-top:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted)">Feedback on the dispute</span><div style="white-space:pre-wrap;margin-top:2px">${escapeHtml(r.dispute_resolution_notes)}</div></div>` : ''}
     </div>` : ''}
   `;
 
@@ -3088,13 +3099,13 @@ function renderDisputesTable(disputes) {
       <td style="white-space:nowrap">${changed
         ? `<span class="badge badge-gray">${original}</span> → <span class="badge ${scoreClass(current)}">${current}</span>`
         : `<span class="badge ${scoreClass(current)}">${current} / 100</span>`}</td>
-      <td style="max-width:240px;font-size:12px">${d.disputed_items ? splitDisputeItems(d.disputed_items).map(x => `<span class="lr-chip">${escapeHtml(x)}</span>`).join('') : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td style="max-width:280px;font-size:12px">${d.disputed_items ? disputedOutcomes(d).map(disputedChip).join('') : '<span style="color:var(--text-muted)">—</span>'}</td>
       <td>${statusTag}</td>
     </tr>`;
   }).join('');
   document.getElementById('disputes-table').innerHTML = `
     <table>
-      <thead><tr><th>Ticket</th><th>Lead</th><th>Reviewer</th><th>Week</th><th>Score</th><th>Disputed</th><th>Status</th></tr></thead>
+      <thead><tr><th>Ticket</th><th>Lead</th><th>Reviewer</th><th>Week</th><th>Score</th><th>Disputed root causes</th><th>Status</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
@@ -3117,40 +3128,70 @@ function handleDisputeRowClick(d) {
   openDisputeReadOnly(d);
 }
 
+// Outcome of each disputed root cause: removed (dispute applied) or kept
+function disputedOutcomes(d) {
+  const resolved = d.dispute_status === 'Resolved';
+  const finalRCs = new Set(RUBRIC_CATS.flatMap(c => splitList(d[c.rc])));
+  return splitDisputeItems(d.disputed_items).map(name => ({
+    name,
+    outcome: !resolved || name === 'Other' ? null : (finalRCs.has(name) ? 'kept' : 'removed'),
+  }));
+}
+function disputedChip(item) {
+  if (item.outcome === 'removed') return `<span class="dsp-chip dsp-removed" title="Removed after the dispute">⚖️ ${escapeHtml(item.name)} · removed</span>`;
+  if (item.outcome === 'kept')    return `<span class="dsp-chip dsp-kept" title="Kept after the dispute">⚖️ ${escapeHtml(item.name)} · kept</span>`;
+  return `<span class="dsp-chip">⚖️ ${escapeHtml(item.name)}</span>`;
+}
+
 function openDisputeReadOnly(d) {
   const orig = d.original_review || null;
   const current = Number(d.total_score) || 0;
   const originalTotal = disputeOriginalTotal(d);
   const isOpen = d.dispute_status === 'Open';
   const accepted = d.dispute_accepted === 'Y';
+  const disputed = new Set(splitDisputeItems(d.disputed_items));
 
-  // Category comparison: original (snapshot) vs current
+  // Root causes: original vs final, per category
   const catRows = RUBRIC_CATS.map(c => {
     const now = Number(d['score_' + c.key]) || 0;
     const before = orig ? Number(orig['score_' + c.key]) || 0 : null;
-    const changed = before !== null && before !== now;
-    const rcNow = d[c.rc] || '';
-    const rcBefore = orig ? orig[c.rc] || '' : null;
-    const cell = (v, rc) => `<span style="font-weight:700;color:${v === c.max ? 'var(--cu-green)' : 'var(--cu-magenta)'}">${v} / ${c.max}</span>${rc ? `<div class="dsp-rc">${escapeHtml(rc)}</div>` : ''}`;
-    return `<tr${changed ? ' class="dsp-changed"' : ''}>
-      <td>${c.label}</td>
-      <td>${before === null ? '<span style="color:var(--text-muted)">—</span>' : cell(before, rcBefore)}</td>
-      <td>${cell(now, rcNow)}</td>
-    </tr>`;
+    const finalRCs = splitList(d[c.rc]);
+    const origRCs = orig ? splitList(orig[c.rc]) : null;
+    const score = v => `<span class="dsp-pts" style="color:${v === c.max ? 'var(--cu-green)' : 'var(--cu-magenta)'}">${v} / ${c.max}</span>`;
+
+    const origCell = origRCs === null
+      ? '<span style="color:var(--text-muted)">—</span>'
+      : score(before) + (origRCs.length
+          ? origRCs.map(rc => `<div class="dsp-rcline">${disputed.has(rc) ? '<span class="dsp-flag">⚖️ disputed</span>' : ''}${escapeHtml(rc)}</div>`).join('')
+          : '<div class="dsp-rcline dsp-none">No fail</div>');
+
+    let finalLines = finalRCs.map(rc => {
+      const isNew = origRCs !== null && !origRCs.includes(rc);
+      return `<div class="dsp-rcline">${isNew ? '<span class="dsp-new">＋ added</span>' : ''}${escapeHtml(rc)}</div>`;
+    });
+    if (origRCs !== null && !isOpen) {
+      origRCs.filter(rc => !finalRCs.includes(rc)).forEach(rc => {
+        finalLines.push(`<div class="dsp-rcline dsp-gone"><span class="dsp-del">− removed</span>${escapeHtml(rc)}</div>`);
+      });
+    }
+    const finalCell = score(now) + (finalLines.length ? finalLines.join('') : '<div class="dsp-rcline dsp-none">No fail</div>');
+    const changed = before !== null && (before !== now || (origRCs || []).join() !== finalRCs.join());
+    return `<tr${changed ? ' class="dsp-changed"' : ''}><td>${c.label}</td><td>${origCell}</td><td>${finalCell}</td></tr>`;
   }).join('');
 
   const when = v => v ? escapeHtml(fmtDate(v)) : '—';
   const finalComment = String(d.comment || '').trim();
   const originalComment = orig ? String(orig.comment || '').trim() : finalComment;
-  const commentChanged = orig && finalComment !== originalComment;
+  const commentChanged = !!orig && finalComment !== originalComment;
+  const items = disputedOutcomes(d);
 
   document.getElementById('modal-title').innerHTML = `Dispute — Ticket ${zdLink(d.ticket)}`;
   document.getElementById('modal-body').innerHTML = `
     <div class="dsp-meta">
       <div><span>Lead</span><strong>${escapeHtml(leadLabel(d.lead_email))}</strong></div>
+      <div><span>Week</span><strong>W${escapeHtml(d.week)}</strong></div>
       <div><span>Reviewed by</span><strong>${escapeHtml(d.reviewer || '—')}</strong></div>
       <div><span>Disputed by</span><strong>${escapeHtml(d.dispute_submitted_by || '—')}</strong></div>
-      <div><span>Week</span><strong>W${escapeHtml(d.week)}</strong></div>
     </div>
 
     <div class="dsp-scores">
@@ -3160,31 +3201,35 @@ function openDisputeReadOnly(d) {
       <div class="dsp-delta">${originalTotal !== null && originalTotal !== current ? `${current > originalTotal ? '+' : ''}${current - originalTotal} pts` : 'No change'}</div>
     </div>
 
+    <div class="dsp-sub" style="margin-top:0">Root causes — original vs ${isOpen ? 'current' : 'final'}</div>
     <table class="dsp-table">
-      <thead><tr><th>Category</th><th>Original</th><th>${isOpen ? 'Current' : 'Final'}</th></tr></thead>
+      <thead><tr><th>Category</th><th>Original review</th><th>${isOpen ? 'Current' : 'After the dispute'}</th></tr></thead>
       <tbody>${catRows}</tbody>
     </table>
-    ${orig ? '' : '<div style="font-size:11px;color:var(--text-muted);margin:-6px 0 12px">Category detail of the original review isn\'t available for disputes opened before this was tracked — only the original total.</div>'}
+    ${orig ? '' : '<div style="font-size:11px;color:var(--text-muted);margin:-6px 0 12px">The original root causes aren\'t available for disputes resolved before this was tracked — only the original total.</div>'}
 
     <div class="dsp-block" style="--c:#475CC7">
-      <h4>1 · Original review comment</h4>
+      <h4>1 · Original review comment <small>${escapeHtml(d.reviewer || '')}</small></h4>
       <div class="dsp-text">${escapeHtml(originalComment || '—')}</div>
     </div>
 
     <div class="dsp-block" style="--c:#AA0061">
       <h4>2 · Dispute <small>${escapeHtml(d.dispute_submitted_by || '')} · ${when(d.dispute_submitted_at)}</small></h4>
-      ${d.disputed_items ? `<div style="margin-bottom:8px">${splitDisputeItems(d.disputed_items).map(x => `<span class="lr-chip">${escapeHtml(x)}</span>`).join('')}</div>` : ''}
+      ${items.length ? `<div style="margin-bottom:8px">${items.map(disputedChip).join('')}</div>` : ''}
       <div class="dsp-text">${escapeHtml(d.dispute_reason || '—')}</div>
     </div>
 
-    <div class="dsp-block" style="--c:${isOpen ? '#E0A100' : accepted ? '#218848' : '#AA0061'}">
-      <h4>3 · Final resolution ${isOpen ? '' : `<small>${escapeHtml(d.dispute_resolved_by || '')} · ${when(d.dispute_resolved_at)}</small>`}</h4>
-      ${isOpen
-        ? '<div class="dsp-text">⏳ Waiting for an admin to review it.</div>'
-        : `<div style="font-weight:700;margin-bottom:6px">${accepted ? '✅ Accepted — review corrected' : '❌ Rejected — original review stands'}</div>
-           <div class="dsp-text">${escapeHtml(d.dispute_resolution_notes || '—')}</div>
-           ${commentChanged ? `<div class="dsp-sub">Updated review feedback</div><div class="dsp-text">${escapeHtml(finalComment || '—')}</div>` : ''}`}
-    </div>`;
+    ${isOpen
+      ? `<div class="dsp-block" style="--c:#E0A100"><h4>3 · Resolution</h4><div class="dsp-text">⏳ Waiting for an admin to review it.</div></div>`
+      : `<div class="dsp-block" style="--c:#2C2B2B">
+          <h4>3 · Final review comment ${commentChanged ? '<small>edited by the admin</small>' : '<small>unchanged</small>'}</h4>
+          <div class="dsp-text">${escapeHtml(finalComment || '—')}</div>
+        </div>
+        <div class="dsp-block" style="--c:${accepted ? '#218848' : '#AA0061'}">
+          <h4>4 · Feedback on the dispute <small>${escapeHtml(d.dispute_resolved_by || '')} · ${when(d.dispute_resolved_at)}</small></h4>
+          <div style="font-weight:700;margin-bottom:6px">${accepted ? '✅ Dispute accepted — review corrected' : '❌ Dispute rejected — original review stands'}</div>
+          <div class="dsp-text">${escapeHtml(d.dispute_resolution_notes || '—')}</div>
+        </div>`}`;
   document.getElementById('modal-actions').innerHTML = (isOpen && currentRole === 'admin')
     ? `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
        <button class="btn btn-primary" onclick="closeModal();openDisputeResolution(window._dspCurrent)">⚖️ Resolve</button>`
@@ -3281,7 +3326,7 @@ async function acceptDisputeCorrection() {
     final_comment:  document.getElementById('f-comment-final')?.value || '',
     resolution_notes: document.getElementById('dispute-resolution-note')?.value.trim() || '',
   };
-  if (!body.resolution_notes) { alert('Please add a resolution note explaining the decision.'); document.getElementById('dispute-resolution-note').focus(); return; }
+  if (!body.resolution_notes) { alert('Please add your feedback on the dispute.'); document.getElementById('dispute-resolution-note').focus(); return; }
   try {
     await api('resolveDispute', {}, body);
     alert('Dispute accepted — score corrected.');
@@ -3294,7 +3339,7 @@ async function acceptDisputeCorrection() {
 async function rejectDisputeFlow() {
   if (!disputeMode) return;
   const notes = document.getElementById('dispute-resolution-note')?.value.trim() || '';
-  if (!notes) { alert('Please add a resolution note explaining why the dispute is rejected.'); document.getElementById('dispute-resolution-note').focus(); return; }
+  if (!notes) { alert('Please add your feedback on the dispute: why it does not apply.'); document.getElementById('dispute-resolution-note').focus(); return; }
   try {
     await api('resolveDispute', {}, {
       ticket: disputeMode.ticket, reviewer_email: disputeMode.reviewer,
