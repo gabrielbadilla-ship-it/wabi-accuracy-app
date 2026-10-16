@@ -263,6 +263,11 @@ tr:hover td{background:var(--card-bg)}
 .dsp-chip{display:inline-block;font-size:11px;padding:2px 8px;margin:1px 4px 1px 0;border-radius:6px;background:#FCE8F2;color:var(--cu-magenta);white-space:nowrap}
 .dsp-chip.dsp-removed{background:#D6EFDF;color:#1a6b3a}
 .dsp-chip.dsp-kept{background:#F1EFE9;color:#6B6963}
+.rc-chip{display:inline-block;font-size:11px;padding:2px 8px;margin:1px 4px 2px 0;border-radius:6px;background:#FCE8F2;color:var(--cu-magenta);white-space:nowrap}
+.rc-chip.rc-gone{background:#F1EFE9;color:#9A978F;text-decoration:line-through}
+.rc-chip.rc-ok{background:#D6EFDF;color:#1a6b3a}
+.rc-chip.rc-new::before{content:'＋ ';font-weight:700}
+.rc-muted{font-size:11px;color:var(--text-muted)}
 .dsp-block{border:1px solid var(--border);border-left:4px solid var(--c);border-radius:10px;padding:12px 14px;margin-bottom:10px}
 .dsp-block h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--c);margin-bottom:6px}
 .dsp-block h4 small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);margin-left:6px}
@@ -3099,15 +3104,40 @@ function renderDisputesTable(disputes) {
       <td style="white-space:nowrap">${changed
         ? `<span class="badge badge-gray">${original}</span> → <span class="badge ${scoreClass(current)}">${current}</span>`
         : `<span class="badge ${scoreClass(current)}">${current} / 100</span>`}</td>
-      <td style="max-width:280px;font-size:12px">${d.disputed_items ? disputedOutcomes(d).map(disputedChip).join('') : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td style="max-width:260px">${disputeRCCell(d, 'original')}</td>
+      <td style="max-width:260px">${disputeRCCell(d, 'final')}</td>
       <td>${statusTag}</td>
     </tr>`;
   }).join('');
   document.getElementById('disputes-table').innerHTML = `
     <table>
-      <thead><tr><th>Ticket</th><th>Lead</th><th>Reviewer</th><th>Week</th><th>Score</th><th>Disputed root causes</th><th>Status</th></tr></thead>
+      <thead><tr><th>Ticket</th><th>Lead</th><th>Reviewer</th><th>Week</th><th>Score</th><th>Original root causes</th><th>Final root causes</th><th>Status</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// Root causes of a disputed review, as chips: the original marking or the
+// marking after the dispute was resolved.
+function disputeRCList(src) {
+  return RUBRIC_CATS.flatMap(c => splitList(src[c.rc]).map(rc => ({ rc, cat: c.label })));
+}
+function disputeRCCell(d, which) {
+  const isOpen = d.dispute_status === 'Open';
+  const orig = d.original_review || null;
+  // While the dispute is open, the review hasn't been touched yet: current = original
+  const original = orig ? disputeRCList(orig) : (isOpen ? disputeRCList(d) : null);
+  const final = isOpen ? null : disputeRCList(d);
+  const chip = (x, cls) => `<span class="rc-chip ${cls || ''}" title="${escapeHtml(x.cat)}">${escapeHtml(x.rc)}</span>`;
+  if (which === 'original') {
+    if (original === null) return '<span class="rc-muted" title="Resolved before original root causes were tracked">Not recorded</span>';
+    if (!original.length) return '<span class="rc-chip rc-ok">No fails</span>';
+    const finalSet = final ? new Set(final.map(x => x.rc)) : null;
+    return original.map(x => chip(x, finalSet && !finalSet.has(x.rc) ? 'rc-gone' : '')).join('');
+  }
+  if (final === null) return '<span class="rc-muted">⏳ Pending resolution</span>';
+  if (!final.length) return '<span class="rc-chip rc-ok">No fails</span>';
+  const origSet = original ? new Set(original.map(x => x.rc)) : null;
+  return final.map(x => chip(x, origSet && !origSet.has(x.rc) ? 'rc-new' : '')).join('');
 }
 
 function splitDisputeItems(items) {
