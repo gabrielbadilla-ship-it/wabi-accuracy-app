@@ -323,6 +323,22 @@ tr:hover td{background:var(--card-bg)}
 
 /* CHARTS */
 .chart-wrap{position:relative;height:220px;margin-top:8px}
+.dash-section{font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:8px 0 12px;padding-top:12px;border-top:1px solid var(--border)}
+.dash-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dash-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:900px){.dash-grid-2,.dash-grid-4{grid-template-columns:1fr}}
+.dash-delta{font-size:11px;font-weight:600;margin-top:4px}
+.dash-note{background:#FFF8E6;border:1px solid #F5DFA6;border-radius:8px;padding:9px 14px;margin-bottom:12px;font-size:12px;color:var(--text)}
+.dash-cat-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px;display:flex;justify-content:space-between}
+.dash-cat-title span{font-weight:500}
+.dash-bar-row{display:grid;grid-template-columns:minmax(120px,40%) 1fr 36px;gap:10px;align-items:center;margin-bottom:8px;font-size:12px}
+.dash-bar-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-bar-label span{display:block;font-size:10px;color:var(--text-muted)}
+.dash-bar-track{position:relative;background:#F0EFE9;border-radius:6px;height:14px;overflow:visible}
+.dash-bar-fill{height:100%;border-radius:6px;transition:width .3s}
+.dash-bar-marker{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--cu-black)}
+.dash-bar-value{text-align:right;font-weight:700}
+
 .charts-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 
 /* TABS */
@@ -427,75 +443,16 @@ tr:hover td{background:var(--card-bg)}
       <div class="page-title">Dashboard</div>
       <div class="page-sub">Wabi Accuracy overview — <span class="current-half-label"></span></div>
       <div class="filters-bar">
-        <select id="dash-month" onchange="loadDashboard(); loadVolumeOverview();">
-          <option value="">All months</option>
-          <option value="1">January</option><option value="2">February</option>
-          <option value="3">March</option><option value="4">April</option>
-          <option value="5">May</option><option value="6">June</option>
-          <option value="7">July</option><option value="8">August</option>
-          <option value="9">September</option><option value="10">October</option>
-          <option value="11">November</option><option value="12">December</option>
-        </select>
-        <button class="btn btn-secondary btn-sm" onclick="loadDashboard(); loadVolumeOverview(); loadComplianceOverview();">↺ Refresh</button>
+        <div class="tabs" id="dash-mode-tabs" style="margin-bottom:0">
+          <div class="tab active" data-mode="week" onclick="setDashMode('week')">📅 Weekly</div>
+          <div class="tab" data-mode="month" onclick="setDashMode('month')">🗓️ Monthly</div>
+        </div>
+        <select id="dash-period" onchange="loadDashboard(Number(this.value))"></select>
+        <button class="btn btn-secondary btn-sm" onclick="loadDashboard(dashState.period)">↺ Refresh</button>
+        <span id="dash-period-info" style="font-size:12px;color:var(--text-muted)"></span>
       </div>
       <div id="dash-cache-status"></div>
-
-      <!-- ══════════ PART 1: VOLUME & EFFICIENCY (Wabi Weekly Summary / Lead Weekly Volume) ══════════ -->
-      <h3 style="font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:4px 0 12px;padding-top:8px;border-top:1px solid var(--border)">📊 Volume & Efficiency</h3>
-      <div id="vol-section" style="margin-bottom:24px"></div>
-
-      <!-- ══════════ PART 2: AUDIT ACCURACY ══════════ -->
-      <h3 style="font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:4px 0 12px;padding-top:8px;border-top:1px solid var(--border)">🎯 Audit Accuracy</h3>
-      <div class="metrics" id="dash-metrics">
-        <div class="metric"><div class="label">Total audits</div><div class="value">—</div></div>
-        <div class="metric"><div class="label">Avg score</div><div class="value">—</div></div>
-        <div class="metric"><div class="label">Below target</div><div class="value">—</div></div>
-      </div>
-      <!-- Category donuts -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px" id="dash-cat-donuts">
-        <div class="card" style="text-align:center;padding:14px">
-          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Validation</div>
-          <div style="position:relative;width:90px;height:90px;margin:0 auto 8px"><canvas id="d-val" width="90" height="90"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--cu-black)" id="pct-val">—</div></div>
-          <div style="font-size:10px;color:var(--text-muted);text-align:left" id="rc-val-legend"></div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:5px;border-top:1px solid var(--border);text-align:left" id="mom-val"></div>
-        </div>
-        <div class="card" style="text-align:center;padding:14px">
-          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Issue Resolution</div>
-          <div style="position:relative;width:90px;height:90px;margin:0 auto 8px"><canvas id="d-ir" width="90" height="90"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--cu-black)" id="pct-ir">—</div></div>
-          <div style="font-size:10px;color:var(--text-muted);text-align:left" id="rc-ir-legend"></div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:5px;border-top:1px solid var(--border);text-align:left" id="mom-ir"></div>
-        </div>
-        <div class="card" style="text-align:center;padding:14px">
-          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Process & Escalation</div>
-          <div style="position:relative;width:90px;height:90px;margin:0 auto 8px"><canvas id="d-pe" width="90" height="90"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--cu-black)" id="pct-pe">—</div></div>
-          <div style="font-size:10px;color:var(--text-muted);text-align:left" id="rc-pe-legend"></div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:5px;border-top:1px solid var(--border);text-align:left" id="mom-pe"></div>
-        </div>
-        <div class="card" style="text-align:center;padding:14px">
-          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Coaching & Guidance</div>
-          <div style="position:relative;width:90px;height:90px;margin:0 auto 8px"><canvas id="d-cg" width="90" height="90"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--cu-black)" id="pct-cg">—</div></div>
-          <div style="font-size:10px;color:var(--text-muted);text-align:left" id="rc-cg-legend"></div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:5px;border-top:1px solid var(--border);text-align:left" id="mom-cg"></div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <div class="card"><h3>Avg score by month</h3><div class="chart-wrap"><canvas id="chart-dash-mom"></canvas></div></div>
-        <div class="card"><h3>By supervisor</h3><div id="dash-sup-table"></div></div>
-      </div>
-      <div class="card" style="margin-bottom:16px"><h3>By lead</h3><div id="dash-lead-table"></div></div>
-
-      <!-- ══════════ PART 3: SUPERVISOR COMPLIANCE ══════════ -->
-      <h3 style="font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:4px 0 12px;padding-top:8px;border-top:1px solid var(--border)">✅ Supervisor Compliance</h3>
-      <div class="metrics" id="comp-overview-metrics">
-        <div class="metric"><div class="label">Reviews completed</div><div class="value">—</div></div>
-        <div class="metric"><div class="label">Reviews pending</div><div class="value">—</div></div>
-        <div class="metric"><div class="label">Feedback delivered</div><div class="value">—</div></div>
-        <div class="metric"><div class="label">Feedback pending</div><div class="value">—</div></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <div class="card"><h3>Reviews pending completion (this week)</h3><div id="comp-reviews-table"></div></div>
-        <div class="card"><h3>Feedback pending to deliver (this month)</h3><div id="comp-feedback-table"></div></div>
-      </div>
+      <div id="dash-body"><div class="empty"><span class="spinner"></span> Loading...</div></div>
     </div>
 
     <!-- FORM -->
@@ -1300,10 +1257,6 @@ async function initApp() {
     });
   }
 
-  // Set dashboard default to current month
-  const curMonth = new Date().getMonth() + 1;
-  document.getElementById('dash-month').value = String(curMonth);
-
   await loadHierarchy();
   await populateSupFilter();
   populateLeadFilter();
@@ -1315,8 +1268,6 @@ async function initApp() {
   // Dashboard + sidebar badges (Feedback Loop, Disputes) load next,
   // together in the background — they're needed right away for the UI.
   loadDashboard();
-  loadVolumeOverview();
-  loadComplianceOverview();
   loadFeedbackLoop();
   loadDisputes();
   if (currentRole === 'admin') loadRoles();
@@ -1454,7 +1405,7 @@ async function refreshMasterData(btn) {
     alert(`✓ Refreshed!\n\nRubric Responses: ${result.counts.rubric_responses}\nSamples Assigned: ${result.counts.samples_assigned}\nWeekly Summary: ${result.counts.weekly_summary}\nSub Contact Reasons: ${result.counts.sub_contact_reasons}\nLead Volume: ${result.counts.lead_volume}`);
 
     // Reload whatever's currently on screen so the new snapshot shows right away
-    loadDashboard(); loadVolumeOverview(); loadComplianceOverview();
+    loadDashboard();
     if (document.getElementById('page-reviews')?.classList.contains('active')) reviewsTab(reviewsView);
     if (document.getElementById('page-leadperf')?.classList.contains('active')) loadLeadAnalytics();
     renderCacheStatusBar('dash-cache-status');
@@ -1466,244 +1417,272 @@ async function refreshMasterData(btn) {
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────
-async function loadDashboard() {
+// One call (getDashboardV3) returns everything for a single period,
+// weekly or monthly, read live from the sheets. Weeks run Sun–Sat and a
+// week belongs to the month of its Wednesday, so the monthly view is the
+// sum of its weeks. Audits are counted in the week of the Wabi.
+const dashState = { mode: 'week', period: null, data: null };
+let chartDashTrend, chartDashVolume, chartDashReasons;
+
+function setDashMode(mode) {
+  if (dashState.mode === mode) return;
+  dashState.mode = mode;
+  dashState.period = null;
+  document.querySelectorAll('#dash-mode-tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  loadDashboard();
+}
+
+// Sun–Sat range of a week number (week 1 contains Jan 1), as in Api.gs
+function weekRange(week, year) {
+  const jan1 = new Date(year, 0, 1);
+  const start = new Date(year, 0, 1 - jan1.getDay() + (week - 1) * 7);
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const f = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${f(start)} – ${f(end)}`;
+}
+
+function dashPeriodLabel(p, mode, year) {
+  return mode === 'month' ? (MONTH_NAMES[p] || 'M' + p) : `W${p} · ${weekRange(p, year)}`;
+}
+function dashShortLabel(p, mode) { return mode === 'month' ? (MONTH_NAMES[p] || 'M' + p).slice(0, 3) : 'W' + p; }
+
+// "▲ 3.2 vs W40" — goodUp=false for metrics where lower is better
+function dashDelta(cur, prev, opts = {}) {
+  const d = dashState.data;
+  if (cur === null || cur === undefined || prev === null || prev === undefined || !d || !d.prev_period) return '';
+  const diff = Math.round((cur - prev) * 10) / 10;
+  const vs = `vs ${dashShortLabel(d.prev_period, d.mode)}`;
+  if (diff === 0) return `<div class="dash-delta">= ${vs}</div>`;
+  const good = opts.goodUp === false ? diff < 0 : diff > 0;
+  const color = opts.neutral ? 'var(--text-muted)' : good ? 'var(--cu-green)' : 'var(--cu-magenta)';
+  return `<div class="dash-delta" style="color:${color}">${diff > 0 ? '▲' : '▼'} ${Math.abs(diff)}${opts.unit || ''} ${vs}</div>`;
+}
+
+function dashVal(v, unit = '') { return v === null || v === undefined || v === '' ? '—' : v + unit; }
+function dashScoreColor(s) { return s === null || s === undefined ? 'var(--text-muted)' : s >= 90 ? 'var(--cu-green)' : s >= 80 ? 'var(--cu-blue)' : s >= 60 ? 'var(--cu-orange)' : 'var(--cu-magenta)'; }
+
+// Horizontal bar row built with plain divs (no canvas needed)
+function dashBar(label, value, max, opts = {}) {
+  const pct = max > 0 && value > 0 ? Math.max(2, Math.round(value / max * 100)) : 0;
+  return `<div class="dash-bar-row">
+    <div class="dash-bar-label" title="${escapeHtml(label)}">${escapeHtml(label)}${opts.sub ? `<span>${escapeHtml(opts.sub)}</span>` : ''}</div>
+    <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${pct}%;background:${opts.color || 'var(--cu-gold)'}"></div>
+      ${opts.marker ? `<div class="dash-bar-marker" style="left:${opts.marker}%"></div>` : ''}</div>
+    <div class="dash-bar-value">${opts.text !== undefined ? opts.text : value}</div>
+  </div>`;
+}
+
+async function loadDashboard(period) {
+  if (period === undefined && dashState.period) period = dashState.period;
   renderCacheStatusBar('dash-cache-status');
-  const params = {
-    month: document.getElementById('dash-month').value,
-    half: CURRENT_HALF,
-    useCache: true,
-  };
+  const body = document.getElementById('dash-body');
+  body.style.opacity = dashState.data ? '.5' : '1';
   try {
-    const [d, a] = await Promise.all([
-      api('getDashboardV2', params),
-      api('getAnalytics', params),
-    ]);
-    document.getElementById('dash-metrics').innerHTML = `
-      <div class="metric"><div class="label">Total audits</div><div class="value">${d.total}</div></div>
-      <div class="metric"><div class="label">Avg score</div><div class="value ${d.avg_score>=90?'green':d.avg_score>=70?'amber':'red'}">${d.avg_score||'—'}%</div></div>
-      <div class="metric"><div class="label">Below target (&lt;${d.target||90})</div><div class="value ${a.below_target>0?'red':''}">${a.below_target||0}</div></div>
-    `;
-    renderDashMomChart(d.by_month);
-    renderCategoryDonuts(d.categories, d.rc_breakdown);
+    const d = await api('getDashboardV3', { mode: dashState.mode, period: period || '' });
+    body.style.opacity = '1';
+    if (d.error) throw new Error(d.error);
+    dashState.data = d;
+    dashState.period = d.period;
 
-    const supRows = (d.by_supervisor||[]).map(s => `
-      <tr><td>${s.email}</td><td>${s.count}</td>
-      <td><span class="badge ${scoreClass(s.avg_score)}">${s.avg_score}%</span></td></tr>`).join('');
-    document.getElementById('dash-sup-table').innerHTML = supRows
-      ? `<table><thead><tr><th>Supervisor</th><th>Audits</th><th>Avg score</th></tr></thead><tbody>${supRows}</tbody></table>`
-      : '<div class="empty">No data yet</div>';
+    const sel = document.getElementById('dash-period');
+    sel.innerHTML = [...(d.periods || [])].reverse()
+      .map(p => `<option value="${p}" ${p === d.period ? 'selected' : ''}>${dashPeriodLabel(p, d.mode, d.year)}</option>`).join('');
 
-    const leadRows = (d.by_lead||[]).map(l => `
-      <tr><td>${l.email}</td><td>${l.count}</td>
-      <td><span class="badge ${scoreClass(l.avg_score)}">${l.avg_score}%</span></td></tr>`).join('');
-    document.getElementById('dash-lead-table').innerHTML = leadRows
-      ? `<table><thead><tr><th>Lead</th><th>Audits</th><th>Avg score</th></tr></thead><tbody>${leadRows}</tbody></table>`
-      : '<div class="empty">No data yet</div>';
-  } catch(e) { console.error('loadDashboard:', e); }
+    if (d.empty) { body.innerHTML = '<div class="empty">No data yet</div>'; return; }
+
+    const info = document.getElementById('dash-period-info');
+    info.innerHTML = d.mode === 'month' && d.weeks.length
+      ? `Weeks ${d.weeks.map(w => 'W' + w).join(', ')}` : '';
+
+    renderDashboard(d);
+  } catch (e) {
+    body.style.opacity = '1';
+    console.error('loadDashboard:', e);
+    body.innerHTML = `<div class="empty">Couldn't load the dashboard: ${escapeHtml(e.message)}</div>`;
+  }
 }
 
-// ── VOLUME & EFFICIENCY (Part 1) ────────────────────────────
-// Handles "Reopen %" whether Sheets stored it as text ("12%") or
-// auto-converted it to a decimal with percent formatting (0.12) — a
-// common Sheets quirk when a script writes a value that looks like a
-// percentage.
-function formatPct(v) {
-  if (v === '' || v === null || v === undefined) return '—';
-  if (typeof v === 'string' && v.trim().endsWith('%')) return v.trim();
-  const n = Number(v);
-  if (isNaN(n)) return String(v);
-  return Math.round(n <= 1 ? n * 100 : n) + '%';
-}
+function renderDashboard(d) {
+  const v = d.volume, a = d.audits, p = d.previous || {};
+  const unitName = d.mode === 'month' ? 'month' : 'week';
+  const label = dashPeriodLabel(d.period, d.mode, d.year);
 
-async function loadVolumeOverview() {
-  try {
-    const [rows, subReasons, leadVolume] = await Promise.all([
-      api('getWeeklySummary', { useCache: false }),
-      api('getSubContactReasons', { useCache: true }),
-      api('getLeadVolume', { useCache: true }),
-    ]);
-    const el = document.getElementById('vol-section');
-    if (!rows.length) {
-      el.innerHTML = '<div class="empty">No data yet</div>';
-      return;
-    }
+  const partial = d.partial ? `
+    <div class="dash-note">⏳ Audits for ${label} are still in progress — <strong>${a.completed} of ${a.assigned}</strong> completed.
+    Scores below can still change until every review is in.</div>` : '';
+  const openDisp = a.open_disputes ? `<div class="dash-note">⚖️ ${a.open_disputes} review${a.open_disputes>1?'s are':' is'} under dispute and left out of the scores until resolved.</div>` : '';
 
-    const sorted = [...rows].sort((a,b) => Number(a['Week']) - Number(b['Week']));
-    const latest = sorted[sorted.length - 1];
-    const latestWeek = Number(latest['Week']);
+  // ── KPIs ─────────────────────────────────────────────
+  const kpis = `
+    <div class="metrics">
+      <div class="metric"><div class="label">Wabis</div><div class="value">${dashVal(v && v.total)}</div>${dashDelta(v && v.total, p.wabis, { neutral: true })}</div>
+      <div class="metric"><div class="label">Reopen %</div><div class="value">${dashVal(v && v.reopen_pct, '%')}</div>${dashDelta(v && v.reopen_pct, p.reopen_pct, { goodUp: false, unit: ' pts' })}</div>
+      <div class="metric"><div class="label">Avg score <span style="font-weight:400">(target ${d.target})</span></div>
+        <div class="value" style="color:${dashScoreColor(a.avg_score)}">${dashVal(a.avg_score)}</div>${dashDelta(a.avg_score, p.avg_score)}</div>
+      <div class="metric"><div class="label">Reviews at target</div><div class="value">${dashVal(a.at_target_pct, '%')}</div>
+        <div class="dash-delta" style="color:var(--text-muted)">${a.at_target} of ${a.reviews} reviews</div></div>
+      <div class="metric"><div class="label">Audits completed</div><div class="value ${a.completed < a.assigned ? 'amber' : 'green'}">${a.completed}<span style="font-size:16px;color:var(--text-muted)"> / ${a.assigned}</span></div></div>
+      <div class="metric"><div class="label">Feedback provided</div><div class="value">${dashVal(a.feedback.pct, '%')}</div>
+        <div class="dash-delta" style="color:var(--text-muted)">${a.feedback.provided} provided · ${a.feedback.pending} pending${a.feedback.disputed ? ` · ${a.feedback.disputed} disputed` : ''}</div></div>
+    </div>`;
 
-    // "This month" always reflects a real month — the dash-month filter
-    // if one is set, otherwise the most recent month recorded.
-    const monthFilter = document.getElementById('dash-month').value;
-    const effectiveMonth = monthFilter ? Number(monthFilter) : Number(latest['Month']);
-    const monthRows = sorted.filter(r => Number(r['Month']) === effectiveMonth);
-    const monthTotal = monthRows.reduce((s,r) => s + (Number(r['Total Wabis'])||0), 0);
+  // ── Volume & Efficiency ──────────────────────────────
+  const leadVolMax = Math.max(1, ...d.lead_volume.map(l => l.total));
+  const leadVolRows = d.lead_volume.map(l => `
+    <tr><td>${escapeHtml(l.name)}</td>
+      <td style="width:38%"><div class="dash-bar-track" style="height:10px"><div class="dash-bar-fill" style="width:${Math.round(l.total/leadVolMax*100)}%;background:var(--cu-gold)"></div></div></td>
+      <td style="text-align:right;font-weight:600">${l.total}</td>
+      <td style="text-align:right;color:var(--text-muted);font-size:12px">${l.cr} / ${l.question} / ${l.live}</td>
+      <td style="text-align:right">${dashVal(l.reopen_pct, '%')}</td>
+      <td style="text-align:right">${dashVal(l.frt)}</td>
+      <td style="text-align:right">${dashVal(l.full_res)}</td></tr>`).join('');
 
-    const latestSubReasons = subReasons
-      .filter(r => Number(r.week) === latestWeek)
-      .sort((a,b) => b.count - a.count);
-    const subReasonTotal = latestSubReasons.reduce((s,r) => s + r.count, 0);
-    const subReasonRows = latestSubReasons.map(r => {
-      const pct = subReasonTotal > 0 ? Math.round(r.count / subReasonTotal * 1000) / 10 : 0;
-      return `<tr><td>${r.contact_reason}</td><td>${r.sub_contact_reason}</td>
-        <td style="text-align:right;font-weight:600">${r.count}</td>
-        <td style="text-align:right;color:var(--text-muted)">${pct}%</td></tr>`;
+  const subRows = d.sub_reasons.map(r => `
+    <tr><td>${escapeHtml(r.contact_reason)}</td><td>${escapeHtml(r.sub_contact_reason)}</td>
+    <td style="text-align:right;font-weight:600">${r.count}</td><td style="text-align:right;color:var(--text-muted)">${r.pct}%</td></tr>`).join('');
+
+  const volume = v ? `
+    <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+      <div class="metric"><div class="label">C&R</div><div class="value" style="font-size:22px">${v.cr}</div></div>
+      <div class="metric"><div class="label">Questions</div><div class="value" style="font-size:22px">${v.question}</div></div>
+      <div class="metric"><div class="label">Live</div><div class="value" style="font-size:22px">${v.live}</div></div>
+      <div class="metric"><div class="label">Avg FRT (min)</div><div class="value" style="font-size:22px">${dashVal(v.frt)}</div>${dashDelta(v.frt, p.frt, { goodUp: false })}</div>
+      <div class="metric"><div class="label">Avg full res (min)</div><div class="value" style="font-size:22px">${dashVal(v.full_res)}</div>${dashDelta(v.full_res, p.full_res, { goodUp: false })}</div>
+    </div>
+    <div class="dash-grid-2">
+      <div class="card"><h3>Wabis per ${unitName}</h3><div class="chart-wrap"><canvas id="chart-dash-volume"></canvas></div></div>
+      <div class="card"><h3>By contact reason — ${label}</h3><div class="chart-wrap" style="height:260px"><canvas id="chart-dash-reasons"></canvas></div></div>
+    </div>
+    <div class="card"><h3>Volume by lead — ${label}</h3>
+      ${leadVolRows ? `<div style="overflow-x:auto"><table><thead><tr><th>Lead</th><th></th><th style="text-align:right">Total</th>
+        <th style="text-align:right">C&R / Q / Live</th><th style="text-align:right">Reopen %</th><th style="text-align:right">Avg FRT</th><th style="text-align:right">Avg full res</th></tr></thead>
+        <tbody>${leadVolRows}</tbody></table></div>` : '<div class="empty">No lead volume for this period</div>'}</div>
+    <div class="card"><h3>By sub contact reason — ${label}</h3>
+      <div style="max-height:320px;overflow-y:auto">${subRows
+        ? `<table><thead><tr><th>Contact reason</th><th>Sub contact reason</th><th style="text-align:right">Count</th><th style="text-align:right">% of total</th></tr></thead><tbody>${subRows}</tbody></table>`
+        : '<div class="empty">No sub contact reason data for this period</div>'}</div></div>`
+    : `<div class="empty" style="margin-bottom:16px">No Wabi volume loaded for ${label}. Run "Generate weekly report only" in the sheet.</div>`;
+
+  // ── Audit Accuracy ───────────────────────────────────
+  let accuracy;
+  if (!a.reviews) {
+    accuracy = `<div class="empty">No completed audits for ${label} yet.</div>`;
+  } else {
+    const catCards = a.categories.map(c => {
+      const prev = p.pass_rates ? p.pass_rates[c.key] : null;
+      const rcs = c.root_causes.slice(0, 3).map(r => `<div style="display:flex;justify-content:space-between;gap:8px"><span>${escapeHtml(r.name)}</span><strong>${r.count}</strong></div>`).join('');
+      return `<div class="card" style="padding:16px;margin-bottom:0">
+        <div class="dash-cat-title">${c.label} <span>${c.max} pts</span></div>
+        <div style="font-size:26px;font-weight:700;color:${dashScoreColor(c.pass_rate)}">${dashVal(c.pass_rate, '%')}</div>
+        <div style="font-size:11px;color:var(--text-muted)">pass rate · ${c.fails} fail${c.fails === 1 ? '' : 's'}</div>
+        ${dashDelta(c.pass_rate, prev, { unit: ' pts' })}
+        <div class="dash-bar-track" style="margin:10px 0"><div class="dash-bar-fill" style="width:${c.pass_rate || 0}%;background:${dashScoreColor(c.pass_rate)}"></div></div>
+        <div style="font-size:11px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px">${rcs || 'No fails 🎉'}</div>
+      </div>`;
     }).join('');
 
-    const latestLeadVolume = leadVolume
-      .filter(r => Number(r.week) === latestWeek)
-      .sort((a,b) => (b.total||0) - (a.total||0));
-    const leadVolumeRows = latestLeadVolume.map(r => `
-      <tr>
-        <td>${r.lead_name || r.lead_email}</td>
-        <td style="text-align:right;font-weight:600">${r.total||0}</td>
-        <td style="text-align:right">${formatPct(r.reopen_pct)}</td>
-        <td style="text-align:right">${r.with_reopens||0}</td>
-        <td style="text-align:right">${r.avg_frt!==''&&r.avg_frt!==undefined?r.avg_frt:'—'}</td>
-        <td style="text-align:right">${r.avg_full_res!==''&&r.avg_full_res!==undefined?r.avg_full_res:'—'}</td>
-      </tr>`).join('');
+    const rcMax = Math.max(1, ...a.top_root_causes.map(r => r.count));
+    const rcBars = a.top_root_causes.slice(0, 8).map(r => dashBar(r.name, r.count, rcMax, { sub: r.category, color: 'var(--cu-magenta)' })).join('');
+    const compMax = Math.max(1, ...a.competencies.map(c => c.count));
+    const compBars = a.competencies.map(c => dashBar(c.name, c.count, compMax, { color: 'var(--cu-blue)' })).join('');
 
-    const latestAvgFRT = latest['Avg First Reply Time'] !== undefined
-      ? latest['Avg First Reply Time']
-      : latest['Avg FRT (min)'];
-    const latestAvgFullRes = latest['Avg Full Resolution Time'] !== undefined
-      ? latest['Avg Full Resolution Time']
-      : latest['Avg Full Res (min)'];
+    const bandColors = { '90-100': 'var(--cu-green)', '80-89': 'var(--cu-blue)', '60-79': 'var(--cu-orange)', 'Below 60': 'var(--cu-magenta)' };
+    const bandMax = Math.max(1, ...Object.values(a.bands));
+    const bandBars = Object.keys(bandColors).map(k => dashBar(k, a.bands[k], bandMax, { color: bandColors[k] })).join('');
 
-    el.innerHTML = `
-      <div class="metrics" style="margin-bottom:16px">
-        <div class="metric"><div class="label">Wabis — ${MONTH_NAMES[effectiveMonth]||'M'+effectiveMonth}</div><div class="value">${monthTotal}</div></div>
-        <div class="metric"><div class="label">Wabis — last week (W${latest['Week']})</div><div class="value">${latest['Total Wabis']||0}</div></div>
-        <div class="metric"><div class="label">Reopen % (last week)</div><div class="value">${formatPct(latest['Reopen %'])}</div></div>
-        <div class="metric"><div class="label">Avg FRT (min)</div><div class="value">${latestAvgFRT!==''&&latestAvgFRT!==undefined?latestAvgFRT:'—'}</div></div>
-        <div class="metric"><div class="label">Avg Full Res (min)</div><div class="value">${latestAvgFullRes!==''&&latestAvgFullRes!==undefined?latestAvgFullRes:'—'}</div></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <div class="card"><h3>Wabis per week</h3><div class="chart-wrap"><canvas id="chart-vol-weekly"></canvas></div></div>
-        <div class="card"><h3>By contact reason — W${latest['Week']}</h3><div class="chart-wrap"><canvas id="chart-vol-reasons"></canvas></div></div>
-      </div>
-      <div class="card" style="margin-bottom:16px">
-        <h3>By sub contact reason — W${latest['Week']}</h3>
-        <div style="max-height:320px;overflow-y:auto">
-          ${subReasonRows
-            ? `<table><thead><tr><th>Contact reason</th><th>Sub contact reason</th><th style="text-align:right">Count</th><th style="text-align:right">% of total</th></tr></thead><tbody>${subReasonRows}</tbody></table>`
-            : '<div class="empty">No sub contact reason data for this week yet</div>'}
-        </div>
-      </div>
-      <div class="card">
-        <h3>Volume by lead — W${latest['Week']}</h3>
-        <div style="max-height:320px;overflow-y:auto">
-          ${leadVolumeRows
-            ? `<table><thead><tr><th>Lead</th><th style="text-align:right">Total</th><th style="text-align:right">Reopen %</th><th style="text-align:right">Reopen count</th><th style="text-align:right">Avg FRT (min)</th><th style="text-align:right">Avg Full Res (min)</th></tr></thead><tbody>${leadVolumeRows}</tbody></table>`
-            : '<div class="empty">No lead volume data for this week yet</div>'}
-        </div>
-      </div>`;
+    const prevLeads = p.leads || {};
+    const leadRows = a.leads.map((l, i) => {
+      const prev = prevLeads[l.email];
+      const diff = prev !== undefined && prev !== null ? Math.round((l.avg - prev) * 10) / 10 : null;
+      const tag = l.avg >= d.target
+        ? (i < 3 ? '<span class="badge badge-green">🏆 Top</span>' : '<span class="badge badge-green">On target</span>')
+        : '<span class="badge badge-red">Needs attention</span>';
+      return `<tr>
+        <td style="color:var(--text-muted);width:28px">${i + 1}</td>
+        <td><strong>${escapeHtml(l.name)}</strong><div style="font-size:11px;color:var(--text-muted)">${escapeHtml(l.supervisor || '')}</div></td>
+        <td style="width:30%"><div class="dash-bar-track" style="height:12px">
+          <div class="dash-bar-fill" style="width:${l.avg}%;background:${dashScoreColor(l.avg)}"></div>
+          <div class="dash-bar-marker" style="left:${d.target}%"></div></div></td>
+        <td style="text-align:right;font-weight:700;color:${dashScoreColor(l.avg)}">${l.avg}</td>
+        <td style="text-align:right;font-size:12px;color:${diff === null ? 'var(--text-muted)' : diff >= 0 ? 'var(--cu-green)' : 'var(--cu-magenta)'}">${diff === null ? '—' : (diff > 0 ? '▲ ' : diff < 0 ? '▼ ' : '= ') + Math.abs(diff)}</td>
+        <td style="text-align:right">${l.count}</td>
+        <td style="text-align:right">${l.at_target}%</td>
+        <td style="font-size:12px">${escapeHtml(l.top_root_cause || '—')}</td>
+        <td>${tag}</td></tr>`;
+    }).join('');
 
-    renderVolumeWeeklyChart(sorted.slice(-12));
-    renderVolumeReasonsChart(latest);
-  } catch(e) { console.error('loadVolumeOverview:', e); }
+    accuracy = `
+      <div class="dash-grid-2">
+        <div class="card"><h3>Avg score per ${unitName}</h3><div class="chart-wrap"><canvas id="chart-dash-trend"></canvas></div></div>
+        <div class="card"><h3>Score distribution — ${label}</h3><div style="margin-top:14px">${bandBars}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:10px">${a.perfect} perfect score${a.perfect === 1 ? '' : 's'} (100) out of ${a.reviews} reviews</div></div>
+      </div>
+      <div class="dash-grid-4">${catCards}</div>
+      <div class="dash-grid-2" style="margin-top:16px">
+        <div class="card"><h3>Top root causes — ${label}</h3>${rcBars || '<div class="empty">No root causes marked 🎉</div>'}</div>
+        <div class="card"><h3>Career Path competencies flagged</h3>${compBars || '<div class="empty">No competencies flagged</div>'}</div>
+      </div>
+      <div class="card"><h3>Lead ranking — ${label}</h3>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Sorted by avg score. The line on each bar is the ${d.target} target; the change is vs ${d.prev_period ? dashShortLabel(d.prev_period, d.mode) : 'the previous period'}.</div>
+        <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Lead</th><th></th><th style="text-align:right">Avg</th><th style="text-align:right">Change</th>
+          <th style="text-align:right">Reviews</th><th style="text-align:right">At target</th><th>Top root cause</th><th></th></tr></thead>
+          <tbody>${leadRows}</tbody></table></div></div>`;
+  }
+
+  document.getElementById('dash-body').innerHTML = `
+    ${partial}${openDisp}
+    ${kpis}
+    <h3 class="dash-section">📊 Volume & Efficiency</h3>
+    ${volume}
+    <h3 class="dash-section">🎯 Audit Accuracy</h3>
+    ${accuracy}`;
+
+  renderDashCharts(d);
 }
 
-let chartVolWeekly, chartVolReasons;
+function renderDashCharts(d) {
+  const labels = d.trend.map(t => dashShortLabel(t.period, d.mode));
+  const isCurrent = d.trend.map(t => t.period === d.period);
 
-function renderVolumeWeeklyChart(rows) {
-  const ctx = document.getElementById('chart-vol-weekly')?.getContext('2d');
-  if (!ctx) return;
-  if (chartVolWeekly) chartVolWeekly.destroy();
-  chartVolWeekly = new Chart(ctx, {
+  const volCtx = document.getElementById('chart-dash-volume');
+  if (chartDashVolume) chartDashVolume.destroy();
+  if (volCtx) chartDashVolume = new Chart(volCtx.getContext('2d'), {
     type: 'bar',
-    data: {
-      labels: rows.map(r => 'W'+r['Week']),
-      datasets: [{ data: rows.map(r => Number(r['Total Wabis'])||0), backgroundColor: '#FFB81C', borderRadius: 6, borderSkipped: false }]
-    },
-    options: { responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.raw} Wabis`}} },
-      scales:{ y:{beginAtZero:true,grid:{color:'#F2F1EC'}}, x:{grid:{display:false}} } }
+    data: { labels, datasets: [{ data: d.trend.map(t => t.wabis || 0),
+      backgroundColor: isCurrent.map(c => c ? '#FFB81C' : '#F5DFA6'), borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.raw} Wabis` } } },
+      scales: { y: { beginAtZero: true, grid: { color: '#F2F1EC' } }, x: { grid: { display: false } } } }
   });
-}
 
-function renderVolumeReasonsChart(row) {
-  const ctx = document.getElementById('chart-vol-reasons')?.getContext('2d');
-  if (!ctx) return;
-  if (chartVolReasons) chartVolReasons.destroy();
-  const reasons = [
-    ['Order Management',     row['Order Management']],
-    ['Delivery Experience',  row['Delivery Experience']],
-    ['Billing and Payments', row['Billing and Payments']],
-    ['Account Management',   row['Account Management']],
-    ['Meal Experience',      row['Meal Experience']],
-    ['Other',                row['Other']],
-    ['Order Experience',     row['Order Experience']],
-    ['Product and Service',  row['Product and Service']],
-    ['User Experience',      row['User Experience']],
-    ['No Contact Reason',    row['No Contact Reason']],
-  ];
-  chartVolReasons = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: reasons.map(r => r[0]),
-      datasets: [{ data: reasons.map(r => Number(r[1])||0), backgroundColor: '#475CC7', borderRadius: 4, borderSkipped: false }]
-    },
-    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      scales:{ x:{beginAtZero:true,grid:{color:'#F2F1EC'}}, y:{grid:{display:false},ticks:{font:{size:11}}} } }
+  const rCtx = document.getElementById('chart-dash-reasons');
+  if (chartDashReasons) chartDashReasons.destroy();
+  if (rCtx && d.volume) {
+    const reasons = Object.entries(d.volume.reasons).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    chartDashReasons = new Chart(rCtx.getContext('2d'), {
+      type: 'bar',
+      data: { labels: reasons.map(r => r[0]), datasets: [{ data: reasons.map(r => r[1]), backgroundColor: '#475CC7', borderRadius: 4, borderSkipped: false }] },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.raw} (${Math.round(c.raw / (d.volume.total || 1) * 100)}%)` } } },
+        scales: { x: { beginAtZero: true, grid: { color: '#F2F1EC' } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+    });
+  }
+
+  const tCtx = document.getElementById('chart-dash-trend');
+  if (chartDashTrend) chartDashTrend.destroy();
+  if (tCtx) chartDashTrend = new Chart(tCtx.getContext('2d'), {
+    data: { labels, datasets: [
+      { type: 'line', label: 'Avg score', data: d.trend.map(t => t.avg_score), borderColor: '#2C2B2B', backgroundColor: '#2C2B2B',
+        pointBackgroundColor: d.trend.map(t => dashScoreColor(t.avg_score)), pointRadius: 5, tension: .3, spanGaps: true, yAxisID: 'y' },
+      { type: 'line', label: `Target ${d.target}`, data: d.trend.map(() => d.target), borderColor: '#218848', borderDash: [6, 4], pointRadius: 0, borderWidth: 1.5, yAxisID: 'y' },
+      { type: 'bar', label: 'Reviews', data: d.trend.map(t => t.reviews), backgroundColor: 'rgba(255,184,28,.35)', borderRadius: 4, yAxisID: 'y2' },
+    ] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+      scales: { y: { min: 0, max: 100, grid: { color: '#F2F1EC' } },
+                y2: { position: 'right', beginAtZero: true, grid: { display: false }, ticks: { precision: 0 } },
+                x: { grid: { display: false } } } }
   });
-}
-
-// ── SUPERVISOR COMPLIANCE (Part 3) ──────────────────────────
-async function loadComplianceOverview() {
-  try {
-    const compliance = await api('getCompliance', { half: CURRENT_HALF });
-
-    // Reviews pending completion — only the most recent (active) week
-    const maxWeek = compliance.reduce((max, r) => Math.max(max, r.week||0), 0);
-    const currentWeekRows = compliance.filter(r => r.week === maxWeek);
-
-    // Feedback for the month of the most recent assigned week (W40 belongs to
-    // September even when it's reviewed in October)
-    const feedbackMonth = (currentWeekRows[0] && Number(currentWeekRows[0].month)) || (new Date().getMonth() + 1);
-    const feedback = await api('getFeedbackLoop', { month: feedbackMonth });
-    const reviewsCompleted = currentWeekRows.reduce((s,r) => s + (r.completed||0), 0);
-    const reviewsPending   = currentWeekRows.reduce((s,r) => s + (r.pending||0), 0);
-
-    // Feedback for the current month (same numbers as Pending Feedback → Team overview)
-    const feedbackMonthRows = (feedback.bySupervisor || []).filter(r => r.needed > 0);
-    const feedbackDelivered = (feedback.totals || {}).provided || 0;
-    const feedbackPending   = (feedback.totals || {}).pending || 0;
-
-    document.getElementById('comp-overview-metrics').innerHTML = `
-      <div class="metric"><div class="label">Reviews completed</div><div class="value green">${reviewsCompleted}</div></div>
-      <div class="metric"><div class="label">Reviews pending</div><div class="value ${reviewsPending>0?'amber':''}">${reviewsPending}</div></div>
-      <div class="metric"><div class="label">Feedback provided</div><div class="value green">${feedbackDelivered}</div></div>
-      <div class="metric"><div class="label">Feedback pending</div><div class="value ${feedbackPending>0?'amber':''}">${feedbackPending}</div></div>
-    `;
-
-    const absences = await getAbsences();
-    const leadEmails = new Set(hierarchy.map(h => String(h.leadEmail || '').toLowerCase().trim()));
-    const absentRows = absences
-      .filter(a => a.email && Number(a.week) === maxWeek && !leadEmails.has(a.email) && !currentWeekRows.some(r => r.supervisor === a.email))
-      .map(a => `<tr><td>${escapeHtml(a.email)}${absenceBadge(a)}</td><td colspan="4" style="color:var(--text-muted);font-size:12px">Not assigned this week</td></tr>`).join('');
-    const reviewRows = currentWeekRows
-      .sort((a,b) => a.compliance - b.compliance)
-      .map(r => `
-        <tr><td>${escapeHtml(r.name || r.supervisor)}${absenceBadge(absenceOf(absences, r.supervisor, maxWeek))}</td><td>${r.assigned}</td><td>${r.completed}</td>
-        <td style="color:${r.pending>0?'var(--cu-magenta)':'var(--text-muted)'};font-weight:${r.pending>0?'600':'400'}">${r.pending}</td>
-        <td><span class="badge ${r.compliance>=90?'badge-green':r.compliance>=70?'badge-amber':'badge-red'}">${r.compliance}%</span></td></tr>`).join('');
-    document.getElementById('comp-reviews-table').innerHTML = (reviewRows || absentRows)
-      ? `<table><thead><tr><th>Supervisor</th><th>Assigned</th><th>Completed</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${reviewRows}${absentRows}</tbody></table>`
-      : '<div class="empty">No data for the current week yet</div>';
-
-    const fbRows = feedbackMonthRows
-      .sort((a,b) => a.compliance - b.compliance)
-      .map(r => `
-        <tr><td>${escapeHtml(r.name || r.supervisor)}</td><td style="color:var(--cu-green);font-weight:600">${r.provided}</td>
-        <td style="color:var(--cu-orange);font-weight:600">${r.disputed}</td>
-        <td style="color:${r.pending>0?'var(--cu-magenta)':'var(--text-muted)'};font-weight:${r.pending>0?'600':'400'}">${r.pending}</td>
-        <td><span class="badge ${r.compliance>=90?'badge-green':r.compliance>=70?'badge-amber':'badge-red'}">${r.compliance}%</span></td></tr>`).join('');
-    document.getElementById('comp-feedback-table').innerHTML = fbRows
-      ? `<table><thead><tr><th>Supervisor</th><th>Provided</th><th>Disputed</th><th>Pending</th><th>Compliance</th></tr></thead><tbody>${fbRows}</tbody></table>`
-      : '<div class="empty">No data for the current month yet</div>';
-  } catch(e) { console.error('loadComplianceOverview:', e); }
 }
 
 function renderBandsChart(data) {
