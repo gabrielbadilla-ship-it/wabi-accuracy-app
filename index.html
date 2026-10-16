@@ -323,6 +323,16 @@ tr:hover td{background:var(--card-bg)}
 
 /* CHARTS */
 .chart-wrap{position:relative;height:220px;margin-top:8px}
+.dash-loading{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.dash-loading-msg{font-size:13px;font-weight:600;flex:1;min-width:220px}
+.dash-loading-steps{display:flex;gap:6px}
+.dash-loading-steps span{width:28px;height:6px;border-radius:3px;background:#F0EFE9;transition:background .3s}
+.dash-loading-steps span.done{background:var(--cu-gold)}
+.dash-loading-steps span.now{background:var(--cu-gold);opacity:.5;animation:dashPulse 1s infinite}
+.dash-loading-time{font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
+.dash-skel{min-height:96px;background:linear-gradient(90deg,#F2F1EC 25%,#FAFAF7 50%,#F2F1EC 75%);background-size:200% 100%;animation:dashShimmer 1.4s infinite;border-color:transparent}
+@keyframes dashShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes dashPulse{50%{opacity:1}}
 .dash-section{font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:8px 0 12px;padding-top:12px;border-top:1px solid var(--border)}
 .dash-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .dash-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -448,10 +458,9 @@ tr:hover td{background:var(--card-bg)}
           <div class="tab" data-mode="month" onclick="setDashMode('month')">🗓️ Monthly</div>
         </div>
         <select id="dash-period" onchange="loadDashboard(Number(this.value))"></select>
-        <button class="btn btn-secondary btn-sm" onclick="loadDashboard(dashState.period)">↺ Refresh</button>
+        <button class="btn btn-secondary btn-sm" title="Reload the latest data" onclick="loadDashboard(dashState.period)">↺</button>
         <span id="dash-period-info" style="font-size:12px;color:var(--text-muted)"></span>
       </div>
-      <div id="dash-cache-status"></div>
       <div id="dash-body"><div class="empty"><span class="spinner"></span> Loading...</div></div>
     </div>
 
@@ -1378,44 +1387,6 @@ function statusClass(s) {
   return 'badge-red'; // Pending = needs action
 }
 
-// ── MASTER DATA CACHE (admin-refreshed snapshot) ────────────
-// Dashboard's Audit Accuracy/Compliance and Reviews' History/Lead
-// Performance read from this snapshot instead of the live sheet, so
-// they load fast and reliably. An admin refreshes it on demand —
-// everyone else sees "last refreshed" until the next refresh.
-async function renderCacheStatusBar(containerId) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  try {
-    const meta = await api('getCacheMeta', {});
-    const when = meta.updated_at ? new Date(meta.updated_at).toLocaleString() : 'never';
-    const isAdmin = currentRole === 'admin';
-    el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:12px;color:var(--text-muted)">
-        <span>📊 Data last refreshed: <strong>${when}</strong>${meta.updated_by?` by ${meta.updated_by}`:''}</span>
-        ${isAdmin ? `<button class="btn btn-secondary btn-sm" onclick="refreshMasterData(this)">🔄 Refresh master data</button>` : ''}
-      </div>`;
-  } catch(e) { console.error('renderCacheStatusBar:', e); }
-}
-
-async function refreshMasterData(btn) {
-  if (btn) { btn.disabled = true; btn.textContent = 'Refreshing...'; }
-  try {
-    const result = await api('refreshMasterData', {}, { updated_by: currentUser.email });
-    alert(`✓ Refreshed!\n\nRubric Responses: ${result.counts.rubric_responses}\nSamples Assigned: ${result.counts.samples_assigned}\nWeekly Summary: ${result.counts.weekly_summary}\nSub Contact Reasons: ${result.counts.sub_contact_reasons}\nLead Volume: ${result.counts.lead_volume}`);
-
-    // Reload whatever's currently on screen so the new snapshot shows right away
-    loadDashboard();
-    if (document.getElementById('page-reviews')?.classList.contains('active')) reviewsTab(reviewsView);
-    if (document.getElementById('page-leadperf')?.classList.contains('active')) loadLeadAnalytics();
-    renderCacheStatusBar('dash-cache-status');
-  } catch(e) {
-    alert('Error: ' + e.message);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🔄 Refresh master data'; }
-  }
-}
-
 // ── DASHBOARD ──────────────────────────────────────────────
 // One call (getDashboardV3) returns everything for a single period,
 // weekly or monthly, read live from the sheets. Weeks run Sun–Sat and a
@@ -1472,13 +1443,56 @@ function dashBar(label, value, max, opts = {}) {
   </div>`;
 }
 
+// Loading indicator. The dashboard comes back in a single call, so the
+// steps advance on a timer (they describe what the server is doing, not
+// measured progress); the seconds counter is real.
+const DASH_LOAD_STEPS = [
+  [0,  'Connecting to the sheet…'],
+  [2,  'Loading Wabi volume…'],
+  [4,  'Loading audits and reviews…'],
+  [6,  'Calculating scores and root causes…'],
+  [8,  'Building the lead ranking…'],
+  [12, 'Almost there — the sheet is a bit slow today…'],
+];
+let dashLoadTimer = null, dashLoadSeq = 0;
+
+function startDashLoading(firstLoad) {
+  stopDashLoading();
+  const started = Date.now();
+  const target = firstLoad ? document.getElementById('dash-body') : document.getElementById('dash-period-info');
+  const draw = () => {
+    const secs = Math.floor((Date.now() - started) / 1000);
+    const msg = DASH_LOAD_STEPS.filter(st => secs >= st[0]).pop()[1];
+    if (firstLoad) {
+      const step = DASH_LOAD_STEPS.findIndex(st => st[1] === msg);
+      target.innerHTML = `<div class="dash-loading">
+        <div class="dash-loading-msg"><span class="spinner"></span> ${msg}</div>
+        <div class="dash-loading-steps">${DASH_LOAD_STEPS.slice(0, 5).map((st, i) =>
+          `<span class="${i < step ? 'done' : i === step ? 'now' : ''}"></span>`).join('')}</div>
+        <div class="dash-loading-time">${secs}s</div>
+      </div>
+      <div class="metrics">${'<div class="metric dash-skel"></div>'.repeat(6)}</div>
+      <div class="dash-grid-2"><div class="card dash-skel" style="height:260px"></div><div class="card dash-skel" style="height:260px"></div></div>`;
+    } else {
+      target.innerHTML = `<span class="spinner"></span> ${msg} ${secs}s`;
+    }
+  };
+  draw();
+  dashLoadTimer = setInterval(draw, 1000);
+}
+function stopDashLoading() { if (dashLoadTimer) { clearInterval(dashLoadTimer); dashLoadTimer = null; } }
+
 async function loadDashboard(period) {
   if (period === undefined && dashState.period) period = dashState.period;
-  renderCacheStatusBar('dash-cache-status');
   const body = document.getElementById('dash-body');
-  body.style.opacity = dashState.data ? '.5' : '1';
+  const firstLoad = !dashState.data;
+  const seq = ++dashLoadSeq;   // ignore older answers if the user clicks again
+  body.style.opacity = firstLoad ? '1' : '.5';
+  startDashLoading(firstLoad);
   try {
     const d = await api('getDashboardV3', { mode: dashState.mode, period: period || '' });
+    if (seq !== dashLoadSeq) return;
+    stopDashLoading();
     body.style.opacity = '1';
     if (d.error) throw new Error(d.error);
     dashState.data = d;
@@ -1488,7 +1502,7 @@ async function loadDashboard(period) {
     sel.innerHTML = [...(d.periods || [])].reverse()
       .map(p => `<option value="${p}" ${p === d.period ? 'selected' : ''}>${dashPeriodLabel(p, d.mode, d.year)}</option>`).join('');
 
-    if (d.empty) { body.innerHTML = '<div class="empty">No data yet</div>'; return; }
+    if (d.empty) { document.getElementById('dash-period-info').innerHTML = ''; body.innerHTML = '<div class="empty">No data yet</div>'; return; }
 
     const info = document.getElementById('dash-period-info');
     info.innerHTML = d.mode === 'month' && d.weeks.length
@@ -1496,6 +1510,9 @@ async function loadDashboard(period) {
 
     renderDashboard(d);
   } catch (e) {
+    if (seq !== dashLoadSeq) return;
+    stopDashLoading();
+    document.getElementById('dash-period-info').innerHTML = '';
     body.style.opacity = '1';
     console.error('loadDashboard:', e);
     body.innerHTML = `<div class="empty">Couldn't load the dashboard: ${escapeHtml(e.message)}</div>`;
