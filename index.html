@@ -239,6 +239,24 @@ tr:hover td{background:var(--card-bg)}
 #guide-decisions a{color:var(--cu-blue);cursor:pointer;font-weight:600}
 .kb-comp-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:14px;background:#F1EEF8;color:#4A3F7A;cursor:pointer;white-space:nowrap}
 .kb-comp-badge:hover{background:#E4DFF3}
+.dsp-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;font-size:13px}
+.dsp-meta span{display:block;font-size:11px;color:var(--text-muted)}
+.dsp-meta strong{overflow-wrap:anywhere}
+.dsp-scores{display:flex;align-items:center;gap:14px;background:var(--card-bg);border-radius:10px;padding:12px 16px;margin-bottom:12px}
+.dsp-score span{display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em}
+.dsp-score b{font-size:22px}
+.dsp-score b.badge-green{color:var(--cu-green)} .dsp-score b.badge-amber{color:var(--cu-orange)} .dsp-score b.badge-red{color:var(--cu-magenta)} .dsp-score b.badge-blue{color:var(--cu-blue)}
+.dsp-arrow{font-size:20px;color:var(--text-muted)}
+.dsp-delta{margin-left:auto;font-weight:700;font-size:13px}
+.dsp-table{width:100%;font-size:13px;margin-bottom:14px}
+.dsp-table td{vertical-align:top}
+.dsp-table tr.dsp-changed td{background:#FFF8E1}
+.dsp-rc{font-size:11px;color:var(--text-muted);margin-top:2px}
+.dsp-block{border:1px solid var(--border);border-left:4px solid var(--c);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.dsp-block h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--c);margin-bottom:6px}
+.dsp-block h4 small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);margin-left:6px}
+.dsp-text{font-size:13px;line-height:1.55;white-space:pre-wrap}
+.dsp-sub{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin:10px 0 4px}
 .comp-pend-chip{display:inline-flex;flex-direction:column;gap:1px;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:5px 10px;margin:0 6px 6px 0;font-size:13px}
 .comp-pend-chip small{font-size:11px;color:var(--text-muted)}
 .abs-badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:#E4E8F7;color:#475CC7;white-space:nowrap;margin-left:6px}
@@ -254,6 +272,7 @@ tr:hover td{background:var(--card-bg)}
 .lr-list-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
 .lr-list-row:last-child{border-bottom:none}
 .lr-list-row small{display:block;font-size:11px;color:var(--text-muted)}
+.lr-chip-comment{background:#EEF1FB!important;color:#475CC7!important}
 .lr-chip{display:inline-block;font-size:11px;padding:2px 7px;margin:1px 3px 1px 0;border-radius:5px;background:#FCE8F2;color:var(--cu-magenta);white-space:nowrap}
 .dispute-group{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px}
 .dispute-group-title{font-size:12px;font-weight:700;margin-bottom:6px}
@@ -686,8 +705,17 @@ tr:hover td{background:var(--card-bg)}
           <!-- Feedback textarea -->
           <div class="field">
             <label style="font-weight:600">Feedback & Coaching Notes <span id="comment-required" style="color:var(--cu-magenta);display:none">*</span><span id="comment-optional" style="font-weight:400;color:var(--text-muted)"> (optional)</span></label>
-            <p id="comment-help" style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Optional when the review has no fails — e.g. good practices worth recognizing or a tip for the Lead.</p>
+            <p id="comment-help" style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Optional when the review has no fails — e.g. good practices worth recognizing or a tip. If you leave a comment, it goes to the Lead's supervisor as feedback to share in the 1:1.</p>
             <textarea id="f-comment-final" placeholder="Optional — leave a comment for the Lead..." style="min-height:140px;height:140px;resize:vertical;overflow-y:auto" oninput="this.style.height='auto';this.style.height=Math.max(140,this.scrollHeight)+'px'"></textarea>
+          </div>
+        </div>
+
+        <!-- DISPUTE RESOLUTION NOTE (admins, dispute mode only) -->
+        <div id="dispute-note-box" style="display:none;margin-bottom:20px">
+          <div class="field">
+            <label style="font-weight:600">Resolution note <span style="color:var(--cu-magenta)">*</span></label>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Explain the decision — why the dispute is accepted (and what changed) or rejected. Accepting saves the comment above as the review's final feedback; the original comment is kept for reference.</p>
+            <textarea id="dispute-resolution-note" style="min-height:90px" placeholder="e.g. Accepted: the Lead did verify the POD in Onfleet; Delivery Evidence removed."></textarea>
           </div>
         </div>
 
@@ -1091,7 +1119,7 @@ tr:hover td{background:var(--card-bg)}
               <li>The total is the sum of the four categories. <strong>Target: 90.</strong></li>
               <li>Mark a fail only when there is a <strong>real error</strong> in the resolution.</li>
               <li><strong>Feedback & Coaching Notes</strong> are required when a category fails, optional on a 100.</li>
-              <li>Any fail generates feedback for the Lead's supervisor.</li>
+              <li>Any fail generates feedback for the Lead's supervisor — and so does a 100 with a comment (it can't be disputed, since it doesn't affect the score).</li>
               <li>Calibration reviews are scored the same way but never generate feedback.</li>
             </ul>
           </div>
@@ -1290,15 +1318,23 @@ async function api(action, params = {}, body = null) {
   url.searchParams.set('_ts', Date.now());
   Object.entries(params).forEach(([k,v]) => { if(v !== undefined && v !== '') url.searchParams.set(k, v); });
 
-  if (body) {
-    url.searchParams.set('payload', JSON.stringify({ action, ...body }));
-  }
-
-  const res = await fetch(url.toString(), {
-    method: 'GET',
-    redirect: 'follow',
-    cache: 'no-store'
-  });
+  // Data is sent in the request body (POST), not in the URL: long
+  // comments made the URL exceed Google's length limit, which returned a
+  // 404 and the audit was not saved. text/plain avoids a CORS preflight;
+  // Api.gs reads it from e.postData.
+  const res = await fetch(url.toString(), body
+    ? {
+        method: 'POST',
+        redirect: 'follow',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, ...body }),
+      }
+    : {
+        method: 'GET',
+        redirect: 'follow',
+        cache: 'no-store',
+      });
   const text = await res.text();
   let json;
   try {
@@ -1899,7 +1935,7 @@ function calcScore() {
   if (opt) opt.style.display = anyFail ? 'none' : 'inline';
   if (help) help.textContent = anyFail
     ? 'Required when any category fails. Be specific — what was missing, why it matters, and what good looks like.'
-    : 'Optional when the review has no fails — e.g. good practices worth recognizing or a tip for the Lead.';
+    : 'Optional when the review has no fails — e.g. good practices worth recognizing or a tip. If you leave a comment, it goes to the Lead\'s supervisor as feedback to share in the 1:1.';
   if (ta) ta.placeholder = anyFail
     ? "Click 'Generate feedback template' to pre-fill with selected root causes, then add your notes..."
     : 'Optional — leave a comment for the Lead...';
@@ -2035,7 +2071,7 @@ async function submitAudit() {
     rc_process_esc: getSelectedChips('pe').join(', '),
     rc_coaching:    getSelectedChips('cg').join(', '),
     comment: comment,
-    feedback_yn: anyFail ? 'Yes' : 'No',
+    feedback_yn: (anyFail || comment) ? 'Yes' : 'No',
     calibration: document.getElementById('f-calibration')?.value || 'No',
     session_id:  document.getElementById('f-session-id')?.value || '',
   };
@@ -2135,7 +2171,15 @@ function reviewStatus(r) {
   const fb = String(r.feedback_yn || 'No').trim();
   if (fb === 'Delivered') return 'Feedback provided';
   if (fb === 'Yes') return 'Pending';
+  // A 100 with a reviewer comment also needs feedback (older rows were saved
+  // as "No"). "Cleared" = dispute accepted and no fails left.
+  if (fb !== 'Cleared' && String(r.calibration || 'No') !== 'Yes' && Number(r.total_score) >= 100 && String(r.comment || '').trim()) return 'Pending';
   return 'No feedback needed';
+}
+
+// Only reviews with a fail can be disputed (a 100 with a comment can't)
+function canDisputeReview(r) {
+  return reviewStatus(r) === 'Pending' && Number(r.total_score) < 100 && !r.dispute_status;
 }
 
 async function loadRecords() {
@@ -2621,10 +2665,12 @@ function renderLeadReviews() {
   const canAct = canActOnLead(lead);
   const rows = sorted.map((r, i) => {
     const status = reviewStatus(r);
-    const fails = RUBRIC_CATS.flatMap(c => splitList(r[c.rc]).map(rc => `<span class="lr-chip">${escapeHtml(rc)}</span>`)).join('');
+    const fails = RUBRIC_CATS.flatMap(c => splitList(r[c.rc]).map(rc => `<span class="lr-chip">${escapeHtml(rc)}</span>`)).join('')
+      || (String(r.comment || '').trim() ? '<span class="lr-chip lr-chip-comment">💬 Comment</span>' : '');
     const actions = canAct && status === 'Pending'
-      ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();markFeedbackProvided(window._lrRows[${i}])">✅ Feedback provided</button>
-         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();openDisputeModal(window._lrRows[${i}])">⚖️ Dispute</button>`
+      ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();markFeedbackProvided(window._lrRows[${i}])">✅ Feedback provided</button>` +
+        (canDisputeReview(r) ? `
+         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();openDisputeModal(window._lrRows[${i}])">⚖️ Dispute</button>` : '')
       : '';
     return `<tr onclick="showRecordModal(window._lrRows[${i}])" style="cursor:pointer">
       <td><span onclick="event.stopPropagation()">${zdLink(r.ticket)}</span></td>
@@ -2682,7 +2728,7 @@ async function markFeedbackProvided(r) {
 
 // Dispute: pick the root cause(s) being disputed (or Other) + reason
 function openDisputeModal(r) {
-  if (!r) return;
+  if (!r || !canDisputeReview(r)) return;
   window._disputeRecord = r;
   const groups = RUBRIC_CATS.map(c => {
     const rcs = splitList(r[c.rc]);
@@ -2798,6 +2844,7 @@ function showRecordModal(r) {
     ${r.dispute_status ? `
     <div style="margin-top:14px;padding:12px;background:#FFF8E1;border-radius:8px;font-size:13px">
       <strong>Dispute ${r.dispute_status === 'Open' ? 'open' : 'resolved'}</strong>${r.dispute_accepted === 'Y' ? ' — ✅ Accepted' : r.dispute_accepted === 'N' ? ' — ❌ Rejected' : ' — ⏳ Waiting for admin review'}
+      ${disputeOriginalTotal(r) !== null && disputeOriginalTotal(r) !== total ? `<div style="margin-top:4px">Score: <strong>${disputeOriginalTotal(r)}</strong> → <strong>${total}</strong> / 100</div>` : ''}
       ${r.disputed_items ? `<div style="margin-top:6px"><span style="color:var(--text-muted)">Disputed:</span> ${escapeHtml(r.disputed_items)}</div>` : ''}
       ${r.dispute_reason ? `<div style="margin-top:4px;white-space:pre-wrap"><span style="color:var(--text-muted)">Reason:</span> ${escapeHtml(r.dispute_reason)}</div>` : ''}
       ${r.dispute_resolution_notes ? `<div style="color:var(--text-muted);margin-top:4px">${escapeHtml(r.dispute_resolution_notes)}</div>` : ''}
@@ -2806,7 +2853,7 @@ function showRecordModal(r) {
 
   document.getElementById('modal-actions').innerHTML = canAct
     ? `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
-       <button class="btn btn-danger" onclick="openDisputeModal(window._modalRecord)">⚖️ Dispute</button>
+       ${canDisputeReview(r) ? `<button class="btn btn-danger" onclick="openDisputeModal(window._modalRecord)">⚖️ Dispute</button>` : ''}
        <button class="btn btn-primary" onclick="markFeedbackProvided(window._modalRecord)">✅ Feedback provided</button>`
     : `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
 
@@ -3023,28 +3070,43 @@ function renderDisputesTable(disputes) {
     document.getElementById('disputes-table').innerHTML = '<div class="empty">No disputes found</div>';
     return;
   }
-  const rows = disputes.map(d => {
-    const score = normalizeScore(d.total_score);
+  window._disputeRows = disputes;
+  const rows = disputes.map((d, i) => {
+    const current = Number(d.total_score) || 0;
+    const original = disputeOriginalTotal(d);
+    const changed = original !== null && original !== current;
     const statusTag = d.dispute_status === 'Open'
       ? '<span class="badge badge-amber">Open</span>'
       : d.dispute_accepted === 'Y'
         ? '<span class="badge badge-green">Accepted</span>'
         : '<span class="badge badge-red">Rejected</span>';
-    return `<tr onclick="handleDisputeRowClick(${JSON.stringify(d).replace(/"/g,'&quot;')})" style="cursor:pointer">
-      <td>${zdLink(d.ticket)}</td>
-      <td>${d.lead_email}</td>
-      <td>${d.reviewer}</td>
-      <td>W${d.week} / M${d.month}</td>
-      <td><span class="badge ${scoreClass(score)}">${score}%</span></td>
-      <td style="max-width:200px;font-size:12px;color:var(--text-muted)">${d.dispute_reason?d.dispute_reason.slice(0,80)+'…':'—'}</td>
+    return `<tr onclick="handleDisputeRowClick(window._disputeRows[${i}])" style="cursor:pointer">
+      <td><span onclick="event.stopPropagation()">${zdLink(d.ticket)}</span></td>
+      <td>${escapeHtml(leadLabel(d.lead_email))}</td>
+      <td style="font-size:12px">${escapeHtml(d.reviewer || '—')}</td>
+      <td>W${escapeHtml(d.week)}</td>
+      <td style="white-space:nowrap">${changed
+        ? `<span class="badge badge-gray">${original}</span> → <span class="badge ${scoreClass(current)}">${current}</span>`
+        : `<span class="badge ${scoreClass(current)}">${current} / 100</span>`}</td>
+      <td style="max-width:240px;font-size:12px">${d.disputed_items ? splitDisputeItems(d.disputed_items).map(x => `<span class="lr-chip">${escapeHtml(x)}</span>`).join('') : '<span style="color:var(--text-muted)">—</span>'}</td>
       <td>${statusTag}</td>
     </tr>`;
   }).join('');
   document.getElementById('disputes-table').innerHTML = `
     <table>
-      <thead><tr><th>Ticket</th><th>Lead</th><th>Reviewer</th><th>Week/Month</th><th>Score</th><th>Reason</th><th>Status</th></tr></thead>
+      <thead><tr><th>Ticket</th><th>Lead</th><th>Reviewer</th><th>Week</th><th>Score</th><th>Disputed</th><th>Status</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+function splitDisputeItems(items) {
+  return String(items || '').split('|').map(x => x.trim()).filter(Boolean)
+    .map(x => x.replace(/^(Validation|Issue Resolution|Process & Escalation|Coaching & Guidance):\s*/, ''));
+}
+function disputeOriginalTotal(d) {
+  if (d.original_review && d.original_review.total_score !== undefined) return Number(d.original_review.total_score);
+  if (d.original_total_score !== null && d.original_total_score !== undefined && d.original_total_score !== '') return Number(d.original_total_score);
+  return null;
 }
 
 function handleDisputeRowClick(d) {
@@ -3052,42 +3114,82 @@ function handleDisputeRowClick(d) {
   // pre-filled with the current root causes so they can correct it.
   // Everything else (non-admins, already-resolved disputes) gets a
   // read-only summary instead.
-  if (d.dispute_status === 'Open' && currentRole === 'admin') {
-    openDisputeResolution(d);
-  } else {
-    openDisputeReadOnly(d);
-  }
+  openDisputeReadOnly(d);
 }
 
 function openDisputeReadOnly(d) {
-  const score = normalizeScore(d.total_score);
-  const origScore = d.original_total_score !== null ? normalizeScore(d.original_total_score) : null;
-  const scoreChanged = origScore !== null && origScore !== score;
+  const orig = d.original_review || null;
+  const current = Number(d.total_score) || 0;
+  const originalTotal = disputeOriginalTotal(d);
+  const isOpen = d.dispute_status === 'Open';
+  const accepted = d.dispute_accepted === 'Y';
 
-  document.getElementById('modal-title').textContent = `Dispute — Ticket ${d.ticket}`;
+  // Category comparison: original (snapshot) vs current
+  const catRows = RUBRIC_CATS.map(c => {
+    const now = Number(d['score_' + c.key]) || 0;
+    const before = orig ? Number(orig['score_' + c.key]) || 0 : null;
+    const changed = before !== null && before !== now;
+    const rcNow = d[c.rc] || '';
+    const rcBefore = orig ? orig[c.rc] || '' : null;
+    const cell = (v, rc) => `<span style="font-weight:700;color:${v === c.max ? 'var(--cu-green)' : 'var(--cu-magenta)'}">${v} / ${c.max}</span>${rc ? `<div class="dsp-rc">${escapeHtml(rc)}</div>` : ''}`;
+    return `<tr${changed ? ' class="dsp-changed"' : ''}>
+      <td>${c.label}</td>
+      <td>${before === null ? '<span style="color:var(--text-muted)">—</span>' : cell(before, rcBefore)}</td>
+      <td>${cell(now, rcNow)}</td>
+    </tr>`;
+  }).join('');
+
+  const when = v => v ? escapeHtml(fmtDate(v)) : '—';
+  const finalComment = String(d.comment || '').trim();
+  const originalComment = orig ? String(orig.comment || '').trim() : finalComment;
+  const commentChanged = orig && finalComment !== originalComment;
+
+  document.getElementById('modal-title').innerHTML = `Dispute — Ticket ${zdLink(d.ticket)}`;
   document.getElementById('modal-body').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;font-size:13px">
-      <div><span style="color:var(--text-muted)">Lead</span><br><strong>${d.lead_email}</strong></div>
-      <div><span style="color:var(--text-muted)">Reviewer</span><br><strong>${d.reviewer}</strong></div>
-      <div><span style="color:var(--text-muted)">Disputed by</span><br><strong>${d.dispute_submitted_by||'—'}</strong></div>
-      <div><span style="color:var(--text-muted)">Score</span><br>
-        <span class="badge ${scoreClass(score)}">${score}%</span>
-        ${scoreChanged ? `<span style="font-size:11px;color:var(--text-muted);margin-left:6px">was ${origScore}%</span>` : ''}
-      </div>
+    <div class="dsp-meta">
+      <div><span>Lead</span><strong>${escapeHtml(leadLabel(d.lead_email))}</strong></div>
+      <div><span>Reviewed by</span><strong>${escapeHtml(d.reviewer || '—')}</strong></div>
+      <div><span>Disputed by</span><strong>${escapeHtml(d.dispute_submitted_by || '—')}</strong></div>
+      <div><span>Week</span><strong>W${escapeHtml(d.week)}</strong></div>
     </div>
-    <div style="background:#FFF0F5;border-radius:8px;padding:12px;margin-bottom:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--cu-magenta);text-transform:uppercase;margin-bottom:6px">Dispute reason</div>
-      <div style="font-size:13px;line-height:1.5">${d.dispute_reason||'—'}</div>
+
+    <div class="dsp-scores">
+      <div class="dsp-score"><span>Original score</span><b class="${scoreClass(originalTotal ?? current)}">${originalTotal ?? current} / 100</b></div>
+      <div class="dsp-arrow">→</div>
+      <div class="dsp-score"><span>${isOpen ? 'Current score' : 'Final score'}</span><b class="${scoreClass(current)}">${current} / 100</b></div>
+      <div class="dsp-delta">${originalTotal !== null && originalTotal !== current ? `${current > originalTotal ? '+' : ''}${current - originalTotal} pts` : 'No change'}</div>
     </div>
-    ${d.dispute_status === 'Open'
-      ? `<div style="background:#FFF8E1;border-radius:8px;padding:12px;font-size:13px">⏳ Waiting on an admin to review this.</div>`
-      : `<div style="background:${d.dispute_accepted==='Y'?'#D6EFDF':'#FFE5F0'};border-radius:8px;padding:12px">
-          <div style="font-weight:700">${d.dispute_accepted==='Y'?'✅ Accepted — score corrected':'❌ Rejected — original review stands'}</div>
-          ${d.dispute_resolution_notes?`<div style="font-size:13px;margin-top:4px">${d.dispute_resolution_notes}</div>`:''}
-          <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Resolved by ${d.dispute_resolved_by||'—'}</div>
-        </div>`}
-  `;
-  document.getElementById('modal-actions').innerHTML = `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
+
+    <table class="dsp-table">
+      <thead><tr><th>Category</th><th>Original</th><th>${isOpen ? 'Current' : 'Final'}</th></tr></thead>
+      <tbody>${catRows}</tbody>
+    </table>
+    ${orig ? '' : '<div style="font-size:11px;color:var(--text-muted);margin:-6px 0 12px">Category detail of the original review isn\'t available for disputes opened before this was tracked — only the original total.</div>'}
+
+    <div class="dsp-block" style="--c:#475CC7">
+      <h4>1 · Original review comment</h4>
+      <div class="dsp-text">${escapeHtml(originalComment || '—')}</div>
+    </div>
+
+    <div class="dsp-block" style="--c:#AA0061">
+      <h4>2 · Dispute <small>${escapeHtml(d.dispute_submitted_by || '')} · ${when(d.dispute_submitted_at)}</small></h4>
+      ${d.disputed_items ? `<div style="margin-bottom:8px">${splitDisputeItems(d.disputed_items).map(x => `<span class="lr-chip">${escapeHtml(x)}</span>`).join('')}</div>` : ''}
+      <div class="dsp-text">${escapeHtml(d.dispute_reason || '—')}</div>
+    </div>
+
+    <div class="dsp-block" style="--c:${isOpen ? '#E0A100' : accepted ? '#218848' : '#AA0061'}">
+      <h4>3 · Final resolution ${isOpen ? '' : `<small>${escapeHtml(d.dispute_resolved_by || '')} · ${when(d.dispute_resolved_at)}</small>`}</h4>
+      ${isOpen
+        ? '<div class="dsp-text">⏳ Waiting for an admin to review it.</div>'
+        : `<div style="font-weight:700;margin-bottom:6px">${accepted ? '✅ Accepted — review corrected' : '❌ Rejected — original review stands'}</div>
+           <div class="dsp-text">${escapeHtml(d.dispute_resolution_notes || '—')}</div>
+           ${commentChanged ? `<div class="dsp-sub">Updated review feedback</div><div class="dsp-text">${escapeHtml(finalComment || '—')}</div>` : ''}`}
+    </div>`;
+  document.getElementById('modal-actions').innerHTML = (isOpen && currentRole === 'admin')
+    ? `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
+       <button class="btn btn-primary" onclick="closeModal();openDisputeResolution(window._dspCurrent)">⚖️ Resolve</button>`
+    : `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
+  window._dspCurrent = d;
   document.getElementById('modal').classList.add('open');
 }
 
@@ -3144,10 +3246,14 @@ function openDisputeResolution(d) {
   if (ta) ta.value = d.comment || '';
 
   document.getElementById('dispute-banner').innerHTML = `
-    <div class="alert" style="background:#FFF0F5;border:1px solid #f5c4d8;color:var(--cu-magenta)">
-      <strong>⚖️ Resolving dispute</strong> — submitted by ${d.dispute_submitted_by||'—'}: "${d.dispute_reason||''}"
-      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Toggle the root causes to correct what was wrong, then Accept — or Reject to keep the original review as-is.</div>
+    <div class="alert" style="background:#FFF0F5;border:1px solid #f5c4d8;color:var(--cu-black)">
+      <strong style="color:var(--cu-magenta)">⚖️ Resolving dispute</strong> · submitted by ${escapeHtml(d.dispute_submitted_by || '—')}
+      ${d.disputed_items ? `<div style="margin-top:6px">Disputed: ${splitDisputeItems(d.disputed_items).map(x => `<span class="lr-chip">${escapeHtml(x)}</span>`).join('')}</div>` : ''}
+      <div style="margin-top:6px;white-space:pre-wrap">"${escapeHtml(d.dispute_reason || '')}"</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px">Toggle the root causes to correct the review and edit the comment if needed, then Accept — or Reject to keep the original review as-is. A resolution note is required either way.</div>
     </div>`;
+  document.getElementById('dispute-note-box').style.display = 'block';
+  document.getElementById('dispute-resolution-note').value = '';
 
   document.getElementById('f-audit-display').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -3172,7 +3278,10 @@ async function acceptDisputeCorrection() {
     rc_issue_res:   getSelectedChips('ir').join(', '),
     rc_process_esc: getSelectedChips('pe').join(', '),
     rc_coaching:    getSelectedChips('cg').join(', '),
+    final_comment:  document.getElementById('f-comment-final')?.value || '',
+    resolution_notes: document.getElementById('dispute-resolution-note')?.value.trim() || '',
   };
+  if (!body.resolution_notes) { alert('Please add a resolution note explaining the decision.'); document.getElementById('dispute-resolution-note').focus(); return; }
   try {
     await api('resolveDispute', {}, body);
     alert('Dispute accepted — score corrected.');
@@ -3184,7 +3293,8 @@ async function acceptDisputeCorrection() {
 
 async function rejectDisputeFlow() {
   if (!disputeMode) return;
-  const notes = prompt('Optional note on why this dispute is being rejected:') || '';
+  const notes = document.getElementById('dispute-resolution-note')?.value.trim() || '';
+  if (!notes) { alert('Please add a resolution note explaining why the dispute is rejected.'); document.getElementById('dispute-resolution-note').focus(); return; }
   try {
     await api('resolveDispute', {}, {
       ticket: disputeMode.ticket, reviewer_email: disputeMode.reviewer,
@@ -3200,6 +3310,7 @@ async function rejectDisputeFlow() {
 function exitDisputeMode() {
   disputeMode = null;
   document.getElementById('dispute-banner').innerHTML = '';
+  document.getElementById('dispute-note-box').style.display = 'none';
   document.getElementById('audit-queue-card').style.display = '';
   document.getElementById('normal-actions').style.display = 'flex';
   document.getElementById('dispute-actions').style.display = 'none';
@@ -4010,19 +4121,20 @@ const FLOW_STEPS = {
     ],
   },
   anyfail: {
-    title: 'Any fail?', role: 'done', who: 'Automatic',
+    title: 'Fail or comment?', role: 'done', who: 'Automatic',
     where: 'Calculated when the review is submitted',
     what: [
-      'No root cause marked → 100/100, no feedback needed.',
       'At least one root cause → the review needs feedback from the Lead\'s supervisor.',
+      'Score 100 with a reviewer comment (recognition or a tip) → it also needs feedback, so the comment reaches the Lead. It can\'t be disputed because it doesn\'t affect the score.',
+      'Score 100 with no comment → no feedback needed.',
     ],
   },
   nofeedback: {
     title: '100 · No feedback needed', role: 'done', who: 'Automatic',
     where: 'Lead and supervisor can see it in 💬 Pending Feedback → Lead reviews',
     what: [
-      'The review counts for the Lead\'s performance with a perfect score.',
-      'The reviewer can leave an optional comment to recognize good work.',
+      'No root cause and no comment: the review counts for the Lead\'s performance with a perfect score.',
+      'Nothing else to do — it never shows as pending.',
     ],
   },
   visible: {
@@ -4047,7 +4159,7 @@ const FLOW_STEPS = {
     what: [
       'Yes → mark Feedback provided.',
       'No (e.g. the Lead showed it was resolved correctly) → open a Dispute instead.',
-      'A review can only be disputed before Feedback provided is marked.',
+      'A review can only be disputed before Feedback provided is marked, and only if it has a fail. A 100 with a comment just needs Feedback provided.',
     ],
   },
   provided: {
@@ -4102,7 +4214,7 @@ function guideFlowSVG() {
     <defs><marker id="gf-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8A8780"/></marker></defs>
     ${line('M500,74 L500,104')}
     ${line('M500,168 L500,186')}
-    ${line('M408,224 L282,224', 'No · 100', 318, 214)}
+    ${line('M408,224 L282,224', 'No', 330, 214)}
     ${line('M500,262 L500,294', 'Yes', 510, 284)}
     ${line('M500,358 L500,388')}
     ${line('M500,452 L500,480')}
@@ -4112,8 +4224,8 @@ function guideFlowSVG() {
     ${line('M940,630 L975,630 L975,326 L646,326', 'Rejected or still fails', 790, 316, true)}
     ${node('assign', 360, 10, 280, 64, '1 · Assign samples', 'Admins · weekly, Sun–Sat')}
     ${node('review', 360, 104, 280, 64, '2 · Review the samples', 'Supervisors · New Audit')}
-    ${diamond('anyfail', 500, 224, 'Any fail?')}
-    ${node('nofeedback', 30, 192, 250, 64, 'No feedback needed', 'Score 100 · optional comment')}
+    ${diamond('anyfail', 500, 224, 'Fail or comment?')}
+    ${node('nofeedback', 30, 192, 250, 64, 'No feedback needed', 'Score 100 · no comment')}
     ${node('visible', 354, 294, 292, 64, '3 · Lead sees the review', 'Pending Feedback for the supervisor')}
     ${node('oneonone', 360, 388, 280, 64, '4 · 1:1 with the Lead', 'Supervisor + Lead')}
     ${diamond('agree', 500, 518, 'Review correct?')}
