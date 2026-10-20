@@ -1255,6 +1255,7 @@ async function initApp() {
   document.getElementById('user-role-badge').textContent = currentRole;
   if (currentRole === 'admin') {
     document.getElementById('admin-link').style.display = 'flex';
+    checkApiVersion();
   }
   if (currentRole === 'lead' || currentRole === 'viewer') {
     document.getElementById('new-audit-link').style.display = 'none';
@@ -1285,10 +1286,45 @@ async function initApp() {
   // aren't needed until the user actually opens those tabs — see nav().
 }
 
+// Warns admins when the published Api.gs is not the version this page
+// expects (usually a deploy without "Version: New version").
+async function checkApiVersion() {
+  let version = '';
+  try { version = (await api('getVersion', {})).version || ''; } catch (e) {}
+  if (version === EXPECTED_API_VERSION) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'background:#FDE8F1;border:1px solid #F3B6CF;color:#7A0046;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px';
+  bar.innerHTML = `⚠️ <strong>The published API is not the latest version</strong> (published: ${version ? escapeHtml(version) : 'unknown/older'}, expected: ${EXPECTED_API_VERSION}).
+    In Apps Script: Manage deployments → Edit → Version: <strong>New version</strong> → Deploy. Some actions may fail until then. (Only admins see this.)`;
+  document.getElementById('main').prepend(bar);
+}
+
 function signOut() { sessionStorage.removeItem('wabiUser'); location.reload(); }
 
 // ── API ────────────────────────────────────────────────────
+// Actions that are safe to send twice (same result), so they can be
+// retried automatically after a transient Apps Script failure (404 or an
+// empty request). Never retry actions that would create duplicates.
+const RETRY_SAFE_WRITES = ['editDisputeComment', 'supervisorAction', 'setRole', 'saveCalibrationNote'];
+const EXPECTED_API_VERSION = '2026-10-20';
+
 async function api(action, params = {}, body = null) {
+  const canRetry = !body || RETRY_SAFE_WRITES.includes(action);
+  try {
+    return await apiOnce(action, params, body);
+  } catch (e) {
+    const transient = e.transient || String(e.message).startsWith('EMPTY_REQUEST');
+    if (!canRetry || !transient) throw cleanApiError(e);
+    await new Promise(r => setTimeout(r, 1500));
+    try { return await apiOnce(action, params, body); }
+    catch (e2) { throw cleanApiError(e2); }
+  }
+}
+function cleanApiError(e) {
+  return new Error(String(e.message).replace(/^EMPTY_REQUEST:\s*/, ''));
+}
+
+async function apiOnce(action, params = {}, body = null) {
   const url = new URL(SCRIPT_URL);
   url.searchParams.set('action', action);
   url.searchParams.set('_ts', Date.now());
@@ -1316,7 +1352,9 @@ async function api(action, params = {}, body = null) {
   try {
     json = JSON.parse(text);
   } catch (e) {
-    throw new Error(`The API returned an invalid response (${res.status}). Please try again.`);
+    const err = new Error(`The API returned an invalid response (${res.status}). Please try again.`);
+    err.transient = true;
+    throw err;
   }
 
   // Handle both {ok, data} wrapper and direct response formats
