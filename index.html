@@ -914,7 +914,7 @@ tr:hover td{background:var(--card-bg)}
             <div class="field"><label>Name</label><input type="text" id="admin-name" placeholder="Full name"></div>
             <div class="field"><label>Email</label><input type="email" id="admin-email" placeholder="user@cookunity.com"></div>
             <div class="field"><label>Role</label>
-              <select id="admin-role"><option>lead</option><option>supervisor</option><option>admin</option><option>viewer</option></select></div>
+              <select id="admin-role"><option>lead</option><option>supervisor</option><option>manager</option><option>admin</option><option>viewer</option></select></div>
           </div>
           <div class="actions-row"><button class="btn btn-primary btn-sm" onclick="saveRole()">Save role</button></div>
         </div>
@@ -1257,7 +1257,7 @@ async function initApp() {
     document.getElementById('admin-link').style.display = 'flex';
     checkApiVersion();
   }
-  if (currentRole === 'lead' || currentRole === 'viewer') {
+  if (currentRole === 'lead' || currentRole === 'viewer' || currentRole === 'manager') {
     document.getElementById('new-audit-link').style.display = 'none';
   }
   if (currentRole === 'lead') {
@@ -1306,7 +1306,7 @@ function signOut() { sessionStorage.removeItem('wabiUser'); location.reload(); }
 // retried automatically after a transient Apps Script failure (404 or an
 // empty request). Never retry actions that would create duplicates.
 const RETRY_SAFE_WRITES = ['editDisputeComment', 'supervisorAction', 'setRole', 'saveCalibrationNote'];
-const EXPECTED_API_VERSION = '2026-10-20';
+const EXPECTED_API_VERSION = '2026-10-20b';
 
 async function api(action, params = {}, body = null) {
   const canRetry = !body || RETRY_SAFE_WRITES.includes(action);
