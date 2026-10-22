@@ -1306,7 +1306,7 @@ function signOut() { sessionStorage.removeItem('wabiUser'); location.reload(); }
 // retried automatically after a transient Apps Script failure (404 or an
 // empty request). Never retry actions that would create duplicates.
 const RETRY_SAFE_WRITES = ['editDisputeComment', 'supervisorAction', 'setRole', 'saveCalibrationNote'];
-const EXPECTED_API_VERSION = '2026-10-20b';
+const EXPECTED_API_VERSION = '2026-10-22';
 
 async function api(action, params = {}, body = null) {
   const canRetry = !body || RETRY_SAFE_WRITES.includes(action);
@@ -1328,6 +1328,9 @@ async function apiOnce(action, params = {}, body = null) {
   const url = new URL(SCRIPT_URL);
   url.searchParams.set('action', action);
   url.searchParams.set('_ts', Date.now());
+  // Who is asking: the API uses it to decide what this person may see
+  // (e.g. calibration results only after completing the session)
+  if (currentUser && currentUser.email) url.searchParams.set('_viewer', String(currentUser.email).toLowerCase().trim());
   Object.entries(params).forEach(([k,v]) => { if(v !== undefined && v !== '') url.searchParams.set(k, v); });
 
   // Data is sent in the request body (POST), not in the URL: long
@@ -2227,9 +2230,29 @@ function reviewStatus(r) {
   return 'No feedback needed';
 }
 
-// Only reviews with a fail can be disputed (a 100 with a comment can't)
+// Only reviews with a fail can be disputed (a 100 with a comment can't).
+// A resolved dispute can be reopened once (2 rounds max) while the
+// feedback is still pending — same rule as submitDispute in Api.gs.
+const MAX_DISPUTE_ROUNDS = 2;
+function disputeRound(r) { return (r.dispute_history || []).length + (r.dispute_status ? 1 : 0); }
+function isReopenable(r) { return r.dispute_status === 'Resolved' && disputeRound(r) < MAX_DISPUTE_ROUNDS; }
 function canDisputeReview(r) {
-  return reviewStatus(r) === 'Pending' && Number(r.total_score) < 100 && !r.dispute_status;
+  if (reviewStatus(r) !== 'Pending' || Number(r.total_score) >= 100) return false;
+  return !r.dispute_status || isReopenable(r);
+}
+function disputeButtonLabel(r) { return r.dispute_status ? '⚖️ Reopen dispute' : '⚖️ Dispute'; }
+
+// Earlier dispute rounds (kept when a dispute is reopened)
+function disputeHistoryHtml(r) {
+  return (r.dispute_history || []).map(h => `
+    <div class="dsp-block" style="--c:#9C9A93">
+      <h4>Round ${h.round} · ${h.accepted === 'Y' ? '✅ Accepted' : h.accepted === 'N' ? '❌ Rejected' : 'Resolved'}
+        <small>${escapeHtml(h.submitted_by || '')}${h.submitted_at ? ' · ' + escapeHtml(fmtDate(h.submitted_at)) : ''}</small></h4>
+      ${h.items ? `<div style="margin-bottom:6px">${splitDisputeItems(h.items).map(x => `<span class="dsp-chip">⚖️ ${escapeHtml(x)}</span>`).join('')}</div>` : ''}
+      <div class="dsp-text"><span style="color:var(--text-muted)">Reason:</span> ${escapeHtml(h.reason || '—')}</div>
+      <div class="dsp-text" style="margin-top:6px"><span style="color:var(--text-muted)">Feedback on the dispute${h.resolved_by ? ' (' + escapeHtml(h.resolved_by) + ')' : ''}:</span> ${escapeHtml(h.notes || '—')}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Score after round ${h.round}: ${h.score_after} / 100</div>
+    </div>`).join('');
 }
 
 async function loadRecords() {
@@ -2290,7 +2313,20 @@ async function loadCalibrationsList() {
       return `<span class="${cls}">${score(value, max)} ${icon}</span><span class="calib-score-ref">Ref: ${score(reference, max)}</span>`;
     };
     window._calibSessions = sessions;
-    el.innerHTML = sessions.map((s, sIdx) => `
+    const lockedCard = s => `
+        <div class="card" style="opacity:.92">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <h3 style="margin:0">🔒 ${safe(s.session_id)}</h3>
+            <span style="font-size:12px;color:var(--text-muted)">deadline ${safe(s.deadline || '—')}</span>
+          </div>
+          <p style="font-size:13px;margin:10px 0 8px">Results unlock once you complete all your tickets in this session, so everyone scores with their own criteria first.</p>
+          <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-muted)">
+            <div style="flex:1;max-width:260px;height:8px;background:#F0EFE9;border-radius:4px;overflow:hidden">
+              <div style="width:${s.my_assigned ? Math.round(s.my_completed / s.my_assigned * 100) : 0}%;height:100%;background:var(--cu-gold)"></div></div>
+            ${s.my_completed} of ${s.my_assigned} completed — go to New Audit to finish them.
+          </div>
+        </div>`;
+    el.innerHTML = sessions.map((s, sIdx) => s.locked ? lockedCard(s) : `
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
             <h3 style="margin:0">🎯 ${s.session_id}</h3>
@@ -2720,7 +2756,7 @@ function renderLeadReviews() {
     const actions = canAct && status === 'Pending'
       ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();markFeedbackProvided(window._lrRows[${i}])">✅ Feedback provided</button>` +
         (canDisputeReview(r) ? `
-         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();openDisputeModal(window._lrRows[${i}])">⚖️ Dispute</button>` : '')
+         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();openDisputeModal(window._lrRows[${i}])">${disputeButtonLabel(r)}</button>` : '')
       : '';
     return `<tr onclick="showRecordModal(window._lrRows[${i}])" style="cursor:pointer">
       <td><span onclick="event.stopPropagation()">${zdLink(r.ticket)}</span></td>
@@ -2789,18 +2825,27 @@ function openDisputeModal(r) {
     </div>`;
   }).join('');
 
-  document.getElementById('modal-title').innerHTML = `Dispute review — Ticket ${zdLink(r.ticket)}`;
+  const reopening = !!r.dispute_status;
+  const prev = reopening ? `
+    <div style="background:var(--card-bg);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px">
+      <div style="font-weight:700;margin-bottom:4px">Previous resolution: ${r.dispute_accepted === 'Y' ? '✅ Accepted' : '❌ Rejected'}</div>
+      <div style="white-space:pre-wrap">${escapeHtml(r.dispute_resolution_notes || '—')}</div>
+    </div>` : '';
+  document.getElementById('modal-title').innerHTML = `${reopening ? 'Reopen dispute' : 'Dispute review'} — Ticket ${zdLink(r.ticket)}`;
   document.getElementById('modal-body').innerHTML = `
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Select what you are disputing and explain why. An admin will review it; while the dispute is open this review counts as handled for feedback compliance.</p>
+    ${prev}
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">${reopening
+      ? 'A dispute can be reopened only once. Select what you are still disputing and explain why you are reopening it. An admin will review it again.'
+      : 'Select what you are disputing and explain why. An admin will review it; while the dispute is open this review counts as handled for feedback compliance.'}</p>
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">What are you disputing?</div>
     ${groups}
     <div class="dispute-group">
       <label class="dispute-option"><input type="checkbox" class="dispute-item" value="Other"> <strong>Other</strong> — e.g. the score is right but the root cause selected is not</label>
     </div>
-    <div class="field" style="margin-top:12px"><label>Reason</label><textarea id="dispute-submit-reason" rows="4" placeholder="What is incorrect in this review, and why?"></textarea></div>`;
+    <div class="field" style="margin-top:12px"><label>Reason</label><textarea id="dispute-submit-reason" rows="4" placeholder="${reopening ? 'Why are you reopening it? What does the previous resolution miss?' : 'What is incorrect in this review, and why?'}"></textarea></div>`;
   document.getElementById('modal-actions').innerHTML = `
     <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-primary" id="dispute-submit-btn" onclick="confirmSubmitDispute()">Submit dispute</button>`;
+    <button class="btn btn-primary" id="dispute-submit-btn" onclick="confirmSubmitDispute()">${reopening ? 'Reopen dispute' : 'Submit dispute'}</button>`;
   document.getElementById('modal').classList.add('open');
 }
 function openSubmitDisputeModal(ticket, reviewer) {
@@ -2823,11 +2868,12 @@ async function confirmSubmitDispute() {
       disputed_items: items.join(' | '), reason,
     });
     closeModal();
-    alert('Dispute submitted — an admin will review it.');
+    alert(r.dispute_status ? 'Dispute reopened — an admin will review it again.' : 'Dispute submitted — an admin will review it.');
     afterFeedbackAction(r.lead_email);
+    if (document.getElementById('page-disputes')?.classList.contains('active')) loadDisputes();
   } catch(e) {
     alert('Error: ' + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = 'Submit dispute'; }
+    if (btn) { btn.disabled = false; btn.textContent = r.dispute_status ? 'Reopen dispute' : 'Submit dispute'; }
   }
 }
 
@@ -2893,7 +2939,8 @@ function showRecordModal(r) {
     ${r.coaching_date ? `<span style="font-size:12px;color:var(--text-muted);margin-left:8px">Feedback provided on ${escapeHtml(fmtDate(r.coaching_date))}</span>` : ''}
     ${r.dispute_status ? `
     <div style="margin-top:14px;padding:12px;background:#FFF8E1;border-radius:8px;font-size:13px">
-      <strong>Dispute ${r.dispute_status === 'Open' ? 'open' : 'resolved'}</strong>${r.dispute_accepted === 'Y' ? ' — ✅ Accepted' : r.dispute_accepted === 'N' ? ' — ❌ Rejected' : ' — ⏳ Waiting for admin review'}
+      ${disputeHistoryHtml(r)}
+      <strong>Dispute ${r.dispute_status === 'Open' ? 'open' : 'resolved'}${disputeRound(r) > 1 ? ' · round ' + disputeRound(r) + ' (reopened)' : ''}</strong>${r.dispute_accepted === 'Y' ? ' — ✅ Accepted' : r.dispute_accepted === 'N' ? ' — ❌ Rejected' : ' — ⏳ Waiting for admin review'}
       ${disputeOriginalTotal(r) !== null && disputeOriginalTotal(r) !== total ? `<div style="margin-top:4px">Score: <strong>${disputeOriginalTotal(r)}</strong> → <strong>${total}</strong> / 100</div>` : ''}
       ${r.disputed_items ? `<div style="margin-top:6px"><span style="color:var(--text-muted)">Disputed:</span> ${escapeHtml(r.disputed_items)}</div>` : ''}
       ${r.dispute_reason ? `<div style="margin-top:4px;white-space:pre-wrap"><span style="color:var(--text-muted)">Reason:</span> ${escapeHtml(r.dispute_reason)}</div>` : ''}
@@ -2903,7 +2950,7 @@ function showRecordModal(r) {
 
   document.getElementById('modal-actions').innerHTML = canAct
     ? `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
-       ${canDisputeReview(r) ? `<button class="btn btn-danger" onclick="openDisputeModal(window._modalRecord)">⚖️ Dispute</button>` : ''}
+       ${canDisputeReview(r) ? `<button class="btn btn-danger" onclick="openDisputeModal(window._modalRecord)">${disputeButtonLabel(r)}</button>` : ''}
        <button class="btn btn-primary" onclick="markFeedbackProvided(window._modalRecord)">✅ Feedback provided</button>`
     : `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
 
@@ -3128,11 +3175,12 @@ function renderDisputesTable(disputes) {
     const current = Number(d.total_score) || 0;
     const original = disputeOriginalTotal(d);
     const changed = original !== null && original !== current;
-    const statusTag = d.dispute_status === 'Open'
+    const statusTag = (d.dispute_status === 'Open'
       ? '<span class="badge badge-amber">Open</span>'
       : d.dispute_accepted === 'Y'
         ? '<span class="badge badge-green">Accepted</span>'
-        : '<span class="badge badge-red">Rejected</span>';
+        : '<span class="badge badge-red">Rejected</span>')
+      + (disputeRound(d) > 1 ? ' <span class="badge badge-gray" title="Reopened once">Round 2</span>' : '');
     return `<tr onclick="handleDisputeRowClick(window._disputeRows[${i}])" style="cursor:pointer">
       <td><span onclick="event.stopPropagation()">${zdLink(d.ticket)}</span></td>
       <td>${escapeHtml(leadLabel(d.lead_email))}</td>
@@ -3318,8 +3366,9 @@ function openDisputeReadOnly(d) {
       <div class="dsp-text">${escapeHtml(originalComment || '—')}</div>
     </div>
 
+    ${disputeHistoryHtml(d)}
     <div class="dsp-block" style="--c:#AA0061">
-      <h4>2 · Dispute <small>${escapeHtml(d.dispute_submitted_by || '')} · ${when(d.dispute_submitted_at)}</small></h4>
+      <h4>2 · Dispute${disputeRound(d) > 1 ? ' — round ' + disputeRound(d) + ', reopened' : ''} <small>${escapeHtml(d.dispute_submitted_by || '')} · ${when(d.dispute_submitted_at)}</small></h4>
       ${items.length ? `<div style="margin-bottom:8px">${items.map(disputedChip).join('')}</div>` : ''}
       <div class="dsp-text">${escapeHtml(d.dispute_reason || '—')}</div>
     </div>
@@ -3342,10 +3391,12 @@ function openDisputeReadOnly(d) {
           <div style="font-weight:700;margin-bottom:6px">${accepted ? '✅ Dispute accepted — review corrected' : '❌ Dispute rejected — original review stands'}</div>
           <div class="dsp-text">${escapeHtml(d.dispute_resolution_notes || '—')}</div>
         </div>`}`;
+  const canReopen = !isOpen && canDisputeReview(d) && canActOnLead(d.lead_email);
   document.getElementById('modal-actions').innerHTML = (isOpen && currentRole === 'admin')
     ? `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
        <button class="btn btn-primary" onclick="closeModal();openDisputeResolution(window._dspCurrent)">⚖️ Resolve</button>`
-    : `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
+    : `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
+       ${canReopen ? '<button class="btn btn-danger" onclick="openDisputeModal(window._dspCurrent)">⚖️ Reopen dispute</button>' : ''}`;
   window._dspCurrent = d;
   document.getElementById('modal').classList.add('open');
 }
