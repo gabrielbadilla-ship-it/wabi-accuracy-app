@@ -155,6 +155,37 @@ tr:hover td{background:var(--card-bg)}
 .calib-score-mismatch{color:var(--cu-magenta);font-weight:700}
 .calib-score-pending{color:var(--text-muted)}
 .guide-view{padding-top:4px}
+.guide-ex-filters{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 18px}
+.guide-ex-pill{border:1px solid var(--border);background:var(--white);border-radius:999px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:var(--text)}
+.guide-ex-pill i{width:8px;height:8px;border-radius:50%;background:var(--cat)}
+.guide-ex-pill b{background:#F0EFE9;border-radius:999px;padding:1px 7px;font-size:11px}
+.guide-ex-pill.active{background:var(--cu-black);color:#fff;border-color:var(--cu-black)}
+.guide-ex-pill.active b{background:rgba(255,255,255,.18)}
+.guide-ex-cat{display:flex;align-items:center;gap:8px;font-size:15px;margin:22px 0 10px}
+.guide-ex-cat i{width:10px;height:10px;border-radius:3px;background:var(--cat)}
+.guide-ex-cat small{font-weight:500;color:var(--text-muted);font-size:12px}
+.guide-ex-soon{border:1px dashed var(--border);border-radius:12px;padding:18px;color:var(--text-muted);font-size:13px;text-align:center}
+.guide-ex-card{background:var(--white);border:1px solid var(--border);border-left:5px solid var(--cat);border-radius:14px;padding:22px 24px;margin-bottom:16px}
+.guide-ex-num{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+.guide-ex-card h4{font-size:17px;margin:4px 0 10px}
+.guide-ex-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.guide-ex-rc{background:var(--cat);color:#2C2B2B;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer}
+.guide-ex-tag{background:#F2F1EC;font-size:12px;padding:4px 10px;border-radius:999px;color:var(--text-muted)}
+.guide-ex-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+@media (max-width:900px){.guide-ex-grid,.guide-ex-options{grid-template-columns:1fr !important}}
+.guide-ex-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+.guide-ex-card p{font-size:13px;line-height:1.6;margin:0}
+.guide-ex-quote{background:#F7F6F2;border-radius:8px;padding:10px 12px;font-style:italic}
+.guide-ex-why{background:#FDF0F5;border-radius:10px;padding:14px 16px;margin:16px 0}
+.guide-ex-options{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.guide-ex-opt{background:#F7F6F2;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.guide-ex-opt-title{font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:2px}
+.guide-ex-opt-title span{background:var(--cu-black);color:#fff;border-radius:6px;padding:2px 8px;margin-right:6px;font-size:11px}
+.guide-ex-msg{border-radius:10px;padding:10px 12px;background:var(--white);border:1px solid var(--border)}
+.guide-ex-msg.spec{background:#EEF1FB;border-color:#D5DBF3;margin-left:22px}
+.guide-ex-msg.lead{border-left:3px solid #218848}
+.guide-ex-msg b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px}
+.guide-ex-note{font-size:12px;color:var(--text-muted);margin-top:10px}
 .guide-hero{background:linear-gradient(135deg,#2C2B2B 0%,#3d3a39 100%);color:#fff;border-radius:16px;padding:28px 32px;margin-bottom:18px}
 .guide-hero h2{font-size:24px;line-height:1.25;margin:6px 0 12px;color:#fff;max-width:760px}
 .guide-hero p{font-size:14px;line-height:1.65;color:#E8E6E1;max-width:820px}
@@ -1001,6 +1032,7 @@ tr:hover td{background:var(--card-bg)}
         <div class="tab" onclick="guideTab('rootcauses',this)">📖 Root causes</div>
         <div class="tab" onclick="guideTab('competencies',this)">🧩 Competencies</div>
         <div class="tab" onclick="guideTab('criteria',this)">✅ Criteria</div>
+        <div class="tab" onclick="guideTab('examples',this)">💡 Examples</div>
       </div>
 
       <!-- OVERVIEW -->
@@ -1140,6 +1172,13 @@ tr:hover td{background:var(--card-bg)}
       <div id="guide-competencies" class="guide-view" style="display:none">
         <p class="guide-intro">Each root cause is linked to a Lead competency from the Career Path. Every review is tagged with the competencies of the root causes marked, so performance can be followed per competency in <strong>Pending Feedback → Lead reviews</strong>. Click a competency to see its root causes in detail.</p>
         <div class="guide-comps" id="guide-comps"></div>
+      </div>
+
+      <!-- EXAMPLES -->
+      <div id="guide-examples" class="guide-view" style="display:none">
+        <p class="guide-intro">Real cases from completed reviews, anonymized. Each one shows what went wrong, the root cause, why it matters and what a good Lead response looks like. For Validation, there are two correct ways to respond: asking the Specialist to validate first, or validating directly.</p>
+        <div class="guide-ex-filters" id="guide-ex-filters"></div>
+        <div id="guide-ex-list"></div>
       </div>
 
       <!-- CRITERIA -->
@@ -4457,7 +4496,7 @@ function showGuideStep(id) {
 }
 
 function guideTab(view, el) {
-  const views = ['overview', 'process', 'scoring', 'rootcauses', 'competencies', 'criteria'];
+  const views = ['overview', 'process', 'scoring', 'rootcauses', 'competencies', 'criteria', 'examples'];
   const tabs = [...document.querySelectorAll('#guide-tabs .tab')];
   tabs.forEach(t => t.classList.remove('active'));
   (el || tabs[views.indexOf(view)])?.classList.add('active');
@@ -4513,6 +4552,89 @@ function initKnowledge() {
     }).join('')}</tbody></table>`;
 
   renderKB(KB_DATA);
+  renderGuideExamples('');
+}
+
+// ── GUIDE · EXAMPLES ──────────────────────────────────────
+// Real, anonymized cases (no ticket numbers, names, emails or order data).
+// category = GUIDE_CATS key. Validation cases carry two ideal responses:
+// option1 is a thread (the Lead holds the decision until the Specialist
+// validates), option2 is the Lead validating directly. Other categories
+// use a single `ideal` text.
+const GUIDE_EXAMPLES = [
+  {
+    category: 'VALIDATION',
+    rootCause: 'Account & Platform Records',
+    title: 'Order on the previous delivery day after a delivery-day change',
+    tags: ['Cancel after cutoff', 'Braze / Mixpanel'],
+    caseText: 'A customer changed their delivery day from Tuesday to Sunday on Sept 24. On Oct 1, an order was still placed for Tuesday, Oct 6. The customer, who was out of the country, asked to cancel it. It was past the cutoff and preparation had started, so the Specialist asked whether the order could be credited in full or partially as a one-time exception, or whether a higher retention offer was possible. The Specialist assumed the system created the order on the old delivery day by mistake.',
+    leadAnswer: "The order couldn't be canceled because it was past the cutoff, and offered $50 x2 as goodwill, without increasing it.",
+    why: "The real reason behind the order was never verified. The Lead accepted the Specialist's version (a system error) and only answered about compensation. Braze/Mixpanel showed that, besides changing the delivery day, the customer had rescheduled an order to Oct 6: the order wasn't an error, the customer created it. Checking the account history would have given the Specialist the real reason to deny the cancellation and a clear explanation for a pushy customer. If the records had confirmed a system error, the right path would have been a Jira ticket.",
+    option1: [
+      ['Lead', 'Hi [Specialist], before we decide anything, please check the account events in Braze and Mixpanel between Sept 24 and Oct 1. If the delivery day was changed to Sunday, we need to understand why there\u2019s still an order for Tuesday, Oct 6. Please share screenshots of what you find.'],
+      ['Specialist', 'I checked Mixpanel: on Sept 24 the customer not only changed the delivery day to Sunday but also rescheduled an order to Tuesday, Oct 6 (screenshots attached). Is that the reason for the order on the 6th?'],
+      ['Lead', 'Yes, that\u2019s the reason. The order was created by the customer\u2019s reschedule, not by a system error, so it\u2019s valid. Since we\u2019re past the cutoff and it\u2019s already in preparation, we can\u2019t cancel it or credit it as a one-time exception.\n\nNext steps: explain to the customer that the Oct 6 order comes from the reschedule they made, offer $50 x2 as goodwill, and remind them they can review their upcoming deliveries in the app before each cutoff.'],
+    ],
+    option2: 'Hi [Specialist], I checked the account history in Mixpanel. On Sept 24 the customer changed their delivery day to Sunday, and they also rescheduled an order to Tuesday, Oct 6. That\u2019s why this order exists: it wasn\u2019t created by a system error. Since we\u2019re past the cutoff and the order is already in preparation, we can\u2019t cancel it or credit it as a one-time exception.\n\nNext steps: explain to the customer that the Oct 6 order comes from the reschedule they made, offer $50 x2 as goodwill, and remind them they can review their upcoming deliveries in the app before each cutoff to avoid this in the future.',
+  },
+];
+
+let guideExamplesCat = '';
+
+function renderGuideExamples(cat) {
+  if (cat !== undefined) guideExamplesCat = cat;
+  const counts = {};
+  GUIDE_EXAMPLES.forEach(e => { counts[e.category] = (counts[e.category] || 0) + 1; });
+
+  document.getElementById('guide-ex-filters').innerHTML =
+    `<button class="guide-ex-pill ${!guideExamplesCat ? 'active' : ''}" onclick="renderGuideExamples('')">All <b>${GUIDE_EXAMPLES.length}</b></button>` +
+    GUIDE_CATS.map(c => `<button class="guide-ex-pill ${guideExamplesCat === c.key ? 'active' : ''}" style="--cat:${c.color}"
+      onclick="renderGuideExamples('${c.key}')"><i></i>${escapeHtml(c.label)} <b>${counts[c.key] || 0}</b></button>`).join('');
+
+  const nl2br = t => escapeHtml(t).replace(/\n/g, '<br>');
+  const cats = guideExamplesCat ? GUIDE_CATS.filter(c => c.key === guideExamplesCat) : GUIDE_CATS;
+
+  document.getElementById('guide-ex-list').innerHTML = cats.map(c => {
+    const list = GUIDE_EXAMPLES.filter(e => e.category === c.key);
+    const head = `<h3 class="guide-ex-cat" style="--cat:${c.color}"><i></i>${escapeHtml(c.label)} <small>${c.pts} pts</small></h3>`;
+    if (!list.length) return head + `<div class="guide-ex-soon">Examples coming soon.</div>`;
+    return head + list.map((e, i) => {
+      const comp = COMPETENCY_BY_RC[e.rootCause] || '';
+      const ideal = e.option1 || e.option2 ? `
+        <div class="guide-ex-label">Ideal Lead response</div>
+        <div class="guide-ex-options">
+          <div class="guide-ex-opt">
+            <div class="guide-ex-opt-title"><span>Option 1</span> The Lead asks the Specialist to validate first</div>
+            ${(e.option1 || []).map(([who, msg]) => `
+              <div class="guide-ex-msg ${who === 'Lead' ? 'lead' : 'spec'}"><b>${escapeHtml(who)}</b><p>${nl2br(msg)}</p></div>`).join('')}
+          </div>
+          <div class="guide-ex-opt">
+            <div class="guide-ex-opt-title"><span>Option 2</span> The Lead validates directly</div>
+            <div class="guide-ex-msg lead"><b>Lead</b><p>${nl2br(e.option2 || '')}</p></div>
+          </div>
+        </div>
+        <div class="guide-ex-note">Both are correct. In Option 1 the Lead holds the resolution until the validation comes back; in Option 2 the Lead validates directly.</div>`
+        : `<div class="guide-ex-label">Ideal Lead response</div>
+           <div class="guide-ex-msg lead"><b>Lead</b><p>${nl2br(e.ideal || '')}</p></div>`;
+      return `<article class="guide-ex-card" style="--cat:${c.color}">
+        <header>
+          <div class="guide-ex-num">${c.label} · Example ${i + 1}</div>
+          <h4>${escapeHtml(e.title)}</h4>
+          <div class="guide-ex-meta">
+            <span class="guide-ex-rc" onclick="openRootCause('${escapeHtml(e.rootCause)}')" title="See the definition">🔎 ${escapeHtml(e.rootCause)}</span>
+            ${comp ? `<span class="guide-ex-tag">🧩 ${escapeHtml(comp)}</span>` : ''}
+            ${(e.tags || []).map(t => `<span class="guide-ex-tag">${escapeHtml(t)}</span>`).join('')}
+          </div>
+        </header>
+        <div class="guide-ex-grid">
+          <div><div class="guide-ex-label">The case</div><p>${nl2br(e.caseText)}</p></div>
+          <div><div class="guide-ex-label">What the Lead answered</div><p class="guide-ex-quote">${nl2br(e.leadAnswer)}</p></div>
+        </div>
+        <div class="guide-ex-why"><div class="guide-ex-label">❌ Why it was wrong</div><p>${nl2br(e.why)}</p></div>
+        <div class="guide-ex-ideal">${ideal}</div>
+      </article>`;
+    }).join('');
+  }).join('');
 }
 
 function openRootCause(name) {
