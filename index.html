@@ -155,6 +155,10 @@ tr:hover td{background:var(--card-bg)}
 .calib-score-mismatch{color:var(--cu-magenta);font-weight:700}
 .calib-score-pending{color:var(--text-muted)}
 .guide-view{padding-top:4px}
+.calib-tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#E8E6DF;color:var(--text);font-size:10px;font-weight:700;cursor:help;position:relative;vertical-align:middle;margin-left:3px;text-transform:none;letter-spacing:0}
+#calib-tip-bubble{display:none;position:fixed;width:280px;background:var(--cu-black);color:#fff;font-size:12px;font-weight:400;line-height:1.5;padding:10px 12px;border-radius:8px;z-index:9999;text-align:left;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none;text-transform:none;letter-spacing:0}
+.calib-rc-miss{color:var(--cu-magenta);font-weight:600;text-decoration:underline dotted}
+.calib-ref-row td{background:#FFF8E6 !important}
 .guide-ex-filters{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 18px}
 .guide-ex-pill{border:1px solid var(--border);background:var(--white);border-radius:999px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:var(--text)}
 .guide-ex-pill i{width:8px;height:8px;border-radius:50%;background:var(--cat)}
@@ -1345,7 +1349,7 @@ function signOut() { sessionStorage.removeItem('wabiUser'); location.reload(); }
 // retried automatically after a transient Apps Script failure (404 or an
 // empty request). Never retry actions that would create duplicates.
 const RETRY_SAFE_WRITES = ['editDisputeComment', 'supervisorAction', 'setRole', 'saveCalibrationNote'];
-const EXPECTED_API_VERSION = '2026-10-22';
+const EXPECTED_API_VERSION = '2026-10-27';
 
 async function api(action, params = {}, body = null) {
   const canRetry = !body || RETRY_SAFE_WRITES.includes(action);
@@ -2373,19 +2377,33 @@ async function loadCalibrationsList() {
           </div>
           <div class="metrics" style="margin-bottom:16px">
             <div class="metric"><div class="label">Avg score</div><div class="value">${score(s.avg_total, MAX.total)}</div></div>
-            <div class="metric"><div class="label">Team alignment</div><div class="value ${alignmentTone(s.alignment_total)}">${pct(s.alignment_total)}</div></div>
+            <div class="metric"><div class="label">Score alignment ${calibTip(`Score alignment: % of completed reviews where all 4 category scores (Validation, Issue Resolution, Process & Escalation, Coaching & Guidance) are exactly the same as the reference. Matching only the total is not enough: failing Validation instead of Process & Escalation gives the same total (both 35 pts) but a different conclusion.`)}</div><div class="value ${alignmentTone(s.alignment_total)}">${pct(s.alignment_total)}</div></div>
+            <div class="metric"><div class="label">Full alignment ${calibTip(`Full alignment: % of completed reviews where all 4 category scores AND the root causes in every category are exactly the same as the reference (same conclusion, same category, same reason). Only tickets with reference root causes in the Calibration Sessions sheet are counted.`)}</div><div class="value ${alignmentTone(s.alignment_full)}">${pct(s.alignment_full)}</div>${s.rc_reference_tickets < s.tickets.length ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">${s.rc_reference_tickets} of ${s.tickets.length} tickets have reference root causes</div>` : ''}</div>
             <div class="metric"><div class="label">Compliance</div><div class="value">${s.compliance}%</div></div>
             <div class="metric"><div class="label">Completed</div><div class="value">${s.completed}/${s.assigned}</div>${s.missed ? `<div style="font-size:12px;color:var(--cu-magenta);font-weight:600;margin-top:4px">${s.missed} missed</div>` : ''}</div>
           </div>
           <div class="card" style="padding:0;overflow:hidden">
-            <div class="calib-table-wrap"><table><thead><tr><th>Ticket</th><th>Reference total</th><th>Avg score</th><th>Completed</th><th>Aligned reviews</th><th>Category alignment</th><th>Alignment</th></tr></thead><tbody>
+            <div class="calib-table-wrap"><table><thead><tr><th>Ticket</th><th>Reference total</th><th>Avg score</th><th>Completed</th><th>Aligned reviews</th><th>Category alignment</th><th>Score alignment ${calibTip(`Score alignment: % of completed reviews where all 4 category scores (Validation, Issue Resolution, Process & Escalation, Coaching & Guidance) are exactly the same as the reference. Matching only the total is not enough: failing Validation instead of Process & Escalation gives the same total (both 35 pts) but a different conclusion.`)}</th><th>Full alignment ${calibTip(`Full alignment: % of completed reviews where all 4 category scores AND the root causes in every category are exactly the same as the reference (same conclusion, same category, same reason). Only tickets with reference root causes in the Calibration Sessions sheet are counted.`)}</th></tr></thead><tbody>
             ${s.tickets.map(t => {
               const detailId = 'calib-detail-' + safe(`${s.session_id}-${t.ticket}`).replace(/[^a-zA-Z0-9_-]/g, '_');
               const reviews = Array.isArray(t.reviews) ? t.reviews : [];
               const completedCount = Number(t.completed || reviews.filter(r => r.status === 'Completed').length || 0);
               const alignedCount = Number.isFinite(Number(t.aligned_total_count))
                 ? Number(t.aligned_total_count)
-                : reviews.filter(r => r.status === 'Completed' && r.matches?.total === true).length;
+                : reviews.filter(r => r.status === 'Completed' && r.matches?.all === true).length;
+              const refRc = t.reference?.rc || {};
+              const rcCell = (val, f, r) => {
+                if (!val) return '';
+                const ok = r.matches?.rc ? r.matches.rc[f] : null;
+                return `<span class="${ok === false ? 'calib-rc-miss' : ''}" title="${ok === false ? 'Different from the reference' : ''}">${safe(val)}</span>`;
+              };
+              const refRow = t.reference?.has_rc ? `<tr class="calib-ref-row">
+                    <td class="calib-reviewer">Reference<small>expected answer</small></td><td></td>
+                    <td><strong>${score(t.reference?.total, MAX.total)}</strong></td>
+                    <td>${score(t.reference?.val, MAX.val)}</td><td>${score(t.reference?.ir, MAX.ir)}</td>
+                    <td>${score(t.reference?.pe, MAX.pe)}</td><td>${score(t.reference?.cg, MAX.cg)}</td>
+                    <td class="calib-review-note">${safe([refRc.val, refRc.ir, refRc.pe, refRc.cg].filter(Boolean).join(' · ')) || 'No root causes (100)'}</td>
+                  </tr>` : '';
               const reviewRows = reviews.length
                 ? reviews.map(r => `<tr>
                     <td class="calib-reviewer">${safe(r.supervisor_name)}<small>${safe(r.supervisor_email)}</small></td>
@@ -2395,9 +2413,10 @@ async function loadCalibrationsList() {
                     <td>${matchScore(r.score_ir, t.reference?.ir, r.matches?.ir, r.status, MAX.ir)}</td>
                     <td>${matchScore(r.score_pe, t.reference?.pe, r.matches?.pe, r.status, MAX.pe)}</td>
                     <td>${matchScore(r.score_cg, t.reference?.cg, r.matches?.cg, r.status, MAX.cg)}</td>
-                    <td class="calib-review-note">${safe([r.root_causes?.val, r.root_causes?.ir, r.root_causes?.pe, r.root_causes?.cg].filter(Boolean).join(' · ')) || '—'}${r.comment ? `<br><span style="color:var(--text-muted)">${safe(r.comment)}</span>` : ''}</td>
+                    <td class="calib-review-note">${['val', 'ir', 'pe', 'cg'].map(f => rcCell(r.root_causes?.[f], f, r)).filter(Boolean).join(' · ') || '—'}${r.matches?.full === true ? ' <span class="badge badge-green" style="margin-left:4px">Full match</span>' : ''}${r.comment ? `<br><span style="color:var(--text-muted)">${safe(r.comment)}</span>` : ''}</td>
                   </tr>`).join('')
                 : '<tr><td colspan="8" class="calib-score-pending">No assigned reviewers found for this ticket.</td></tr>';
+              const reviewRowsWithRef = refRow + reviewRows;
               return `<tr class="calib-ticket-row" data-calib-toggle="${detailId}" onclick="toggleCalibrationTicket('${detailId}')">
                   <td><span class="calib-chevron" id="${detailId}-chevron">▸</span><span onclick="event.stopPropagation()">${zdLink(t.ticket)}</span></td>
                   <td><strong>${score(t.reference?.total, MAX.total)}</strong></td>
@@ -2406,22 +2425,25 @@ async function loadCalibrationsList() {
                   <td><strong>${alignedCount}/${completedCount}</strong></td>
                   <td><div class="calib-align-cats">${categoryAlignment(t)}</div></td>
                   <td><span class="calib-alignment-value ${alignmentTone(t.alignment_total)}">${pct(t.alignment_total)}</span></td>
+                  <td>${t.has_rc_reference
+                    ? `<span class="calib-alignment-value ${alignmentTone(t.alignment_full)}">${pct(t.alignment_full)}</span><div style="font-size:11px;color:var(--text-muted)">${t.aligned_full_count}/${completedCount}</div>`
+                    : '<span style="font-size:11px;color:var(--text-muted)" title="Add the reference root causes in the Calibration Sessions sheet">No RC reference</span>'}</td>
                 </tr>
                 <tr id="${detailId}" class="calib-detail-row">
-                  <td colspan="7"><div class="calib-detail">
+                  <td colspan="8"><div class="calib-detail">
                     <div class="calib-review-wrap"><table class="calib-review-table"><thead><tr>
                       <th>Supervisor</th><th>Status</th><th>Total</th><th>Validation</th><th>Issue Resolution</th><th>Process &amp; Escalation</th><th>Coaching &amp; Guidance</th><th>Root causes / notes</th>
-                    </tr></thead><tbody>${reviewRows}</tbody></table></div>
+                    </tr></thead><tbody>${reviewRowsWithRef}</tbody></table></div>
                   </div></td>
                 </tr>`;
             }).join('')}
             ${(() => {
               const sumId = 'calib-summary-' + sIdx;
               return `<tr class="calib-ticket-row calib-summary-row" data-calib-toggle="${sumId}" onclick="toggleCalibrationTicket('${sumId}')">
-                  <td colspan="7"><span class="calib-chevron" id="${sumId}-chevron">▸</span><strong>📝 Session summary</strong><span class="calib-summary-meta" id="calib-sum-meta-${sIdx}">${calibrationSummaryMeta(s.summary)}</span></td>
+                  <td colspan="8"><span class="calib-chevron" id="${sumId}-chevron">▸</span><strong>📝 Session summary</strong><span class="calib-summary-meta" id="calib-sum-meta-${sIdx}">${calibrationSummaryMeta(s.summary)}</span></td>
                 </tr>
                 <tr id="${sumId}" class="calib-detail-row">
-                  <td colspan="7"><div class="calib-detail">${renderCalibrationSummary(s, sIdx)}</div></td>
+                  <td colspan="8"><div class="calib-detail">${renderCalibrationSummary(s, sIdx)}</div></td>
                 </tr>`;
             })()}
             </tbody></table></div>
@@ -2430,6 +2452,25 @@ async function loadCalibrationsList() {
         </div>`).join('');
   } catch(e) { console.error('loadCalibrationsList:', e); el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
 }
+
+// "?" help bubble: hover on desktop, tap on mobile
+function calibTip(text) {
+  return `<span class="calib-tip" tabindex="0" data-tip="${escapeHtml(text)}"
+    onmouseenter="showCalibTip(this)" onmouseleave="hideCalibTip()" onfocus="showCalibTip(this)" onblur="hideCalibTip()"
+    onclick="event.stopPropagation();showCalibTip(this)">?</span>`;
+}
+// One floating bubble on <body>, positioned next to the "?" so no card or
+// scrolling table can clip it.
+function showCalibTip(el) {
+  let tip = document.getElementById('calib-tip-bubble');
+  if (!tip) { tip = document.createElement('div'); tip.id = 'calib-tip-bubble'; document.body.appendChild(tip); }
+  tip.textContent = el.dataset.tip;
+  tip.style.display = 'block';
+  const r = el.getBoundingClientRect(), w = tip.offsetWidth;
+  tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+  tip.style.top = (r.bottom + 8) + 'px';
+}
+function hideCalibTip() { const tip = document.getElementById('calib-tip-bubble'); if (tip) tip.style.display = 'none'; }
 
 function toggleCalibrationTicket(detailId) {
   const detail = document.getElementById(detailId);
