@@ -913,14 +913,14 @@ tr:hover td{background:var(--card-bg)}
       <!-- TEAM OVERVIEW: the same for everyone -->
       <div id="feedback-overview">
         <div class="filters-bar">
-          <select id="fo-week" onchange="loadFeedbackOverview()"><option value="">All weeks</option></select>
-          <button class="btn btn-secondary btn-sm" onclick="loadFeedbackOverview()">↺ Refresh</button>
+          <select id="fo-month" onchange="renderFeedbackOverview()"></select>
+          <button class="btn btn-secondary btn-sm" title="Reload the latest data" onclick="loadFeedbackOverview()">↺</button>
+          <span style="font-size:13px;color:var(--text-muted)" id="fo-summary"></span>
         </div>
         <div class="metrics" id="fo-metrics"></div>
-        <div class="card" style="padding:0;overflow:hidden">
-          <div id="fo-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
-        </div>
-        <div class="fb-note">Compliance = (feedback provided + disputed) ÷ feedback needed. A disputed review counts as handled: the supervisor acted on it and it is waiting for the dispute to be resolved.</div>
+        <div class="page-title" style="font-size:18px;margin:12px 0 10px">Weekly history</div>
+        <div id="fo-table"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+        <div class="fb-note">Compliance = (feedback provided + disputed) ÷ feedback needed. A disputed review counts as handled. Feedback is due two weeks after the audit deadline of its week (e.g. W42 audits due Sun Oct 25 → feedback due Sun Nov 8); until then the week shows "In progress" and doesn't count toward Overall.</div>
       </div>
 
       <!-- LEAD REVIEWS: supervisor + their Lead -->
@@ -1335,7 +1335,7 @@ function signOut() { sessionStorage.removeItem('wabiUser'); location.reload(); }
 // retried automatically after a transient Apps Script failure (404 or an
 // empty request). Never retry actions that would create duplicates.
 const RETRY_SAFE_WRITES = ['editDisputeComment', 'supervisorAction', 'setRole', 'saveCalibrationNote'];
-const EXPECTED_API_VERSION = '2026-10-27b';
+const EXPECTED_API_VERSION = '2026-10-28';
 
 async function api(action, params = {}, body = null) {
   const canRetry = !body || RETRY_SAFE_WRITES.includes(action);
@@ -2669,47 +2669,141 @@ async function loadFeedbackLoop() {
 }
 async function loadQueue() { return loadFeedbackLoop(); }
 
+// Feedback for a Wabi week is due 2 weeks after its audit deadline
+// (weekReviewDeadline), i.e. 28 days after the week starts.
+function feedbackDeadline(week, year) {
+  const d = weekReviewDeadline(week, year);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 14);
+}
+function feedbackInProgress(b) {
+  const year = Number((String(b.half || CURRENT_HALF || '').match(/(\d{4})/) || [])[1]) || new Date().getFullYear();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return today <= feedbackDeadline(Number(b.week), year);
+}
+// Counts toward compliance: deadline passed, or nothing left pending
+function fbCounts(b) { return !feedbackInProgress(b) || b.pending === 0; }
+const fbPct = b => b.needed ? Math.round((b.provided + b.disputed) / b.needed * 100) : null;
+const fbSum = list => list.reduce((t, b) => ({ needed: t.needed + b.needed, provided: t.provided + b.provided,
+  disputed: t.disputed + b.disputed, pending: t.pending + b.pending }), { needed: 0, provided: 0, disputed: 0, pending: 0 });
+function fbPill(p, big) {
+  if (p === null || p === undefined) return '<span style="color:var(--text-muted)">—</span>';
+  const col = p >= 100 ? 'var(--cu-green)' : p >= 80 ? 'var(--cu-blue)' : p >= 50 ? 'var(--cu-orange)' : 'var(--cu-magenta)';
+  const bg  = p >= 100 ? '#D6EFDF' : p >= 80 ? '#D6DCF7' : p >= 50 ? '#FDE8D8' : '#FFE5F0';
+  return `<span style="background:${bg};color:${col};font-weight:700;font-size:${big ? 12 : 11}px;padding:2px ${big ? 9 : 7}px;border-radius:10px">${p}%</span>`;
+}
+
+let fbOverview = null;
+
 async function loadFeedbackOverview() {
-  const weekSel = document.getElementById('fo-week');
-  const week = weekSel?.value || '';
   const tableEl = document.getElementById('fo-table');
   try {
-    const [d, absences] = await Promise.all([api('getFeedbackLoop', { week, supervisor: currentUser.email }), getAbsences()]);
-    (d.weeks || []).forEach(w => fbWeeks.add(Number(w)));
-    if (weekSel) {
-      weekSel.innerHTML = '<option value="">All weeks</option>' +
-        [...fbWeeks].sort((a, b) => b - a).map(w => `<option value="${w}" ${String(w) === week ? 'selected' : ''}>W${w}</option>`).join('');
-    }
-
+    const d = await api('getFeedbackLoop', { supervisor: currentUser.email });
+    fbOverview = d;
     const badge = document.getElementById('feedback-badge');
     if (badge) badge.textContent = d.myPending || 0;
 
-    const t = d.totals || {};
-    const tone = v => v === null || v === undefined ? '' : v >= 80 ? 'green' : v >= 50 ? 'amber' : 'red';
-    document.getElementById('fo-metrics').innerHTML = `
-      <div class="metric"><div class="label">Feedback needed</div><div class="value">${t.needed || 0}</div></div>
-      <div class="metric"><div class="label">Feedback provided</div><div class="value green">${t.provided || 0}</div></div>
-      <div class="metric"><div class="label">Disputed</div><div class="value amber">${t.disputed || 0}</div></div>
-      <div class="metric"><div class="label">Pending</div><div class="value ${t.pending ? 'red' : ''}">${t.pending || 0}</div></div>
-      <div class="metric"><div class="label">Feedback compliance</div><div class="value ${tone(t.compliance)}">${t.compliance === null || t.compliance === undefined ? '—' : t.compliance + '%'}</div></div>`;
-
-    const rows = (d.bySupervisor || []).map(s => `
-      <tr${s.supervisor === myEmail() ? ' style="background:#FFFBF0"' : ''}>
-        <td><strong>${escapeHtml(s.name)}</strong>${week ? absenceBadge(absenceOf(absences, s.supervisor, week)) : ''}<div style="font-size:11px;color:var(--text-muted)">${escapeHtml(s.supervisor)}</div></td>
-        <td style="text-align:center">${s.leads}</td>
-        <td style="text-align:center">${s.needed}</td>
-        <td style="text-align:center;color:var(--cu-green);font-weight:600">${s.provided}</td>
-        <td style="text-align:center;color:var(--cu-orange);font-weight:600">${s.disputed}</td>
-        <td style="text-align:center;${s.pending ? 'color:var(--cu-magenta);font-weight:700' : ''}">${s.pending}</td>
-        <td>${s.compliance === null ? '<span style="color:var(--text-muted)">—</span>' : `<span class="badge ${s.compliance >= 80 ? 'badge-green' : s.compliance >= 50 ? 'badge-amber' : 'badge-red'}">${s.compliance}%</span>`}</td>
-      </tr>`).join('');
-    tableEl.innerHTML = rows
-      ? `<table><thead><tr><th>Supervisor</th><th style="text-align:center">Leads</th><th style="text-align:center">Needed</th><th style="text-align:center">Provided</th><th style="text-align:center">Disputed</th><th style="text-align:center">Pending</th><th>Compliance</th></tr></thead><tbody>${rows}</tbody></table>`
-      : '<div class="empty">No supervisors found in Hierarchy</div>';
+    const sel = document.getElementById('fo-month');
+    const prev = sel.value;
+    const months = [...new Set((d.byWeek || []).map(b => Number(b.month)))].filter(Boolean).sort((a, b) => b - a);
+    sel.innerHTML = months.length
+      ? months.map(m => `<option value="${m}">${MONTH_NAMES[m] || 'Month ' + m}</option>`).join('')
+      : '<option value="">No reviews yet</option>';
+    sel.value = months.map(String).includes(prev) ? prev : String(months[0] || '');
+    renderFeedbackOverview();
   } catch(e) {
     console.error('loadFeedbackOverview:', e);
     if (tableEl) tableEl.innerHTML = `<div class="empty">Error: ${escapeHtml(e.message)}</div>`;
   }
+}
+
+function renderFeedbackOverview() {
+  const d = fbOverview; if (!d) return;
+  const month = Number(document.getElementById('fo-month').value) || 0;
+  const list = (d.byWeek || []).filter(b => !month || Number(b.month) === month);
+  const tableEl = document.getElementById('fo-table');
+
+  const all = fbSum(list), counted = fbSum(list.filter(fbCounts));
+  const openWeeks = [...new Set(list.filter(b => !fbCounts(b)).map(b => b.week))].sort((a, b) => a - b);
+  const comp = fbPct(counted);
+  document.getElementById('fo-summary').textContent = (month ? MONTH_NAMES[month] : '') +
+    (openWeeks.length ? ` (${openWeeks.map(w => 'W' + w).join(', ')} in progress, not counted in compliance)` : '');
+  const tone = v => v === null ? '' : v >= 80 ? 'green' : v >= 50 ? 'amber' : 'red';
+  document.getElementById('fo-metrics').innerHTML = `
+    <div class="metric"><div class="label">Feedback needed</div><div class="value">${all.needed}</div></div>
+    <div class="metric"><div class="label">Provided</div><div class="value green">${all.provided}</div></div>
+    <div class="metric"><div class="label">Disputed</div><div class="value amber">${all.disputed}</div></div>
+    <div class="metric"><div class="label">Pending</div><div class="value ${all.pending ? 'red' : ''}">${all.pending}</div></div>
+    <div class="metric"><div class="label">Feedback compliance</div><div class="value ${tone(comp)}">${comp === null ? '—' : comp + '%'}</div></div>`;
+
+  if (!list.length) { tableEl.innerHTML = '<div class="empty">No feedback needed this month</div>'; return; }
+
+  const weeks = [...new Set(list.map(b => b.week))].sort((a, b) => a - b);
+  const names = {};
+  (d.bySupervisor || []).forEach(s => { names[s.supervisor] = s.name; });
+  const sups = [...new Set(list.map(b => b.supervisor))].sort((a, b) => String(names[a] || a).localeCompare(String(names[b] || b)));
+  window._fbRows = {};
+
+  const head = weeks.map(w => {
+    const open = list.some(b => b.week === w && feedbackInProgress(b));
+    return `<th style="text-align:center;min-width:52px;white-space:nowrap;font-size:10px;padding:8px 6px;color:#fff">W${w}${open ? ' <span style="color:#FFB81C">⏳</span>' : ''}</th>`;
+  }).join('');
+
+  const body = sups.map((sup, i) => {
+    const byW = {};
+    list.filter(b => b.supervisor === sup).forEach(b => { byW[b.week] = b; });
+    window._fbRows[i] = { byW, weeks };
+    const overall = fbPct(fbSum(Object.values(byW).filter(fbCounts)));
+    const cells = weeks.map(w => {
+      const b = byW[w];
+      if (!b) return '<td style="text-align:center;color:var(--text-muted);font-size:12px">—</td>';
+      if (!fbCounts(b)) return `<td style="text-align:center" title="Feedback deadline not reached yet — doesn't count toward Overall"><span style="background:#F0EFE9;color:var(--text-muted);font-weight:700;font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap">⏳ In progress · ${b.provided + b.disputed}/${b.needed}</span></td>`;
+      return `<td style="text-align:center">${fbPill(fbPct(b))}</td>`;
+    }).join('');
+    return `<tr style="cursor:pointer;border-bottom:0.5px solid var(--border)${sup === myEmail() ? ';background:#FFFBF0' : ''}" onclick="toggleFbDetail(${i})">
+        <td style="font-size:12px;white-space:nowrap;padding:9px 12px;position:sticky;left:0;background:${sup === myEmail() ? '#FFFBF0' : '#fff'};z-index:1">
+          <span style="margin-right:6px;font-size:10px;color:var(--text-muted)" id="fb-arrow-${i}">▶</span>${escapeHtml(names[sup] || sup)}</td>
+        <td style="text-align:center;padding:9px 6px">${fbPill(overall, true)}</td>
+        ${cells}
+      </tr>
+      <tr id="fb-detail-${i}" style="display:none"><td colspan="${weeks.length + 2}" style="padding:0"></td></tr>`;
+  }).join('');
+
+  tableEl.innerHTML = `
+    <div style="overflow-x:auto;max-height:600px;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead style="position:sticky;top:0;z-index:3"><tr style="background:var(--cu-black)">
+          <th style="padding:8px 12px;text-align:left;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.05em;position:sticky;left:0;z-index:4;background:var(--cu-black)">Supervisor</th>
+          <th style="padding:8px 10px;text-align:center;color:#FFB81C;font-size:10px;text-transform:uppercase">Overall</th>${head}
+        </tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>`;
+}
+
+// Click a supervisor: Needed / Provided / Disputed / Pending per week
+function toggleFbDetail(i) {
+  const row = document.getElementById('fb-detail-' + i), arrow = document.getElementById('fb-arrow-' + i);
+  const open = row.style.display !== 'none';
+  [...document.querySelectorAll(`tr[data-fb-detail="${i}"]`)].forEach(r => r.remove());
+  arrow.textContent = open ? '▶' : '▼';
+  if (open) { row.style.display = 'none'; return; }
+  const { byW, weeks } = window._fbRows[i];
+  const defs = [['Needed', 'needed', 'var(--text-muted)'], ['Provided', 'provided', 'var(--cu-green)'],
+                ['Disputed', 'disputed', 'var(--cu-orange)'], ['Pending', 'pending', 'var(--cu-magenta)']];
+  let anchor = row.previousElementSibling;
+  defs.forEach(([label, key, color], k) => {
+    const tr = document.createElement('tr');
+    tr.dataset.fbDetail = i;
+    tr.style.cssText = 'background:#FAFAF7;border-bottom:' + (k === 3 ? '2px solid var(--cu-gold)' : '0.5px solid var(--border)');
+    const total = weeks.reduce((s, w) => s + (byW[w] ? byW[w][key] : 0), 0);
+    tr.innerHTML = `<td style="padding:6px 12px 6px 30px;font-size:11px;color:var(--text-muted);position:sticky;left:0;background:#FAFAF7">${label}</td>
+      <td style="text-align:center;font-size:11px;font-weight:700;color:${key === 'pending' && !total ? 'var(--text-muted)' : color}">${total}</td>` +
+      weeks.map(w => {
+        const v = byW[w] ? byW[w][key] : null;
+        return `<td style="text-align:center;font-size:11px;${v ? 'font-weight:600;color:' + color : 'color:var(--text-muted)'}">${v === null ? '—' : v}</td>`;
+      }).join('');
+    anchor.after(tr); anchor = tr;
+  });
 }
 
 // Leads the current user can look at in "Lead reviews"
