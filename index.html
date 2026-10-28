@@ -3721,6 +3721,22 @@ async function loadCompliance() {
   }
 }
 
+// Review deadline of a Wabi week: the Sunday after the following week
+// (e.g. W42 Oct 11–17 → due Sun Oct 25). The deadline day still counts
+// as on time, so the week is "in progress" until that day ends.
+function weekReviewDeadline(week, year) {
+  const jan1 = new Date(year, 0, 1);
+  const start = new Date(year, 0, 1 - jan1.getDay() + (week - 1) * 7);
+  return new Date(start.getFullYear(), start.getMonth(), start.getDate() + 14);
+}
+function weekInProgress(d) {
+  const year = Number((String(d.half || CURRENT_HALF || '').match(/(\d{4})/) || [])[1]) || new Date().getFullYear();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return today <= weekReviewDeadline(Number(d.week), year);
+}
+// Counts toward compliance: deadline passed, or already fully completed
+function compCounts(d) { return !weekInProgress(d) || d.completed >= d.assigned; }
+
 function renderComplianceHistory() {
   try {
     let incidents = {};   // team-wide incidents: week → note
@@ -3736,9 +3752,13 @@ function renderComplianceHistory() {
     const filteredData = month ? data.filter(d => Number(d.month) === month) : data;
     if (!filteredData.length) { document.getElementById('compliance-table').innerHTML = '<div class="empty">No compliance data for this month</div>'; return; }
 
-    // Update metrics
-    const totalAssigned  = filteredData.reduce((s,d) => s+d.assigned, 0);
-    const totalCompleted = filteredData.reduce((s,d) => s+d.completed, 0);
+    // Update metrics (weeks still in progress don't count yet)
+    const countedData    = filteredData.filter(compCounts);
+    const totalAssigned  = countedData.reduce((s,d) => s+d.assigned, 0);
+    const totalCompleted = countedData.reduce((s,d) => s+d.completed, 0);
+    const openWeeks = [...new Set(filteredData.filter(d => !compCounts(d)).map(d => Number(d.week)))].sort((a, b) => a - b);
+    document.getElementById('comp-month-label').textContent =
+      (month ? (MONTH_NAMES[month] || 'Month ' + month) : '—') + (openWeeks.length ? ` (${openWeeks.map(w => 'W' + w).join(', ')} in progress, not counted)` : '');
     const overallPct     = totalAssigned > 0 ? Math.round((totalCompleted/totalAssigned)*100) : 0;
     const pctCol         = overallPct >= 80 ? 'var(--cu-green)' : overallPct >= 50 ? 'var(--cu-orange)' : 'var(--cu-magenta)';
     document.getElementById('comp-total').textContent = totalAssigned;
@@ -3756,7 +3776,8 @@ function renderComplianceHistory() {
     const weeks = [...allWeeks].map(Number).sort((a,b) => a-b);
 
     const headerCols = weeks.map(w => {
-      return `<th style="text-align:center;min-width:52px;white-space:nowrap;font-size:10px;padding:8px 6px">W${w}</th>`;
+      const open = filteredData.some(d => Number(d.week) === w && weekInProgress(d));
+      return `<th style="text-align:center;min-width:52px;white-space:nowrap;font-size:10px;padding:8px 6px">W${w}${open ? ' <span style="color:#FFB81C">⏳</span>' : ''}</th>`;
     }).join('');
 
     const rows = Object.entries(supMap).sort((a,b) => a[0].localeCompare(b[0])).map(([sup, weekData]) => {
@@ -3767,6 +3788,9 @@ function renderComplianceHistory() {
         if (abs) return `<td style="text-align:center">${absenceBadge(abs).replace('class="abs-badge"', 'class="abs-badge" style="margin-left:0"')}</td>`;
         const d = weekData[w];
         if (!d) return `<td style="text-align:center;color:var(--text-muted);font-size:12px">—</td>`;
+        if (!compCounts(d)) {
+          return `<td style="text-align:center" title="Deadline not reached yet — doesn't count toward Overall"><span style="background:#F0EFE9;color:var(--text-muted);font-weight:700;font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap">⏳ In progress · ${d.completed}/${d.assigned}</span></td>`;
+        }
         const pct = d.compliance;
         const col = pct >= 100 ? 'var(--cu-green)' : pct >= 80 ? 'var(--cu-blue)' : pct >= 50 ? 'var(--cu-orange)' : 'var(--cu-magenta)';
         const bg  = pct >= 100 ? '#D6EFDF' : pct >= 80 ? '#D6DCF7' : pct >= 50 ? '#FDE8D8' : '#FFE5F0';
@@ -3774,7 +3798,7 @@ function renderComplianceHistory() {
       }).join('');
 
       // Weeks with an absence don't count toward the supervisor's overall %
-      const allD = Object.values(weekData).filter(d => !absenceOf(absences, sup, d.week));
+      const allD = Object.values(weekData).filter(d => !absenceOf(absences, sup, d.week) && compCounts(d));
       const totalAssigned  = allD.reduce((s,d) => s+d.assigned, 0);
       const totalCompleted = allD.reduce((s,d) => s+d.completed, 0);
       const overallPct = totalAssigned > 0 ? Math.round((totalCompleted/totalAssigned)*100) : 0;
