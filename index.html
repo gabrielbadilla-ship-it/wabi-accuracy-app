@@ -1349,7 +1349,7 @@ function signOut() { sessionStorage.removeItem('wabiUser'); location.reload(); }
 // retried automatically after a transient Apps Script failure (404 or an
 // empty request). Never retry actions that would create duplicates.
 const RETRY_SAFE_WRITES = ['editDisputeComment', 'supervisorAction', 'setRole', 'saveCalibrationNote'];
-const EXPECTED_API_VERSION = '2026-10-27';
+const EXPECTED_API_VERSION = '2026-10-27b';
 
 async function api(action, params = {}, body = null) {
   const canRetry = !body || RETRY_SAFE_WRITES.includes(action);
@@ -2378,7 +2378,9 @@ async function loadCalibrationsList() {
           <div class="metrics" style="margin-bottom:16px">
             <div class="metric"><div class="label">Avg score</div><div class="value">${score(s.avg_total, MAX.total)}</div></div>
             <div class="metric"><div class="label">Score alignment ${calibTip(`Score alignment: % of completed reviews where all 4 category scores (Validation, Issue Resolution, Process & Escalation, Coaching & Guidance) are exactly the same as the reference. Matching only the total is not enough: failing Validation instead of Process & Escalation gives the same total (both 35 pts) but a different conclusion.`)}</div><div class="value ${alignmentTone(s.alignment_total)}">${pct(s.alignment_total)}</div></div>
-            <div class="metric"><div class="label">Full alignment ${calibTip(`Full alignment: % of completed reviews where all 4 category scores AND the root causes in every category are exactly the same as the reference (same conclusion, same category, same reason). Only tickets with reference root causes in the Calibration Sessions sheet are counted.`)}</div><div class="value ${alignmentTone(s.alignment_full)}">${pct(s.alignment_full)}</div>${s.rc_reference_tickets < s.tickets.length ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">${s.rc_reference_tickets} of ${s.tickets.length} tickets have reference root causes</div>` : ''}</div>
+            <div class="metric"><div class="label">Full alignment ${calibTip(`Full alignment: % of completed reviews where all 4 category scores AND the root causes in every category are exactly the same as the reference (same conclusion, same category, same reason). Only tickets with reference root causes in the Calibration Sessions sheet are counted.`)}</div><div class="value ${alignmentTone(s.alignment_full)}">${pct(s.alignment_full)}</div>${s.rc_columns_found === 0
+              ? `<div style="font-size:11px;color:var(--cu-magenta);margin-top:4px">Reference RC columns not found in the sheet</div>`
+              : s.rc_reference_tickets < s.tickets.length ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">${s.rc_reference_tickets} of ${s.tickets.length} tickets have reference root causes</div>` : ''}</div>
             <div class="metric"><div class="label">Compliance</div><div class="value">${s.compliance}%</div></div>
             <div class="metric"><div class="label">Completed</div><div class="value">${s.completed}/${s.assigned}</div>${s.missed ? `<div style="font-size:12px;color:var(--cu-magenta);font-weight:600;margin-top:4px">${s.missed} missed</div>` : ''}</div>
           </div>
@@ -2427,7 +2429,9 @@ async function loadCalibrationsList() {
                   <td><span class="calib-alignment-value ${alignmentTone(t.alignment_total)}">${pct(t.alignment_total)}</span></td>
                   <td>${t.has_rc_reference
                     ? `<span class="calib-alignment-value ${alignmentTone(t.alignment_full)}">${pct(t.alignment_full)}</span><div style="font-size:11px;color:var(--text-muted)">${t.aligned_full_count}/${completedCount}</div>`
-                    : '<span style="font-size:11px;color:var(--text-muted)" title="Add the reference root causes in the Calibration Sessions sheet">No RC reference</span>'}</td>
+                    : (s.rc_columns_found === 0
+                        ? '<span style="font-size:11px;color:var(--cu-magenta)" title="No column with reference root causes was found in the Calibration Sessions sheet">RC columns not found</span>'
+                        : '<span style="font-size:11px;color:var(--text-muted)" title="This ticket has no reference root causes in the Calibration Sessions sheet">No RC reference</span>')}</td>
                 </tr>
                 <tr id="${detailId}" class="calib-detail-row">
                   <td colspan="8"><div class="calib-detail">
