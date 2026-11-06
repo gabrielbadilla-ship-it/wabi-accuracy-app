@@ -4649,7 +4649,7 @@ const GUIDE_EXAMPLES = [
     rootCause: 'Account & Platform Records',
     title: 'Order on the previous delivery day after a delivery-day change',
     tags: ['Cancel after cutoff', 'Braze / Mixpanel'],
-    caseText: 'A customer changed their delivery day from Tuesday to Sunday on Sept 24. On Oct 1, an order was still placed for Tuesday, Oct 6. The customer, who was out of the country, asked to cancel it. It was past the cutoff and preparation had started, so the Specialist asked whether the order could be credited in full or partially as a one-time exception, or whether a higher retention offer was possible. The Specialist assumed the system created the order on the old delivery day by mistake.',
+    caseText: 'A customer changed their delivery day from Tuesday to Sunday on Sept 24. On Oct 1, a recommendation order was still placed for Tuesday, Oct 6 delivery. The customer, who was out of the country, asked to cancel it. It was past the cutoff and preparation had started, so the Specialist asked whether the order could be credited in full or partially as a one-time exception, or whether a higher retention offer was possible. The Specialist assumed the system created the order on the old delivery day by mistake.',
     leadAnswer: "The order couldn't be canceled because it was past the cutoff, and offered $50 x2 as goodwill, without increasing it.",
     why: "The real reason behind the order was never verified. The Lead accepted the Specialist's version (a system error) and only answered about compensation. Braze/Mixpanel showed that, besides changing the delivery day, the customer had rescheduled an order to Oct 6: the order wasn't an error, the customer created it. Checking the account history would have given the Specialist the real reason to deny the cancellation and a clear explanation for a pushy customer. If the records had confirmed a system error, the right path would have been a Jira ticket.",
     option1: [
@@ -4658,6 +4658,37 @@ const GUIDE_EXAMPLES = [
       ['Lead', 'Yes, that\u2019s the reason. The order was created by the customer\u2019s reschedule, not by a system error, so it\u2019s valid. Since we\u2019re past the cutoff and it\u2019s already in preparation, we can\u2019t cancel it or credit it as a one-time exception.\n\nNext steps: explain to the customer that the Oct 6 order comes from the reschedule they made, offer $50 x2 as goodwill, and remind them they can review their upcoming deliveries in the app before each cutoff.'],
     ],
     option2: 'Hi [Specialist], I checked the account history in Mixpanel. On Sept 24 the customer changed their delivery day to Sunday, and they also rescheduled an order to Tuesday, Oct 6. That\u2019s why this order exists: it wasn\u2019t created by a system error. Since we\u2019re past the cutoff and the order is already in preparation, we can\u2019t cancel it or credit it as a one-time exception.\n\nNext steps: explain to the customer that the Oct 6 order comes from the reschedule they made, offer $50 x2 as goodwill, and remind them they can review their upcoming deliveries in the app before each cutoff to avoid this in the future.',
+  },
+  {
+    category: 'ISSUE RESOLUTION',
+    rootCause: 'Compensation type',
+    title: 'Credits only when the issue was on our end',
+    tags: ['Instructions not followed', 'Not left at door', 'Refund vs credits'],
+    caseText: 'A customer reported that their order was never received. The driver texted asking for building access and the customer let them in, but the driver left the order in the lobby instead of at the apartment door, as the delivery instructions said. The order was taken from the lobby and couldn\u2019t be found. The Specialist escalated it as Delivery | Instructions not followed | Not left at door and asked for compensation. After the Lead\u2019s first answer, the customer said they didn\u2019t want credits and asked for a refund.',
+    leadAnswer: 'Approved credits for the order as a one-time courtesy. When the Specialist came back with the customer\u2019s request for a refund, the Lead denied it and asked the Specialist to explain that the credits were a one-time courtesy.',
+    why: 'The order was lost because the driver didn\u2019t follow the delivery instructions: the customer let them into the building, so the order should have been left at the apartment door. When the issue is on our end and the customer doesn\u2019t accept credits, the compensation can be a refund. Treating it as a courtesy and denying the refund put the responsibility on the customer, which increases their frustration and reduces trust in our service.',
+    ideal: 'Hi [Specialist], since the customer let the driver in and the order wasn\u2019t left at the apartment door as requested, please proceed with a full refund to the original payment method. Apologize to the customer for the driver\u2019s mistake.',
+  },
+  {
+    category: 'PROCESS & ESCALATION',
+    rootCause: 'Missing next steps',
+    title: 'Food poisoning reported without an FSQA escalation',
+    tags: ['Food safety', 'FSQA', 'Cancel after cutoff'],
+    caseText: 'A new customer reported getting sick a few hours after eating one of the meals in their first order. They needed emergency care and shared medical documentation. A first Lead approved a refund of the affected order and 50% off the next 2 orders, but the customer wasn\u2019t satisfied: they no longer wanted to eat the meals and asked to also refund the next order, which was already past the cutoff. The Specialist followed up in the Wabi asking for a one-time exception to refund that order. The case had no FSQA escalation, and the Wabi didn\u2019t mention it.',
+    leadAnswer: 'Approved canceling the upcoming order with a refund as a one-time exception and reminded the Specialist to notify Logistics.',
+    why: 'Every food poisoning case needs an FSQA escalation, and neither the Wabi nor the account showed one. The Lead resolved the compensation but didn\u2019t tell the Specialist to escalate, so the case could close without the Food Safety and Quality Assurance team ever reviewing it.',
+    ideal: 'Hi [Specialist], please refund the affected order and cancel the upcoming order with a full refund as a one-time exception, taking into account the documentation provided. Notify Logistics about the cancellation, escalate the case to FSQA with the probing answers and the medical documentation, and apply 50% off the next 2 weeks for retention.',
+  },
+  {
+    category: 'COACHING AND GUIDANCE',
+    rootCause: 'Incomplete Lead response',
+    title: 'Two requests in the Wabi, only one answered',
+    tags: ['Incomplete drop-off', 'First order', 'Sign-up promo'],
+    caseText: 'A customer on their first order couldn\u2019t receive the delivery: they were away from home for two days and had no one to bring it in and refrigerate it. Logistics couldn\u2019t accommodate an exception and was going to mark the delivery as failed. The Specialist asked for two things in the Wabi: credit the full order amount to the account and restore the 50% off x1 sign-up promo, so the customer could use it on a future order.',
+    leadAnswer: 'Approved full credits for the order as an incomplete drop-off one-time exception, and asked the Specialist to educate the customer on the delivery window and the tracking link. The promo request was left unanswered, so the Specialist had to ask again in a second message before getting the approval.',
+    why: 'The Specialist asked for two things, and the Lead only answered one. Not restoring the promo could have been a valid decision, since the customer missed the delivery for reasons outside CookUnity\u2019s control. But the Lead didn\u2019t approve it or deny it: the request was left unanswered, so the Specialist couldn\u2019t close the case and had to follow up, which delayed the resolution for the customer. Every request in the Wabi needs an explicit answer, whether it\u2019s approved or denied.',
+    ideal: 'Hi [Specialist], please proceed with full credits for the order as an incomplete drop-off one-time exception and restore the 50% off x1 sign-up promo. Educate the customer on the delivery window and the tracking link to avoid this in the future.',
+    notes: ['Denying the promo would also be a correct answer, as long as the Lead says so and explains why (e.g. \u201cWe can\u2019t restore the sign-up promo since the missed delivery wasn\u2019t caused by CookUnity\u201d).'],
   },
 ];
 
@@ -4698,6 +4729,8 @@ function renderGuideExamples(cat) {
         <div class="guide-ex-note">Both are correct. In Option 1 the Lead holds the resolution until the validation comes back; in Option 2 the Lead validates directly.</div>`
         : `<div class="guide-ex-label">Ideal Lead response</div>
            <div class="guide-ex-msg lead"><b>Lead</b><p>${nl2br(e.ideal || '')}</p></div>`;
+      const notes = (e.notes || []).map(n => `<div class="guide-ex-note">${escapeHtml(n)}</div>`).join('') +
+        `<div class="guide-ex-note">If the Specialist’s Wabi already includes complete and correct next steps, the Lead can simply reply “Proceed.”</div>`;
       return `<article class="guide-ex-card" style="--cat:${c.color}">
         <header>
           <div class="guide-ex-num">${c.label} · Example ${i + 1}</div>
@@ -4713,7 +4746,7 @@ function renderGuideExamples(cat) {
           <div><div class="guide-ex-label">What the Lead answered</div><p class="guide-ex-quote">${nl2br(e.leadAnswer)}</p></div>
         </div>
         <div class="guide-ex-why"><div class="guide-ex-label">❌ Why it was wrong</div><p>${nl2br(e.why)}</p></div>
-        <div class="guide-ex-ideal">${ideal}</div>
+        <div class="guide-ex-ideal">${ideal}${notes}</div>
       </article>`;
     }).join('');
   }).join('');
